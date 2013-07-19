@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<text>
+ <girl>
+  <default>
+    Hello, its a default dialogue.
+  </default>
+  <day1>
+ Ti tak priyatno pahnesh. Davai poshalim v tualete :))) ко--ко
+
+   <answers>
+Da, kone4no.
+Lol voobshe xD
+   </answers>
+
+   <speech1>
+ Okey nahuuuy!!!
+
+    <answers>
+Voobshe norm
+Proebalsya
+    </answers>
+
+    <speech1>
+ Tai molodsya, vse robit
+    </speech1>
+    <speech2>
+ Hule?
+    </speech2>
+
+   </speech1>
+
+   <speech2>
+ Huli smeeshsya??
+   </speech2>
+  </day1>
+ </girl>
+</text>

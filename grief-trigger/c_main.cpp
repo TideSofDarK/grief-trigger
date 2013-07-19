@@ -11,6 +11,7 @@
 #include "i_appearingtext.h"
 #include "g_sceneobject.h"
 #include "g_npc.h"
+#include "d_dialogueinfo.h"
 
 using namespace sf;
 using namespace tmx;
@@ -40,8 +41,10 @@ int main()
 	std::locale::global(std::locale("Russian"));
 
 	PlayerObject po = PlayerObject(128, 128);
-	std::string str = "—ъешь еще этих м€гких французских булок, да выпей чаю.";
-	AppearingText at(str);
+
+	DialogueInfo di = DialogueInfo("text.xml");
+
+	AppearingText at = AppearingText(di);
 
 	sf::Clock frameClock;
 
@@ -52,21 +55,19 @@ int main()
 		{
 			if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
 				window.close();
-			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) 
-			{
-				at.reset("These are words with a D this time \n Dialogue \n Dualogue \n Diatribe");
-			}
+
+			at.input(event);
 		}
 
-		po.move(ml.GetLayers().back().objects);
-		po.update(frameClock.restart());
-
 		at.update();
+
+		po.move(ml.GetLayers().back().objects, at);
+		po.update(frameClock.restart());
 
 		window.clear();
 
 		window.setView(camera);
-		ml.Draw(window, false);
+		ml.Draw(window, true);
 		po.draw(window);
 
 		window.setView(unscalable);

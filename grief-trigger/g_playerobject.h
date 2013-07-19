@@ -11,6 +11,7 @@
 #include "AnimatedSprite.hpp"
 
 #include "g_sceneobject.h"
+#include "i_appearingtext.h"
 
 static const sf::Uint32 DIR_IDLE = -1;
 static const sf::Uint32 DIR_TOP = 0;
@@ -33,7 +34,7 @@ public:
 	PlayerObject(sf::Uint32 x, sf::Uint32 y);
 	void update(sf::Time &time);
 	void draw(sf::RenderTarget &tg);
-	void move(std::vector<tmx::MapObject> &objects);
+	void move(std::vector<tmx::MapObject> &objects, AppearingText &at);
 	void play();
 	AnimatedSprite& getSprite();
 };

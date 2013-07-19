@@ -27,116 +27,116 @@ PlayerObject::PlayerObject(sf::Uint32 x, sf::Uint32 y)
 	ny = animatedSprite.getPosition().y;
 }
 
-void PlayerObject::move(std::vector<tmx::MapObject> &objects)
+void PlayerObject::move(std::vector<tmx::MapObject> &objects, AppearingText &at)
 {
-	bool isMovable = true;
-
-	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+	if (at.isHided() == true)
 	{
-		for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+		bool isMovable = true;
+
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 		{
-			tmx::MapObject &object = *it;
-			if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE))) isMovable = false;
+			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+			{
+				tmx::MapObject &object = *it;
+				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE))) isMovable = false;
+				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE)) && object.GetName() != "") at.reset(object.GetName(), "day1");
+			}
+
+			if(walking == false && isMovable == true)
+			{
+				nextspot = animatedSprite.getPosition().y - CHARACTER_SIZE; 
+				direction = DIR_TOP;
+				walking = true; 
+
+				animatedSprite.setAnimation(walkingAnimation[direction]);
+				animatedSprite.play();
+			}
+			else if (isMovable == false)
+			{
+				animatedSprite.setAnimation(walkingAnimation[DIR_TOP]);
+				animatedSprite.setFrame(0);
+			}
 		}
 
-		if(walking == false && isMovable == true)
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 		{
-			nextspot = animatedSprite.getPosition().y - CHARACTER_SIZE; 
-			direction = DIR_TOP;
-			walking = true; 
+			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+			{
+				tmx::MapObject &object = *it;
+				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE))) isMovable = false;
+				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE)) && object.GetName() != "") at.reset(object.GetName(), "day1");
+			}
 
-			animatedSprite.setAnimation(walkingAnimation[direction]);
-			animatedSprite.play();
-		}
-		else if (isMovable == false)
-		{
-			animatedSprite.setAnimation(walkingAnimation[DIR_TOP]);
-			animatedSprite.setFrame(0);
-		}
-	}
+			if(walking == false && isMovable == true)
+			{
+				nextspot = animatedSprite.getPosition().y + CHARACTER_SIZE; 
+				direction = DIR_DOWN;
+				walking = true;
 
-	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-	{
-		for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
-		{
-			tmx::MapObject &object = *it;
-			if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE))) isMovable = false;
-		}
-
-		if(walking == false && isMovable == true)
-		{
-			nextspot = animatedSprite.getPosition().y + CHARACTER_SIZE; 
-			direction = DIR_DOWN;
-			walking = true;
-
-			animatedSprite.setAnimation(walkingAnimation[direction]);
-			animatedSprite.play();
-		}
-		else if (isMovable == false)
-		{
-			animatedSprite.setAnimation(walkingAnimation[DIR_DOWN]);
-			animatedSprite.setFrame(0);
-		}
-	}
-
-	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-	{
-		for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
-		{
-			tmx::MapObject &object = *it;
-			if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y))) isMovable = false;
+				animatedSprite.setAnimation(walkingAnimation[direction]);
+				animatedSprite.play();
+			}
+			else if (isMovable == false)
+			{
+				animatedSprite.setAnimation(walkingAnimation[DIR_DOWN]);
+				animatedSprite.setFrame(0);
+			}
 		}
 
-		if(walking == false && isMovable == true)
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
-			nextspot = animatedSprite.getPosition().x - CHARACTER_SIZE; 
-			direction = DIR_LEFT;
-			walking = true;
+			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+			{
+				tmx::MapObject &object = *it;
+				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y))) isMovable = false;
+				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y)) && object.GetName() != "") at.reset(object.GetName(), "day1");
+			}
 
-			animatedSprite.setAnimation(walkingAnimation[direction]);
-			animatedSprite.play();
-		}
-		else if (isMovable == false)
-		{
-			animatedSprite.setAnimation(walkingAnimation[DIR_LEFT]);
-			animatedSprite.setFrame(0);
-		}
-	}
+			if(walking == false && isMovable == true)
+			{
+				nextspot = animatedSprite.getPosition().x - CHARACTER_SIZE; 
+				direction = DIR_LEFT;
+				walking = true;
 
-	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-	{
-		for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
-		{
-			tmx::MapObject &object = *it;
-			if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y))) isMovable = false;
+				animatedSprite.setAnimation(walkingAnimation[direction]);
+				animatedSprite.play();
+			}
+			else if (isMovable == false)
+			{
+				animatedSprite.setAnimation(walkingAnimation[DIR_LEFT]);
+				animatedSprite.setFrame(0);
+			}
 		}
 
-		if(walking == false && isMovable == true)
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 		{
-			nextspot = animatedSprite.getPosition().x + CHARACTER_SIZE; 
-			direction = DIR_RIGHT;
-			walking = true;
+			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+			{
+				tmx::MapObject &object = *it;
+				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y))) isMovable = false;
+				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y)) && object.GetName() != "") at.reset(object.GetName(), "day1");
+			}
 
-			animatedSprite.setAnimation(walkingAnimation[direction]);
-			animatedSprite.play();
-		}
-		else if (isMovable == false)
-		{
-			animatedSprite.setAnimation(walkingAnimation[DIR_RIGHT]);
-			animatedSprite.setFrame(0);
+			if(walking == false && isMovable == true)
+			{
+				nextspot = animatedSprite.getPosition().x + CHARACTER_SIZE; 
+				direction = DIR_RIGHT;
+				walking = true;
+
+				animatedSprite.setAnimation(walkingAnimation[direction]);
+				animatedSprite.play();
+			}
+			else if (isMovable == false)
+			{
+				animatedSprite.setAnimation(walkingAnimation[DIR_RIGHT]);
+				animatedSprite.setFrame(0);
+			}
 		}
 	}
 }
 
 void PlayerObject::draw(sf::RenderTarget &tg)
 {
-	for (int a = 0; a < 4; a++)
-	{
-		for (int i = 0; i < 4; i++)
-		{
-			walkingAnimation[a].setSpriteSheet(texture);
-		}
-	}
 	tg.draw(animatedSprite);
 }
 
