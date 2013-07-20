@@ -29,7 +29,7 @@ PlayerObject::PlayerObject(sf::Uint32 x, sf::Uint32 y)
 
 void PlayerObject::move(std::vector<tmx::MapObject> &objects, AppearingText &at)
 {
-	if (at.isHided() == true)
+	if (at.isHided() == false)
 	{
 		bool isMovable = true;
 

@@ -26,3 +26,6 @@
 *.ilk
 *.filters
 *.zip
+*.xml
+*.vert
+*.frag

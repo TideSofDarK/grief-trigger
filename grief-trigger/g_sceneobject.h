@@ -9,5 +9,6 @@ protected:
 public:
 	void update(sf::Time &time);
 	void draw(sf::RenderTarget &tg);
+	void input(sf::Event &event);
 };
 

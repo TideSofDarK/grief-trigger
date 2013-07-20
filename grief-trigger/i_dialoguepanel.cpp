@@ -1,4 +1,4 @@
-#include "i_appearingtext.h"
+#include "i_dialoguepanel.h"
 
 AppearingText::AppearingText(DialogueInfo &dinfo)
 {
@@ -6,11 +6,12 @@ AppearingText::AppearingText(DialogueInfo &dinfo)
 
 	font.loadFromFile("assets/fonts/default.ttf");
 
-	artTexture.loadFromFile("assets/girl_art.png");
-	art.setTexture(artTexture);
+	//Set up tween for background panel
+	nby = 0;
 
 	backgroundTexture.loadFromFile("assets/dbox.png");
 	background.setTexture(backgroundTexture);
+	background.setPosition(0, nby);
 
 	pointer = sf::RectangleShape();
 	pointer.setFillColor(sf::Color::Blue);
@@ -56,6 +57,9 @@ void AppearingText::reset(std::string name, std::string situation)
 		text = sf::Text("", font, fontSize);
 
 		text.setPosition(320, 455);
+
+		artTexture.loadFromFile("assets/" + lastName + "_art.png");
+		art.setTexture(artTexture);
 
 		actualString = di->getDialogue(name, lastSituation);
 
@@ -142,23 +146,34 @@ void AppearingText::update()
 {
 	if (visible)
 	{
-		if (ended == false)
+		sf::Uint32 elapsed = clock.getElapsedTime().asMilliseconds();
+		
+		//Update tween if animation is not ended
+		if (nby != 0)
 		{
-			if (clock.getElapsedTime().asMilliseconds() > 30 && character < actualString.length())
-			{
-				clock.restart();
-				character++;
-				text.setString( sf::String(actualString.substr(0, character)));
-			}
-			else if (character >= actualString.length())
-			{
-				stop();
-			}
+
+			background.setPosition(0, nby);
 		}
-		if (isAnswering)
+		else
 		{
-			pointer.setPosition(answers[selected].getPosition().x, answers[selected].getPosition().y + fontSize / 6);
-			pointer.setSize(sf::Vector2f(answers[selected].getGlobalBounds().width, fontSize));
+			if (ended == false)
+			{
+				if (elapsed > 30 && character < actualString.length())
+				{
+					clock.restart();
+					character++;
+					text.setString( sf::String(actualString.substr(0, character)));
+				}
+				else if (character >= actualString.length())
+				{
+					stop();
+				}
+			}
+			if (isAnswering)
+			{
+				pointer.setPosition(answers[selected].getPosition().x, answers[selected].getPosition().y + fontSize / 6);
+				pointer.setSize(sf::Vector2f(answers[selected].getGlobalBounds().width, fontSize));
+			}
 		}
 	}
 }
@@ -177,19 +192,19 @@ void AppearingText::input(sf::Event &event)
 			{
 				selected--;
 			}
-			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Right) 
+			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) 
 			{
 				applyAnswer(selected);
 			}
 		}
-		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down && ended == true) 
+		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && ended == true) 
 		{
 			if (showAnswers() == false)
 			{
 				hide();
 			}
 		}
-		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down && ended != true)
+		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && ended != true)
 		{
 			stop();
 		}
