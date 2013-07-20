@@ -34,7 +34,7 @@ public:
 	PlayerObject(sf::Uint32 x, sf::Uint32 y);
 	void update(sf::Time &time);
 	void draw(sf::RenderTarget &tg);
-	void move(std::vector<tmx::MapObject> &objects, AppearingText &at);
+	void move(std::vector<tmx::MapObject> &objects, DialoguePanel &at);
 	void play();
 	AnimatedSprite& getSprite();
 };

@@ -27,7 +27,7 @@ PlayerObject::PlayerObject(sf::Uint32 x, sf::Uint32 y)
 	ny = animatedSprite.getPosition().y;
 }
 
-void PlayerObject::move(std::vector<tmx::MapObject> &objects, AppearingText &at)
+void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 {
 	if (at.isHided() == false)
 	{
@@ -39,7 +39,7 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, AppearingText &at)
 			{
 				tmx::MapObject &object = *it;
 				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE))) isMovable = false;
-				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE)) && object.GetName() != "") at.reset(object.GetName(), "day1");
+				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE)) && object.GetName() != "") at.openDialogue(object.GetName(), "day1");
 			}
 
 			if(walking == false && isMovable == true)
@@ -64,7 +64,7 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, AppearingText &at)
 			{
 				tmx::MapObject &object = *it;
 				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE))) isMovable = false;
-				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE)) && object.GetName() != "") at.reset(object.GetName(), "day1");
+				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE)) && object.GetName() != "") at.openDialogue(object.GetName(), "day1");
 			}
 
 			if(walking == false && isMovable == true)
@@ -89,7 +89,7 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, AppearingText &at)
 			{
 				tmx::MapObject &object = *it;
 				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y))) isMovable = false;
-				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y)) && object.GetName() != "") at.reset(object.GetName(), "day1");
+				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y)) && object.GetName() != "") at.openDialogue(object.GetName(), "day1");
 			}
 
 			if(walking == false && isMovable == true)
@@ -114,7 +114,7 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, AppearingText &at)
 			{
 				tmx::MapObject &object = *it;
 				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y))) isMovable = false;
-				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y)) && object.GetName() != "") at.reset(object.GetName(), "day1");
+				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y)) && object.GetName() != "") at.openDialogue(object.GetName(), "day1");
 			}
 
 			if(walking == false && isMovable == true)

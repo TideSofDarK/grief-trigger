@@ -4,9 +4,7 @@
   <default>
     Hello, its a default dialogue.
   </default>
-  <day1>
- Ti tak priyatno pahnesh. Davai poshalim v tualete :))) ко--ко
-
+  <day1>Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! Default dialogue test. Very fancy! 
    <answers>
 Da, kone4no.
 Lol voobshe xD
@@ -34,4 +32,11 @@ Proebalsya
    </speech2>
   </day1>
  </girl>
+ <blue>
+  <default>
+    Hello, its a default dialogue.
+  </default>
+  <day1>Default blue dialogue test. Very fancy!
+  </day1>
+ </blue>
 </text>

@@ -5,15 +5,25 @@
 #include <string>
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
+
+#include <dbtweener.h>
 
 #include "d_dialogueinfo.h"
 #include "RoundedRectangleShape.hpp"
 
-class AppearingText
+class DialoguePanel
 {
 protected:
 	//Font size
 	static const unsigned int fontSize = 40;
+
+	//Buffer for typewriter sound
+	sf::SoundBuffer clickBuffer;
+	sf::Sound click;
+
+	sf::SoundBuffer enterBuffer;
+	sf::Sound enter;
 
 	//Pointer to dialogue data
 	DialogueInfo *di;
@@ -68,9 +78,12 @@ protected:
 	//Is answering state
 	bool isAnswering;
 
+	//Tweener itself
+	CDBTweener oTweener;
+
 public:
-	AppearingText(DialogueInfo &dinfo);
-	void reset(std::string name, std::string situation);
+	DialoguePanel(DialogueInfo &dinfo);
+	void openDialogue(std::string name, std::string situation);
 	void update();
 	void input(sf::Event &event);
 	void stop();

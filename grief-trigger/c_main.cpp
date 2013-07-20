@@ -40,7 +40,7 @@ int main()
 
 	DialogueInfo di = DialogueInfo("text.xml");
 
-	AppearingText at = AppearingText(di);
+	DialoguePanel dp = DialoguePanel(di);
 
 	sf::Clock frameClock;
 
@@ -74,14 +74,14 @@ int main()
 			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) ef.setCurrentEffect("distortion", sf::seconds(1));
 			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) ef.setCurrentEffect("shader", sf::seconds(1));
 
-			at.input(event);
+			dp.input(event);
 		}
 
 		ef.update();
 
-		at.update();
+		dp.update();
 
-		po.move(ml.GetLayers().back().objects, at);
+		po.move(ml.GetLayers().back().objects, dp);
 		po.update(frameClock.restart());
 
 		//system.update(clock.restart());
@@ -95,7 +95,7 @@ int main()
 
 		//Unscalable
 		finalTexture.setView(unscalable);
-		at.draw(finalTexture);
+		dp.draw(finalTexture);
 		//finalTexture.draw(system);
 
 		finalTexture.display();

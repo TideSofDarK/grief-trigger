@@ -1,13 +1,16 @@
 #include "i_dialoguepanel.h"
 
-AppearingText::AppearingText(DialogueInfo &dinfo)
+DialoguePanel::DialoguePanel(DialogueInfo &dinfo)
 {
 	di = &dinfo;
 
 	font.loadFromFile("assets/fonts/default.ttf");
 
-	//Set up tween for background panel
-	nby = 0;
+	clickBuffer.loadFromFile("assets/typewriter.wav");
+	click.setBuffer(clickBuffer);
+
+	enterBuffer.loadFromFile("assets/enter.wav");
+	enter.setBuffer(enterBuffer);
 
 	backgroundTexture.loadFromFile("assets/dbox.png");
 	background.setTexture(backgroundTexture);
@@ -19,7 +22,7 @@ AppearingText::AppearingText(DialogueInfo &dinfo)
 	hide();
 }
 
-void AppearingText::stop()
+void DialoguePanel::stop()
 {
 	text.setString(actualString);
 	ended = true;
@@ -41,12 +44,12 @@ std::string wordWrap( std::string str, size_t width = 50 ) {
 	return str;
 }
 
-void AppearingText::reset(std::string name, std::string situation)
+void DialoguePanel::openDialogue(std::string name, std::string situation)
 {
 	selected = 0;
 	isAnswering = false;
 	lastName = name;
-	lastSituation = situation + '/';
+	if (lastSituation != situation) lastSituation = situation + '/';
 
 	if (ended == false && text.getString().toAnsiString().c_str() != actualString.c_str())
 	{
@@ -61,17 +64,46 @@ void AppearingText::reset(std::string name, std::string situation)
 		artTexture.loadFromFile("assets/" + lastName + "_art.png");
 		art.setTexture(artTexture);
 
-		actualString = di->getDialogue(name, lastSituation);
-
-		//Remove all newlines
-		std::string::size_type pos = 0; 
-		while ( ( pos = actualString.find ("\n",pos) ) != std::string::npos )
+		//If next string is
+		if (nextString != "") 
 		{
-			actualString.erase ( pos, 2 );
+			actualString = nextString;
+			nextString = "";
+		}
+		else 
+		{
+			actualString = di->getDialogue(name, lastSituation);
+		}
+
+		//Replace all newlines
+		while ( actualString.find ("\n") != std::string::npos )
+		{
+			actualString.replace( actualString.find ("\n"), 1 ," ");
 		}
 
 		//Wrap words
 		actualString = wordWrap(actualString);
+
+		//Check height
+		size_t n = std::count(actualString.begin(), actualString.end(), '\n');
+		const int maxLines = 3;
+		if (n > maxLines)
+		{
+			//Find first space after last line
+			unsigned int a = actualString.find(' ', maxLines*50);
+			a++;
+
+			//Cut all to next string
+			nextString = actualString.substr(a, actualString.length());
+			actualString.erase(a, actualString.length());
+		}
+
+		//Reset tweener
+		if (!visible)
+		{
+			nby = 720.f / 2.f;
+			oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 1.0f, &nby, 0.0f);
+		}
 
 		//Reset variables
 		character = 0;
@@ -81,14 +113,15 @@ void AppearingText::reset(std::string name, std::string situation)
 	}
 }
 
-bool AppearingText::showAnswers()
+bool DialoguePanel::showAnswers()
 {
-
 	//Get answers
 	if (di->getAnswers(lastName, lastSituation) != "")
 	{
-		hide();
 		actualString = di->getAnswers(lastName, lastSituation);
+		//Clear all text
+		text.setString("");
+		answers.clear();
 	}
 	else
 	{
@@ -121,14 +154,12 @@ bool AppearingText::showAnswers()
 	}
 
 	isAnswering = true;
-
 	ended = true;
 	visible = true;
-
 	return true;
 }
 
-void AppearingText::hide()
+void DialoguePanel::hide()
 {
 	selected = 0;
 	isAnswering = false;
@@ -136,33 +167,41 @@ void AppearingText::hide()
 	ended = true;
 	text.setString("");
 	actualString = "";
-	if (answers.size() != 0)
-	{
-		answers.clear();
-	}
+	answers.clear();
 }
 
-void AppearingText::update()
+void DialoguePanel::update()
 {
 	if (visible)
 	{
 		sf::Uint32 elapsed = clock.getElapsedTime().asMilliseconds();
-		
+
 		//Update tween if animation is not ended
 		if (nby != 0)
 		{
-
+			oTweener.step(elapsed / 1000.f);
 			background.setPosition(0, nby);
+			clock.restart();
 		}
 		else
 		{
 			if (ended == false)
 			{
-				if (elapsed > 30 && character < actualString.length())
+				if (elapsed > 60 && character < actualString.length())
 				{
+					//Play sound if it is not a space
+					if (text.getString().toAnsiString().c_str()[text.getString().getSize()] != ' ')
+					{
+						click.play();
+					}
+					if (text.getString().getSize() + 1 == actualString.size())
+					{
+						//If last - play enter sound
+						enter.play();
+					}
 					clock.restart();
 					character++;
-					text.setString( sf::String(actualString.substr(0, character)));
+					text.setString( sf::String(actualString.substr(0, character)));				
 				}
 				else if (character >= actualString.length())
 				{
@@ -178,45 +217,59 @@ void AppearingText::update()
 	}
 }
 
-void AppearingText::input(sf::Event &event)
+void DialoguePanel::input(sf::Event &event)
 {
 	if (visible)
 	{
-		if (isAnswering)
+		//Check if tween ended...
+		if (nby == 0)
 		{
-			if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down && selected < answers.size() - 1)
+			if (isAnswering)
 			{
-				selected++;
+				if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down && selected < answers.size() - 1)
+				{
+					selected++;
+				}
+				else if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up && selected - 1 >= 0)
+				{
+					selected--;
+				}
+				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) 
+				{
+					enter.play();
+
+					applyAnswer(selected);
+				}
 			}
-			else if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up && selected - 1 >= 0)
+			else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && ended == true) 
 			{
-				selected--;
+				enter.play();
+
+				if (nextString == "")
+				{
+					if (showAnswers() == false)
+					{
+						hide();
+					}
+				}	
+				else openDialogue(lastName, lastSituation);
 			}
-			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) 
+			else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && ended != true)
 			{
-				applyAnswer(selected);
+				enter.play();
+
+				stop();
 			}
-		}
-		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && ended == true) 
-		{
-			if (showAnswers() == false)
-			{
-				hide();
-			}
-		}
-		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && ended != true)
-		{
-			stop();
 		}
 	}
 }
 
-void AppearingText::applyAnswer(unsigned int number)
+void DialoguePanel::applyAnswer(unsigned int number)
 {
-	reset(lastName, lastSituation + "speech" + std::to_string(number + 1));
+	openDialogue(lastName, lastSituation + "speech" + std::to_string(number + 1));
 }
 
-void AppearingText::draw(sf::RenderTarget &rt)
+void DialoguePanel::draw(sf::RenderTarget &rt)
 {
 	if (visible)
 	{
@@ -239,12 +292,12 @@ void AppearingText::draw(sf::RenderTarget &rt)
 	}
 }
 
-bool AppearingText::isHided()
+bool DialoguePanel::isHided()
 {
 	return visible;
 }
 
-bool AppearingText::isEnded()
+bool DialoguePanel::isEnded()
 {
 	return ended;
 }
