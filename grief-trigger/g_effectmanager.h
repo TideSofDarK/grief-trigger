@@ -25,7 +25,8 @@ private:
 	//Is working
 	bool working;
 public:
-	EffectManager(sf::Vector2f resolution);
+	EffectManager(void);
+	void init(sf::Vector2f resolution);
 	void update();
 	void draw(sf::RenderTexture &rt, sf::RenderTarget &target);
 	sf::Shader& getCurrentEffect();

@@ -1,6 +1,10 @@
 #include "i_dialoguepanel.h"
 
-DialoguePanel::DialoguePanel(DialogueInfo &dinfo)
+DialoguePanel::DialoguePanel()
+{
+}
+
+void DialoguePanel::init(DialogueInfo &dinfo)
 {
 	di = &dinfo;
 
@@ -60,6 +64,7 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		text = sf::Text("", font, fontSize);
 
 		text.setPosition(320, 455);
+		text.setColor(sf::Color::Black);
 
 		artTexture.loadFromFile("assets/" + lastName + "_art.png");
 		art.setTexture(artTexture);
@@ -150,6 +155,7 @@ bool DialoguePanel::showAnswers()
 	{
 		sf::Text ans(strings[i], font, fontSize);
 		ans.setPosition(320, (455 + i * fontSize) + i * 4);
+		ans.setColor(sf::Color::Black);
 		answers.push_back(ans);
 	}
 

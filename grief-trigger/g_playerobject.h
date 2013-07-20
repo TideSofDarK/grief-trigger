@@ -31,8 +31,9 @@ private:
 	int nx, ny;
 
 public:
-	PlayerObject(sf::Uint32 x, sf::Uint32 y);
-	void update(sf::Time &time);
+	PlayerObject();
+	void init(sf::Uint32 x, sf::Uint32 y);
+	void update(sf::Time &time, sf::View &camera);
 	void draw(sf::RenderTarget &tg);
 	void move(std::vector<tmx::MapObject> &objects, DialoguePanel &at);
 	void play();

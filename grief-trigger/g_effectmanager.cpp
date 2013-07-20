@@ -1,6 +1,10 @@
 #include "g_effectmanager.h"
 
-EffectManager::EffectManager(sf::Vector2f resolution)
+EffectManager::EffectManager(void)
+{
+}
+
+void EffectManager::init(sf::Vector2f resolution)
 {
 	size = resolution;
 	working = false;

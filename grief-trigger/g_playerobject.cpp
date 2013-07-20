@@ -2,7 +2,11 @@
 
 #include "h_config.h"
 
-PlayerObject::PlayerObject(sf::Uint32 x, sf::Uint32 y)
+PlayerObject::PlayerObject()
+{
+}
+
+void PlayerObject::init(sf::Uint32 x, sf::Uint32 y)
 {
 	texture.loadFromFile("assets/player.png");
 
@@ -51,11 +55,11 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 				animatedSprite.setAnimation(walkingAnimation[direction]);
 				animatedSprite.play();
 			}
-			else if (isMovable == false)
+			else if (isMovable == false && walking == false)
 			{
 				animatedSprite.setAnimation(walkingAnimation[DIR_TOP]);
 				animatedSprite.setFrame(0);
-			}
+			}		
 		}
 
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
@@ -76,7 +80,7 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 				animatedSprite.setAnimation(walkingAnimation[direction]);
 				animatedSprite.play();
 			}
-			else if (isMovable == false)
+			else if (isMovable == false && walking == false)
 			{
 				animatedSprite.setAnimation(walkingAnimation[DIR_DOWN]);
 				animatedSprite.setFrame(0);
@@ -101,11 +105,11 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 				animatedSprite.setAnimation(walkingAnimation[direction]);
 				animatedSprite.play();
 			}
-			else if (isMovable == false)
+			else if (isMovable == false && walking == false)
 			{
 				animatedSprite.setAnimation(walkingAnimation[DIR_LEFT]);
 				animatedSprite.setFrame(0);
-			}
+			}	
 		}
 
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
@@ -126,11 +130,11 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 				animatedSprite.setAnimation(walkingAnimation[direction]);
 				animatedSprite.play();
 			}
-			else if (isMovable == false)
+			else if (isMovable == false && walking == false)
 			{
 				animatedSprite.setAnimation(walkingAnimation[DIR_RIGHT]);
 				animatedSprite.setFrame(0);
-			}
+			}	
 		}
 	}
 }
@@ -145,13 +149,14 @@ AnimatedSprite& PlayerObject::getSprite()
 	return animatedSprite;
 }
 
-void PlayerObject::update(sf::Time &time)
+void PlayerObject::update(sf::Time &time, sf::View &camera)
 {
 	if(walking == true)
 	{
 		if(direction == DIR_TOP)
 		{
 			ny -= playerMoveSpeed;
+
 			if(ny <= nextspot)
 			{
 				ny = nextspot; 
@@ -164,6 +169,7 @@ void PlayerObject::update(sf::Time &time)
 		if(direction == DIR_DOWN)
 		{
 			ny += playerMoveSpeed;
+
 			if(ny >= nextspot)
 			{
 				ny = nextspot;
@@ -176,6 +182,7 @@ void PlayerObject::update(sf::Time &time)
 		if(direction == DIR_LEFT)
 		{
 			nx -= playerMoveSpeed;
+
 			if(nx <= nextspot)
 			{
 				nx = nextspot;
@@ -188,6 +195,7 @@ void PlayerObject::update(sf::Time &time)
 		if(direction == DIR_RIGHT)
 		{
 			nx += playerMoveSpeed;
+
 			if(nx >= nextspot)
 			{
 				nx = nextspot;
@@ -198,7 +206,7 @@ void PlayerObject::update(sf::Time &time)
 			}
 		}
 	}
-
+	
 	animatedSprite.setPosition(nx, ny);
 	animatedSprite.update(time);
 }

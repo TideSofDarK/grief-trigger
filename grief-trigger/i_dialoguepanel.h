@@ -10,7 +10,6 @@
 #include <dbtweener.h>
 
 #include "d_dialogueinfo.h"
-#include "RoundedRectangleShape.hpp"
 
 class DialoguePanel
 {
@@ -82,7 +81,8 @@ protected:
 	CDBTweener oTweener;
 
 public:
-	DialoguePanel(DialogueInfo &dinfo);
+	DialoguePanel();
+	void init(DialogueInfo &dinfo);
 	void openDialogue(std::string name, std::string situation);
 	void update();
 	void input(sf::Event &event);

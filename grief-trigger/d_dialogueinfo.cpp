@@ -1,6 +1,10 @@
 #include "d_dialogueinfo.h"
 
-DialogueInfo::DialogueInfo(std::string file)
+DialogueInfo::DialogueInfo()
+{
+}
+
+void DialogueInfo::init(std::string file)
 {
 	this->file = file;
 }
