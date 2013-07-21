@@ -8,10 +8,10 @@
 #include <MapLoader.h>
 
 #include "d_dialogueinfo.h"
-#include "g_sceneobject.h"
-#include "g_effectmanager.h"
+#include "g_shadermanager.h"
 #include "i_dialoguepanel.h"
 #include "g_playerobject.h"
+#include "g_particlesmanager.h"
 
 class Scene
 {
@@ -23,13 +23,16 @@ private:
 	tmx::MapLoader *map;
 
 	//Shaders
-	EffectManager ef;
+	ShaderManager ef;
 
 	//XML Parser
 	DialogueInfo di;
 
 	//Dialogue panel
 	DialoguePanel dp;
+
+	//Particles manager
+	ParticlesManager pm;
 
 	//Render all to final texture
 	sf::RenderTexture finalTexture;

@@ -6,7 +6,7 @@
 
 #include <SFML/Graphics.hpp>
 
-class EffectManager
+class ShaderManager
 {
 private:
 	//Effect shader
@@ -25,7 +25,7 @@ private:
 	//Is working
 	bool working;
 public:
-	EffectManager(void);
+	ShaderManager(void);
 	void init(sf::Vector2f resolution);
 	void update();
 	void draw(sf::RenderTexture &rt, sf::RenderTarget &target);

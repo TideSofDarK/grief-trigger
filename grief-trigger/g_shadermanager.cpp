@@ -1,16 +1,16 @@
-#include "g_effectmanager.h"
+#include "g_shadermanager.h"
 
-EffectManager::EffectManager(void)
+ShaderManager::ShaderManager(void)
 {
 }
 
-void EffectManager::init(sf::Vector2f resolution)
+void ShaderManager::init(sf::Vector2f resolution)
 {
 	size = resolution;
 	working = false;
 }
 
-void EffectManager::update()
+void ShaderManager::update()
 {
 	if (working)
 	{
@@ -30,7 +30,7 @@ void EffectManager::update()
 	}
 }
 
-void EffectManager::setCurrentEffect(std::string name, sf::Time time)
+void ShaderManager::setCurrentEffect(std::string name, sf::Time time)
 {
 	if (!working)
 	{
@@ -42,7 +42,7 @@ void EffectManager::setCurrentEffect(std::string name, sf::Time time)
 	}
 }
 
-void EffectManager::draw(sf::RenderTexture &rt, sf::RenderTarget &target)
+void ShaderManager::draw(sf::RenderTexture &rt, sf::RenderTarget &target)
 {
 	sf::Sprite sprite(rt.getTexture());
 
@@ -57,7 +57,7 @@ void EffectManager::draw(sf::RenderTexture &rt, sf::RenderTarget &target)
 	}
 }
 
-sf::Shader& EffectManager::getCurrentEffect()
+sf::Shader& ShaderManager::getCurrentEffect()
 {
 	return shader;
 }

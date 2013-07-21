@@ -6,7 +6,7 @@ PlayerObject::PlayerObject()
 {
 }
 
-void PlayerObject::init(sf::Uint32 x, sf::Uint32 y)
+void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart)
 {
 	texture.loadFromFile("assets/player.png");
 
@@ -29,6 +29,10 @@ void PlayerObject::init(sf::Uint32 x, sf::Uint32 y)
 	walking = false;
 	nx = animatedSprite.getPosition().x;
 	ny = animatedSprite.getPosition().y;
+
+	camStart = cameraStart;
+
+	ncy = ncx = 0;
 }
 
 void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
@@ -37,6 +41,9 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 	{
 		bool isMovable = true;
 
+		/************************************************************************/
+		/* Check for input and movable space									*/
+		/************************************************************************/
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 		{
 			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
@@ -151,6 +158,9 @@ AnimatedSprite& PlayerObject::getSprite()
 
 void PlayerObject::update(sf::Time &time, sf::View &camera)
 {
+	/************************************************************************/
+	/* Procces smooth walking														*/
+	/************************************************************************/
 	if(walking == true)
 	{
 		if(direction == DIR_TOP)
@@ -206,7 +216,41 @@ void PlayerObject::update(sf::Time &time, sf::View &camera)
 			}
 		}
 	}
+
+
+	/************************************************************************/
+	/* Scrolling                                                            */
+	/************************************************************************/
+	if (animatedSprite.getPosition().y > camera.getCenter().y + (HALF_HEIGHT / 2) - (CHARACTER_SIZE / 2))
+	{
+		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncy, ncy + HALF_HEIGHT);
+	}
+	if (animatedSprite.getPosition().y < camera.getCenter().y - (HALF_HEIGHT / 2) - (CHARACTER_SIZE / 2))
+	{
+		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncy, ncy - HALF_HEIGHT);
+	}
+	if (animatedSprite.getPosition().x > camera.getCenter().x + (HALF_WIDTH / 2) - (CHARACTER_SIZE / 2))
+	{
+		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx + HALF_WIDTH);
+	}
+	if (animatedSprite.getPosition().x < camera.getCenter().x - (HALF_WIDTH / 2) - (CHARACTER_SIZE / 2))
+	{
+		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx - HALF_WIDTH);
+	}
 	
+	oTweener.step(time.asMilliseconds() / 1000.f);
+
+	if ((int)ncy % HALF_HEIGHT != 0)
+	{
+		camera.setCenter(camera.getCenter().x, camStart.y + ncy);
+	}
+
+	if ((int)ncx % HALF_WIDTH != 0)
+	{
+		camera.setCenter(camStart.x + ncx, camera.getCenter().y);
+	}
+
+	//Update animation and position
 	animatedSprite.setPosition(nx, ny);
 	animatedSprite.update(time);
 }

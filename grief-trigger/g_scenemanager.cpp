@@ -8,24 +8,41 @@ Scene::Scene()
 
 void Scene::init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml)
 {
+	//Constructor
 	ml.Load(name);
 	map = &ml;
 	camera = cam;
 	unscalable = uns;
 
-	po.init(128, 128);
+	//Find hero position on map
+	for(auto i = map->GetLayers().back().objects.begin(); i != map->GetLayers().back().objects.end(); i++)
+	{
+		tmx::MapObject &object = *i;
+		if (object.GetName() == "hero")
+		{
+			//Set center of camera to player coords
+			camera->setCenter(object.GetPosition().x + CHARACTER_SIZE, object.GetPosition().y + (CHARACTER_SIZE / 2));
 
+			po.init(object.GetPosition().x, object.GetPosition().y, camera->getCenter());
+		}
+	}
+
+	//Init some managers/etc...
 	ef.init(sf::Vector2f(WIDTH, HEIGHT));
 
 	di.init("text.xml");
 
 	dp.init(di);
 
+	pm.init("assets/smoke.png");
+
+	//Create render texture
 	finalTexture.create(WIDTH, HEIGHT);
 }
 
 void Scene::update(sf::Time &time)
 {
+	pm.update(time);
 	ef.update();
 	dp.update();
 	po.move(map->GetLayers().back().objects, dp);
@@ -34,8 +51,8 @@ void Scene::update(sf::Time &time)
 
 void Scene::draw(sf::RenderTarget &tg)
 {
-	finalTexture.clear();
-
+	finalTexture.clear(sf::Color(24u, 19u, 27u));
+	
 	//Game content
 	finalTexture.setView(*camera);
 	map->Draw(finalTexture, false);
@@ -44,6 +61,7 @@ void Scene::draw(sf::RenderTarget &tg)
 	//Unscalable
 	finalTexture.setView(*unscalable);
 	dp.draw(finalTexture);
+	pm.draw(finalTexture);
 
 	finalTexture.display();
 

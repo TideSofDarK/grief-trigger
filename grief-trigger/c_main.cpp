@@ -14,10 +14,8 @@
 #include "h_config.h"
 #include "g_playerobject.h"
 #include "i_dialoguepanel.h"
-#include "g_sceneobject.h"
-#include "g_npc.h"
 #include "d_dialogueinfo.h"
-#include "g_effectmanager.h"
+#include "g_shadermanager.h"
 #include "g_scenemanager.h"
 
 using namespace sf;
@@ -25,11 +23,11 @@ using namespace tmx;
 
 int main()
 {
-	RenderWindow window(VideoMode(1280, 720), "Grief Trigger Turbo HD", sf::Style::Default, sf::ContextSettings(32));
+	RenderWindow window(VideoMode(1280, 720), "Grief Trigger Turbo HD", sf::Style::Default);
 	window.setFramerateLimit(60);
 	//window.setVerticalSyncEnabled(true);
 
-	sf::View camera(sf::FloatRect(-1280 / 4, -720/ 4, 1280, 720));
+	sf::View camera(sf::FloatRect(0, 0, 1280, 720));
 	sf::View unscalable(sf::FloatRect(0, 0, 1280, 720));
 	camera.zoom(1.f/2.f);
 
@@ -40,6 +38,12 @@ int main()
 	tmx::MapLoader ml("assets/");
 
 	SceneManager manager("test.tmx", &camera, &unscalable, ml);
+
+	sf::Font font;
+	font.loadFromFile("assets/fonts/default.ttf");
+	sf::Text fps = sf::Text("", font, 50);
+	float lastTime = 0;
+	sf::Clock clock;
 
 	while (window.isOpen())
 	{
@@ -52,11 +56,18 @@ int main()
 			manager.input(event);
 		}
 
+		float currentTime = clock.restart().asSeconds();
+		float fpsf = 1.f / currentTime;
+		lastTime = currentTime;
+
+		fps.setString(std::to_string((int)fpsf));
+		
 		manager.update(frameClock.restart());
 
 		window.clear();
 
 		manager.draw(window);
+		window.draw(fps);
 
 		window.display();
 	}

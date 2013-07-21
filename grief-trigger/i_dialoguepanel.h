@@ -21,6 +21,7 @@ protected:
 	sf::SoundBuffer clickBuffer;
 	sf::Sound click;
 
+	//Buffer for enter sound
 	sf::SoundBuffer enterBuffer;
 	sf::Sound enter;
 

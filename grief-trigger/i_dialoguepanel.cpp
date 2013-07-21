@@ -16,6 +16,7 @@ void DialoguePanel::init(DialogueInfo &dinfo)
 	enterBuffer.loadFromFile("assets/enter.wav");
 	enter.setBuffer(enterBuffer);
 
+	nby = 720.f / 2.f;
 	backgroundTexture.loadFromFile("assets/dbox.png");
 	background.setTexture(backgroundTexture);
 	background.setPosition(0, nby);
