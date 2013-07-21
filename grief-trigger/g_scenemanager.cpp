@@ -74,9 +74,15 @@ void Scene::input(sf::Event &event)
 	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) ef.setCurrentEffect("distortion", sf::seconds(1));
 	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) ef.setCurrentEffect("shader", sf::seconds(1));
 	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P) finalTexture.getTexture().copyToImage().saveToFile("screenshot.png");
+	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C) init("test.tmx", camera, unscalable, *map);
 }
 
 SceneManager::SceneManager(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml)
+{
+	current.init(name, cam, uns, ml);
+}
+
+void SceneManager::setScene(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml)
 {
 	current.init(name, cam, uns, ml);
 }

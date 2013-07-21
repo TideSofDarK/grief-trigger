@@ -159,7 +159,7 @@ AnimatedSprite& PlayerObject::getSprite()
 void PlayerObject::update(sf::Time &time, sf::View &camera)
 {
 	/************************************************************************/
-	/* Procces smooth walking														*/
+	/* Process smooth walking														*/
 	/************************************************************************/
 	if(walking == true)
 	{
@@ -216,7 +216,6 @@ void PlayerObject::update(sf::Time &time, sf::View &camera)
 			}
 		}
 	}
-
 
 	/************************************************************************/
 	/* Scrolling                                                            */

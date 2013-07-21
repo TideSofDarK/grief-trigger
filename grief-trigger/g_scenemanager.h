@@ -60,6 +60,7 @@ public:
 	void draw(sf::RenderTarget &rt);
 	void update(sf::Time time);
 	void input(sf::Event &event);
+	void setScene(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml);
 };
 
 #endif
