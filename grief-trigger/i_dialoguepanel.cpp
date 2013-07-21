@@ -8,7 +8,7 @@ void DialoguePanel::init(DialogueInfo &dinfo)
 {
 	di = &dinfo;
 
-	font.loadFromFile("assets/fonts/default.ttf");
+	font.loadFromFile("assets/fonts/default.TTF");
 
 	clickBuffer.loadFromFile("assets/typewriter.wav");
 	click.setBuffer(clickBuffer);

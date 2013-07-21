@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SHADERMANAGER_INCLUDE
+#define SHADERMANAGER_INCLUDE
 
 #include <iostream>
 #include <list>
@@ -33,3 +34,5 @@ public:
 	void setCurrentEffect(std::string name, sf::Time time);
 	bool isWorking() {return working;};
 };
+
+#endif

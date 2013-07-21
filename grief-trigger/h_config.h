@@ -1,3 +1,6 @@
+#ifndef CONFIG_INCLUDE
+#define CONFIG_INCLUDE
+
 #include <SFML/System.hpp>
 
 static const sf::Uint32 TILE_SIZE = 32;
@@ -13,3 +16,5 @@ static const sf::Uint32 HEIGHT = 720;
 
 static const sf::Uint32 HALF_WIDTH = WIDTH / 2;
 static const sf::Uint32 HALF_HEIGHT = HEIGHT / 2;
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DIALOGUEINFO_INCLUDE
+#define DIALOGUEINFO_INCLUDE
 
 #include <iostream>
 #include <string>
@@ -18,3 +19,4 @@ public:
 	std::string getAnswers(std::string name, std::string situation);
 };
 
+#endif

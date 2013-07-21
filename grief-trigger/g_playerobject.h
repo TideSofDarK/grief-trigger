@@ -1,11 +1,12 @@
-#pragma once
+#ifndef PLAYEROBJECT_INCLUDE
+#define PLAYEROBJECT_INCLUDE
 
 #include <iostream>
 #include <vector>
 
 #include <SFML/Graphics.hpp>
 
-#include <dbtweener.h>
+#include "dbtweener.h"
 
 #include "MapLoader.h"
 
@@ -61,3 +62,4 @@ public:
 	AnimatedSprite& getSprite();
 };
 
+#endif

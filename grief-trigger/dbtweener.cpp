@@ -45,7 +45,7 @@ CDBTweener::CTween::CTween()
 	m_fDurationSec = 0.0f;
 	m_pEquation = &TWEQ_LINEAR;
 	m_eEasing = TWEA_IN;
-	m_pUserData = NULL;
+	m_pUserData = 0;
 }
 
 CDBTweener::CTween::CTween(CEquation *pEquation, EEasing eEasing, float fDuration, float *fpValue, float fTarget)
@@ -54,7 +54,7 @@ CDBTweener::CTween::CTween(CEquation *pEquation, EEasing eEasing, float fDuratio
 	m_fDurationSec = fDuration;
 	m_pEquation = pEquation;
 	m_eEasing = eEasing;
-	m_pUserData = NULL;
+	m_pUserData = 0;
 	addValue(fpValue, fTarget);
 }
 

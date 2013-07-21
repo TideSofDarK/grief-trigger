@@ -145,6 +145,83 @@ std::vector<MapObject*> MapLoader::QueryQuadTree(const sf::FloatRect& testArea)
 	return m_rootNode.Retrieve(testArea);
 }
 
+void MapLoader::Draw(sf::RenderTarget& rt)
+{
+	m_SetDrawingBounds(rt.getView());
+	for(auto layer = m_layers.begin(); layer != m_layers.end(); ++layer)
+	{
+		if(!layer->visible) continue; //skip invisible layers
+		for(unsigned i = 0; i < layer->vertexArrays.size(); i++)
+		{
+			rt.draw(layer->vertexArrays[i], &m_tilesetTextures[i]);
+		}
+		if(layer->type == ObjectGroup || layer->type == ImageLayer)
+		{
+			//draw tiles used on objects
+			for(auto tile = layer->tiles.begin(); tile != layer->tiles.end(); ++tile)
+			{
+				//draw tile if in bounds and is not transparent
+				if((m_bounds.contains(tile->sprite.getPosition()) && tile->sprite.getColor().a)
+					|| layer->type == ImageLayer) //always draw image layer
+				{
+					rt.draw(tile->sprite, tile->renderStates);
+				}
+			}
+			//if(debug)//draw debug shapes for each object			
+			//	for(auto object = layer->objects.begin(); object != layer->objects.end(); ++object)		
+			//		object->DrawDebugShape(rt);
+		}
+	}
+	//if(debug)
+	//{
+	//	rt.draw(m_gridVertices);
+	//	m_rootNode.DebugDraw(rt);
+	//}
+}
+
+void MapLoader::Draw(sf::RenderTarget& rt, MapLayer::DrawType type)
+{
+	switch(type)
+	{
+	default:
+	case MapLayer::All:
+		Draw(rt);
+		break;
+	case MapLayer::Back:
+		{
+		//remember front of vector actually draws furthest back
+		MapLayer& layer = m_layers.front();
+		m_DrawLayer(rt, layer);
+		}
+		break;
+	case MapLayer::Front:
+		{
+		MapLayer& layer = m_layers.back();
+		m_DrawLayer(rt, layer);
+		}
+		break;
+	case MapLayer::Debug:
+		m_SetDrawingBounds(rt.getView());
+		for(auto layer : m_layers)
+		{
+			if(layer.type = ObjectGroup)
+			{
+			for(auto object : layer.objects)		
+				object.DrawDebugShape(rt);
+			}
+		}
+		rt.draw(m_gridVertices);
+		m_rootNode.DebugDraw(rt);
+		break;
+	}
+}
+
+void MapLoader::Draw(sf::RenderTarget& rt, sf::Uint16 index)
+{
+	m_DrawLayer(rt, m_layers[index]);
+}
+
+//legacy draw function, avoid using this if possible
 void MapLoader::Draw2(sf::RenderTarget& rt, bool debug)
 {
 	if(!m_mapLoaded) return; //no need to log this really
@@ -167,40 +244,6 @@ void MapLoader::Draw2(sf::RenderTarget& rt, bool debug)
 			//draw debug shapes for each object
 			for(auto object = layer->objects.begin(); object != layer->objects.end(); ++object)
 				object->DrawDebugShape(rt);
-		}
-	}
-	if(debug)
-	{
-		rt.draw(m_gridVertices);
-		m_rootNode.DebugDraw(rt);
-	}
-}
-
-void MapLoader::Draw(sf::RenderTarget& rt, bool debug)
-{
-	m_SetDrawingBounds(rt.getView());
-	for(auto layer = m_layers.begin(); layer != m_layers.end(); ++layer)
-	{
-		if(!layer->visible) continue; //skip invisible layers
-		for(unsigned i = 0; i < layer->vertexArrays.size(); i++)
-		{
-			rt.draw(layer->vertexArrays[i], &m_tilesetTextures[i]);
-		}
-		if(layer->type == ObjectGroup || layer->type == ImageLayer)
-		{
-			//draw tiles used on objects
-			for(auto tile = layer->tiles.begin(); tile != layer->tiles.end(); ++tile)
-			{
-				//draw tile if in bounds and is not transparent
-				if((m_bounds.contains(tile->sprite.getPosition()) && tile->sprite.getColor().a)
-					|| layer->type == ImageLayer) //always draw image layer
-				{
-					rt.draw(tile->sprite, tile->renderStates);
-				}
-			}
-			if(debug)//draw debug shapes for each object			
-				for(auto object = layer->objects.begin(); object != layer->objects.end(); ++object)		
-					object->DrawDebugShape(rt);
 		}
 	}
 	if(debug)

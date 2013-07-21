@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DIALOGUEPANEL_INCLUDE
+#define DIALOGUEPANEL_INCLUDE
 
 #include <list>
 #include <iostream>
@@ -7,7 +8,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
-#include <dbtweener.h>
+#include "dbtweener.h"
 
 #include "d_dialogueinfo.h"
 
@@ -97,3 +98,4 @@ public:
 	bool isEnded();
 };
 
+#endif

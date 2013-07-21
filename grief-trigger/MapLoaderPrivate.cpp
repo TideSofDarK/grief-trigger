@@ -759,6 +759,29 @@ void MapLoader::m_SetIsometricCoords(MapLayer& layer)
 	}
 }
 
+void MapLoader::m_DrawLayer(sf::RenderTarget& rt, const MapLayer& layer)
+{
+	if(!layer.visible) return; //skip invisible layers
+	m_SetDrawingBounds(rt.getView());
+	for(unsigned i = 0; i < layer.vertexArrays.size(); i++)
+	{
+		rt.draw(layer.vertexArrays[i], &m_tilesetTextures[i]);
+	}
+	if(layer.type == ObjectGroup || layer.type == ImageLayer)
+	{
+		//draw tiles used on objects
+		for(auto tile = layer.tiles.begin(); tile != layer.tiles.end(); ++tile)
+		{
+			//draw tile if in bounds and is not transparent
+			if((m_bounds.contains(tile->sprite.getPosition()) && tile->sprite.getColor().a)
+				|| layer.type == ImageLayer) //always draw image layer
+			{
+				rt.draw(tile->sprite, tile->renderStates);
+			}
+		}
+	}
+}
+
 //decoding and utility functions
 const sf::Color MapLoader::m_ColourFromHex(const char* hexStr) const
 {

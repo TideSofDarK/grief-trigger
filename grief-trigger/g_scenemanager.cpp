@@ -40,7 +40,7 @@ void Scene::init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader 
 	finalTexture.create(WIDTH, HEIGHT);
 }
 
-void Scene::update(sf::Time &time)
+void Scene::update(sf::Time time)
 {
 	pm.update(time);
 	ef.update();
@@ -55,7 +55,7 @@ void Scene::draw(sf::RenderTarget &tg)
 	
 	//Game content
 	finalTexture.setView(*camera);
-	map->Draw(finalTexture, false);
+	map->Draw(finalTexture);
 	po.draw(finalTexture);
 
 	//Unscalable
@@ -86,7 +86,7 @@ void SceneManager::draw(sf::RenderTarget &rt)
 	current.draw(rt);
 }
 
-void SceneManager::update(sf::Time &time)
+void SceneManager::update(sf::Time time)
 {
 	current.update(time);
 }

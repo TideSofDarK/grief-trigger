@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PARTICLESMANAGER_INCLUDE
+#define PARTICLESMANAGER_INCLUDE
 
 #include <iostream>
 #include <string>
@@ -26,3 +27,4 @@ public:
 	void draw(sf::RenderTarget &tg);
 };
 
+#endif

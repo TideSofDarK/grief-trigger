@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SCENEMANAGER_INCLUDE
+#define SCENEMANAGER_INCLUDE
 
 #include <iostream>
 #include <vector>
@@ -44,7 +45,7 @@ private:
 public:
 	Scene();
 	void init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml);
-	void update(sf::Time &time);
+	void update(sf::Time time);
 	void draw(sf::RenderTarget &tg);
 	void input(sf::Event &event);
 };
@@ -57,7 +58,8 @@ private:
 public:
 	SceneManager(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml);
 	void draw(sf::RenderTarget &rt);
-	void update(sf::Time &time);
+	void update(sf::Time time);
 	void input(sf::Event &event);
 };
 
+#endif

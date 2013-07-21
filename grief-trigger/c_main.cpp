@@ -31,8 +31,6 @@ int main()
 	sf::View unscalable(sf::FloatRect(0, 0, 1280, 720));
 	camera.zoom(1.f/2.f);
 
-	std::locale::global(std::locale("Russian"));
-
 	sf::Clock frameClock;
 
 	tmx::MapLoader ml("assets/");
@@ -40,7 +38,7 @@ int main()
 	SceneManager manager("test.tmx", &camera, &unscalable, ml);
 
 	sf::Font font;
-	font.loadFromFile("assets/fonts/default.ttf");
+	font.loadFromFile("assets/fonts/default.TTF");
 	sf::Text fps = sf::Text("", font, 50);
 	float lastTime = 0;
 	sf::Clock clock;
