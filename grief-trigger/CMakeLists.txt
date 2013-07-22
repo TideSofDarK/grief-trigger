@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 
-SET ( CMAKE_CXX_FLAGS "-std=c++11" )
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    SET(CMAKE_CXX_FLAGS "/EHsc")
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    SET(CMAKE_CXX_FLAGS "-std=c++11")
+endif()
 
 project(grief-trigger)
 
@@ -16,6 +20,12 @@ file(GLOB HEADER
 add_executable(grief-trigger ${SOURCE})
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
+
+#Aurora
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	set(AURORA_INCLUDE_DIR "" CACHE FILEPATH "sets aurora include path")
+	include_directories(${AURORA_INCLUDE_DIR})
+	endif()
 
 #zlib
 find_package( ZLIB REQUIRED )

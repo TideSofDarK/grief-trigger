@@ -182,7 +182,7 @@ public:
 		float m_fStart;
 	};
 
-	typedef std::vector<SValue *> TValuePts;
+	typedef std::vector<SValue*> TValuePts;
 
 	class IListener;
 
