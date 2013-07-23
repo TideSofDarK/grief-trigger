@@ -7,12 +7,11 @@ DialogueInfo::DialogueInfo()
 void DialogueInfo::init(std::string file)
 {
 	this->file = file;
+	pugi::xml_parse_result result = doc.load_file(("assets/" + file).c_str());
 }
 
 std::string DialogueInfo::getDefaultDialogue(std::string name)
 {
-	pugi::xml_document doc;
-	pugi::xml_parse_result result = doc.load_file(("assets/" + file).c_str());
 	pugi::xml_node text = doc.child("text");
 
 	return text.child(name.c_str()).child_value("default");
@@ -20,8 +19,6 @@ std::string DialogueInfo::getDefaultDialogue(std::string name)
 
 std::string DialogueInfo::getDialogue(std::string name, std::string situation)
 {
-	pugi::xml_document doc;
-	pugi::xml_parse_result result = doc.load_file(("assets/" + file).c_str());
 	pugi::xml_node text = doc.child("text").child(name.c_str());
 
 	std::vector<std::string> situations;
@@ -45,8 +42,6 @@ std::string DialogueInfo::getDialogue(std::string name, std::string situation)
 
 std::string DialogueInfo::getAnswers(std::string name, std::string situation)
 {
-	pugi::xml_document doc;
-	pugi::xml_parse_result result = doc.load_file(("assets/" + file).c_str());
 	pugi::xml_node text = doc.child("text").child(name.c_str());
 
 	std::vector<std::string> situations;

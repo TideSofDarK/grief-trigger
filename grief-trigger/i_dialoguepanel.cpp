@@ -4,6 +4,38 @@ DialoguePanel::DialoguePanel()
 {
 }
 
+bool DialoguePanel::loadResources(std::string fileName)
+{
+	//Load resources list file
+	pugi::xml_parse_result result = doc.load_file((fileName).c_str());
+
+	std::string resourcesList = doc.child("hires").child_value("dialogues");
+
+	//Remove first newline
+	std::string::size_type pos = 0; 
+	pos = resourcesList.find ("\n",pos);
+	resourcesList.erase ( pos, 1 );
+
+	//Count resources
+	int s = std::count(resourcesList.begin(), resourcesList.end(), '\n');
+
+	std::vector<std::string> resourcesNames;
+
+	//Add resources
+	pos = 0;
+	std::string token;
+	while ((pos = resourcesList.find('\n')) != std::string::npos) {
+		resourcesNames.push_back(resourcesList.substr(0, pos));
+		resourcesList.erase(0, pos + 1);
+	}
+
+	for (int i = 0; i < s; i++)
+	{
+		manager.getTexture("assets/" + resourcesNames[i]);
+	}
+	return true;
+}
+
 void DialoguePanel::init(DialogueInfo &dinfo)
 {
 	di = &dinfo;
@@ -16,9 +48,8 @@ void DialoguePanel::init(DialogueInfo &dinfo)
 	enterBuffer.loadFromFile("assets/enter.wav");
 	enter.setBuffer(enterBuffer);
 
-	nby = 720.f / 2.f;
-	backgroundTexture.loadFromFile("assets/dbox.png");
-	background.setTexture(backgroundTexture);
+	nby = HEIGHT / 2;
+	background.setTexture(manager.getTexture("assets/dbox.png"));
 	background.setPosition(0, nby);
 
 	pointer = sf::RectangleShape();
@@ -53,8 +84,6 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 {
 	selected = 0;
 	isAnswering = false;
-	lastName = name;
-	if (lastSituation != situation) lastSituation = situation + '/';
 
 	if (ended == false && text.getString().toAnsiString().c_str() != actualString.c_str())
 	{
@@ -67,8 +96,12 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		text.setPosition(320, 455);
 		text.setColor(sf::Color::Black);
 
-		artTexture.loadFromFile("assets/" + lastName + "_art.png");
-		art.setTexture(artTexture);
+		//Load new art image
+		if (lastName != name) {
+			lastName = name;
+			art.setTexture(manager.getTexture("assets/" + lastName + "_art.png"));
+		}
+		if (lastSituation != situation) lastSituation = situation + '/';
 
 		//If next string is
 		if (nextString != "") 
@@ -107,8 +140,14 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		//Reset tweener
 		if (!visible)
 		{
-			nby = 720.f / 2.f;
+			nby = HALF_HEIGHT;
 			oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 1.0f, &nby, 0.0f);
+
+			nax = -640 / 2;
+			oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 0.5f, &nax, 0.0f);
+
+			background.setPosition(0, nby);
+			art.setPosition(nax, 0);
 		}
 
 		//Reset variables
@@ -184,10 +223,11 @@ void DialoguePanel::update()
 		sf::Uint32 elapsed = clock.getElapsedTime().asMilliseconds();
 
 		//Update tween if animation is not ended
-		if (nby != 0)
+		if (nby != 0 || nax != 0)
 		{
 			oTweener.step(elapsed / 1000.f);
 			background.setPosition(0, nby);
+			art.setPosition(nax, 0);
 			clock.restart();
 		}
 		else
@@ -252,12 +292,10 @@ void DialoguePanel::input(sf::Event &event)
 			{
 				enter.play();
 
+				//Leave dialogue if no text
 				if (nextString == "")
 				{
-					if (showAnswers() == false)
-					{
-						hide();
-					}
+					if (showAnswers() == false) hide();
 				}	
 				else openDialogue(lastName, lastSituation);
 			}

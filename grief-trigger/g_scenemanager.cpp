@@ -2,7 +2,22 @@
 
 #include "h_config.h"
 
-Scene::Scene()
+void Scene::loadResources()
+{
+	//Init some managers/etc...
+	sm.init(sf::Vector2f(WIDTH, HEIGHT));
+
+	di.init("text.xml");
+
+	dp.loadResources();
+	dp.init(di);
+
+	pm.init("assets/smoke.png");
+
+	loaded = true;
+}
+
+Scene::Scene() : loadingThread(&Scene::loadResources, this)
 {
 }
 
@@ -27,14 +42,12 @@ void Scene::init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader 
 		}
 	}
 
-	//Init some managers/etc...
-	ef.init(sf::Vector2f(WIDTH, HEIGHT));
+	font.loadFromFile("assets/fonts/default.TTF");
+	loadingText = sf::Text("Loading", font, 14);
+	loadingText.setPosition(HALF_WIDTH, HALF_HEIGHT);
 
-	di.init("text.xml");
-
-	dp.init(di);
-
-	pm.init("assets/smoke.png");
+	loaded = false;
+	loadingThread.launch();
 
 	//Create render texture
 	finalTexture.create(WIDTH, HEIGHT);
@@ -42,39 +55,64 @@ void Scene::init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader 
 
 void Scene::update(sf::Time time)
 {
-	pm.update(time);
-	ef.update();
-	dp.update();
-	po.move(map->GetLayers().back().objects, dp);
-	po.update(time, *camera);
+	if (loaded)
+	{
+		pm.update(time);
+		sm.update();
+		dp.update();
+		po.move(map->GetLayers().back().objects, dp);
+		po.update(time, *camera);
+	}
+	else
+	{
+		if (counter == 1) loadingText.setString("Loading");
+		else if (counter % 10 == 0) loadingText.setString("Loading.");
+		else if (counter % 15 == 0) loadingText.setString("Loading..");
+		else if (counter % 20 == 0) loadingText.setString("Loading...");
+		else if (counter >= 20) counter = 0;
+		counter++;
+	}
 }
 
 void Scene::draw(sf::RenderTarget &tg)
 {
-	finalTexture.clear(sf::Color(24u, 19u, 27u));
-	
-	//Game content
-	finalTexture.setView(*camera);
-	map->Draw(finalTexture);
-	po.draw(finalTexture);
+	if (loaded)
+	{
+		finalTexture.clear(sf::Color(24u, 19u, 27u));
 
-	//Unscalable
-	finalTexture.setView(*unscalable);
-	dp.draw(finalTexture);
-	pm.draw(finalTexture);
+		//Particle effect under game map
+		pm.drawUnder(finalTexture);
 
-	finalTexture.display();
+		//Game content
+		finalTexture.setView(*camera);
+		map->Draw(finalTexture);
+		po.draw(finalTexture);
 
-	ef.draw(finalTexture, tg);
+		//Unscalable
+		finalTexture.setView(*unscalable);
+		pm.draw(finalTexture);
+		dp.draw(finalTexture);
+
+		finalTexture.display();
+
+		sm.draw(finalTexture, tg);
+	}
+	else
+	{
+		tg.draw(loadingText);
+	}
 }
 
 void Scene::input(sf::Event &event)
 {
-	dp.input(event);
-	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) ef.setCurrentEffect("distortion", sf::seconds(1));
-	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) ef.setCurrentEffect("shader", sf::seconds(1));
-	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P) finalTexture.getTexture().copyToImage().saveToFile("screenshot.png");
-	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C) init("test.tmx", camera, unscalable, *map);
+	if (loaded)
+	{
+		dp.input(event);
+		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) sm.setCurrentEffect("distortion", sf::seconds(1));
+		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) sm.setCurrentEffect("rgb", sf::seconds(1));
+		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P) finalTexture.getTexture().copyToImage().saveToFile("screenshot.png");
+		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C) init("test.tmx", camera, unscalable, *map);
+	}
 }
 
 SceneManager::SceneManager(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml)

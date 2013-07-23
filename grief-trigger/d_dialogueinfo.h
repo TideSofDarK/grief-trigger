@@ -11,6 +11,7 @@ class DialogueInfo
 {
 protected:
 	std::string file;
+	pugi::xml_document doc;
 public:
 	DialogueInfo();
 	void init(std::string file);

@@ -1,34 +1,50 @@
 #include "g_particlesmanager.h"
 
-ParticlesManager::ParticlesManager(void) : system(texture)
+//ParticlesManager::ParticlesManager(void)
+//{
+//	texture.loadFromFile("assets/smoke.png");
+//}
+
+float RandomFloat(float min, float max)
 {
-	texture.loadFromFile("assets/smoke.png");
+	float r = (float)rand() / (float)RAND_MAX;
+	return min + r * (max - min);
 }
 
 void ParticlesManager::init(std::string name)
 {
-	//texture.loadFromFile("assets/smoke.png");
-	//system.setTexture(texture);
+	texture.loadFromFile("assets/smoke.png");
+	system.setTexture(texture);
 
-	//thor::UniversalEmitter emitter;
-	//emitter.setEmissionRate(30.f);
-	//emitter.setParticleLifetime(sf::seconds(5.f));
-	//system.addEmitter(thor::refEmitter(emitter));
+	thor::UniversalEmitter emitter;
+	emitter.setEmissionRate(0.2f);
+	emitter.setParticleLifetime(sf::seconds(15));
 
-	//thor::ColorGradient gradient;
-	//gradient[0.f] = sf::Color(0, 150, 0);
-	//gradient[0.5f] = sf::Color(0, 150, 100);
-	//gradient[1.f] = sf::Color(0, 0, 150);
+	emitter.setParticleLifetime(thor::Distributions::uniform(sf::seconds(5), sf::seconds(9)));
+	emitter.setParticlePosition(thor::Distributions::rect(sf::Vector2f(2.f, HALF_HEIGHT), sf::Vector2f(1, HALF_HEIGHT / 2)) );
 
-	//thor::ColorAnimation colorizer(gradient);
-	//thor::FadeAnimation fader(0.1f, 0.1f);
+	system.addEmitter(emitter);
 
-	//system.addAffector( thor::AnimationAffector(colorizer) );
-	//system.addAffector( thor::AnimationAffector(fader) );
-	//system.addAffector( thor::TorqueAffector(100.f) );
-	//system.addAffector( thor::ForceAffector(sf::Vector2f(100.f, 0.f))  );
+	sf::Vector2f acceleration(70.f, 0.f);
+	thor::ForceAffector gravityAffector(acceleration);
+	system.addAffector(gravityAffector);
 
-	//thor::PolarVector2f velocity(200.f, -90.f);
+	thor::FadeAnimation fader(0.15f, 0.15f);
+
+	system.addAffector(thor::AnimationAffector(fader));
+
+	//Additional
+	additionalSystem.setTexture(texture);
+
+	emitter.setEmissionRate(0.3f);
+	emitter.setParticleLifetime(sf::seconds(15));
+
+	emitter.setParticleLifetime(thor::Distributions::uniform(sf::seconds(5), sf::seconds(9)));
+	emitter.setParticlePosition(thor::Distributions::rect(sf::Vector2f(RandomFloat(30, 50), HALF_HEIGHT), sf::Vector2f(RandomFloat(15, 25), HALF_HEIGHT / 2)) );
+
+	additionalSystem.addEmitter(emitter);
+	additionalSystem.addAffector(gravityAffector);
+	additionalSystem.addAffector(thor::AnimationAffector(fader));
 }
 
 void ParticlesManager::draw(sf::RenderTarget &tg)
@@ -36,7 +52,13 @@ void ParticlesManager::draw(sf::RenderTarget &tg)
 	tg.draw(system);
 }
 
+void ParticlesManager::drawUnder(sf::RenderTarget &tg)
+{
+	tg.draw(additionalSystem);
+}
+
 void ParticlesManager::update(sf::Time &time)
 {
 	system.update(time);
+	additionalSystem.update(time);
 }

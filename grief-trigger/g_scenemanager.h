@@ -13,10 +13,14 @@
 #include "i_dialoguepanel.h"
 #include "g_playerobject.h"
 #include "g_particlesmanager.h"
+#include "d_resourcesmanager.H"
 
 class Scene
 {
 private:
+	//Is loaded
+	bool loaded;
+
 	//Player object
 	PlayerObject po;
 
@@ -24,7 +28,7 @@ private:
 	tmx::MapLoader *map;
 
 	//Shaders
-	ShaderManager ef;
+	ShaderManager sm;
 
 	//XML Parser
 	DialogueInfo di;
@@ -42,6 +46,17 @@ private:
 	sf::View *camera;
 	sf::View *unscalable;
 
+	//Loading thread
+	sf::Thread loadingThread;
+
+	//Loading resources
+	void loadResources();
+
+	//Loading text
+	sf::Font font;
+	unsigned int counter;
+	sf::Text loadingText;
+
 public:
 	Scene();
 	void init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml);
@@ -55,6 +70,9 @@ class SceneManager
 private:
 	//Current scene pointer
 	Scene current;
+
+	//Main manager
+	ResourcesManager manager;
 public:
 	SceneManager(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml);
 	void draw(sf::RenderTarget &rt);
