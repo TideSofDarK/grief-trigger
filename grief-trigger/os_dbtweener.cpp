@@ -1,4 +1,4 @@
-#include "dbtweener.h"
+#include "os_dbtweener.h"
 
 // declare the static equation classes
 CDBTweener::CLinear CDBTweener::TWEQ_LINEAR;

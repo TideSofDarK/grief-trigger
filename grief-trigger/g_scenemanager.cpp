@@ -5,6 +5,27 @@
 void Scene::loadResources()
 {
 	//Init some managers/etc...
+
+	//Parse map
+	for(auto i = map->GetLayers().back().objects.begin(); i != map->GetLayers().back().objects.end(); i++)
+	{
+		tmx::MapObject &object = *i;
+		if (object.GetName() == "hero")
+		{
+			//Set center of camera to player coords
+			camera->setCenter(object.GetPosition().x + CHARACTER_SIZE, object.GetPosition().y + (CHARACTER_SIZE / 2));
+
+			//Init hero object
+			po.init(object.GetPosition().x, object.GetPosition().y, camera->getCenter());
+		}
+		else if (object.GetName() == "squad")
+		{
+			Squad newSquad;
+			newSquad.init(object.GetPropertyString("monsters"), object.GetPosition());
+			squads.push_back(newSquad);
+		}
+	}
+
 	sm.init(sf::Vector2f(WIDTH, HEIGHT));
 
 	di.init("text.xml");
@@ -29,23 +50,11 @@ void Scene::init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader 
 	camera = cam;
 	unscalable = uns;
 
-	//Find hero position on map
-	for(auto i = map->GetLayers().back().objects.begin(); i != map->GetLayers().back().objects.end(); i++)
-	{
-		tmx::MapObject &object = *i;
-		if (object.GetName() == "hero")
-		{
-			//Set center of camera to player coords
-			camera->setCenter(object.GetPosition().x + CHARACTER_SIZE, object.GetPosition().y + (CHARACTER_SIZE / 2));
-
-			po.init(object.GetPosition().x, object.GetPosition().y, camera->getCenter());
-		}
-	}
-
 	font.loadFromFile("assets/fonts/default.TTF");
-	loadingText = sf::Text("Loading", font, 14);
-	loadingText.setPosition(HALF_WIDTH, HALF_HEIGHT);
+	loadingText = sf::Text("Loading", font, 15);
+	loadingText.setPosition(HALF_WIDTH - (loadingText.getGlobalBounds().width / 2), HALF_HEIGHT - (loadingText.getGlobalBounds().height / 2));
 
+	//Start loading
 	loaded = false;
 	loadingThread.launch();
 
@@ -58,6 +67,10 @@ void Scene::update(sf::Time time)
 	if (loaded)
 	{
 		pm.update(time);
+		for (auto i = squads.begin(); i != squads.end(); ++i)
+		{
+			i->update(time, map->GetLayers().back().objects);
+		}
 		sm.update();
 		dp.update();
 		po.move(map->GetLayers().back().objects, dp);
@@ -85,16 +98,26 @@ void Scene::draw(sf::RenderTarget &tg)
 
 		//Game content
 		finalTexture.setView(*camera);
+		//Map
 		map->Draw(finalTexture);
+		//Enemy squads
+		for (auto i = squads.begin(); i != squads.end(); ++i)
+		{
+			i->draw(finalTexture);
+		}
+		//Player object
 		po.draw(finalTexture);
 
 		//Unscalable
 		finalTexture.setView(*unscalable);
+		//Particles
 		pm.draw(finalTexture);
+		//Dialogue UI
 		dp.draw(finalTexture);
 
 		finalTexture.display();
 
+		//Draw through shader manager
 		sm.draw(finalTexture, tg);
 	}
 	else

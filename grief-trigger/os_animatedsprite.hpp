@@ -30,7 +30,7 @@
 #include <SFML/Graphics/Transformable.hpp>
 #include <SFML/System/Vector2.hpp>
 
-#include "Animation.hpp"
+#include "os_animation.hpp"
 
 class AnimatedSprite : public sf::Drawable, public sf::Transformable
 {

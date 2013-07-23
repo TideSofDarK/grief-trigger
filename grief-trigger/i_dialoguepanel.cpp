@@ -31,7 +31,7 @@ bool DialoguePanel::loadResources(std::string fileName)
 
 	for (int i = 0; i < s; i++)
 	{
-		manager.getTexture("assets/" + resourcesNames[i]);
+		ResourcesManager::instance().getTexture("assets/" + resourcesNames[i]);
 	}
 	return true;
 }
@@ -49,7 +49,7 @@ void DialoguePanel::init(DialogueInfo &dinfo)
 	enter.setBuffer(enterBuffer);
 
 	nby = HEIGHT / 2;
-	background.setTexture(manager.getTexture("assets/dbox.png"));
+	background.setTexture(ResourcesManager::instance().getTexture("assets/dbox.png"));
 	background.setPosition(0, nby);
 
 	pointer = sf::RectangleShape();
@@ -99,7 +99,7 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		//Load new art image
 		if (lastName != name) {
 			lastName = name;
-			art.setTexture(manager.getTexture("assets/" + lastName + "_art.png"));
+			art.setTexture(ResourcesManager::instance().getTexture("assets/" + lastName + "_art.png"));
 		}
 		if (lastSituation != situation) lastSituation = situation + '/';
 

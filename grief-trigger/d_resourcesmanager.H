@@ -1,6 +1,8 @@
 #ifndef RESOURCESMANAGER_INCLUDE
 #define RESOURCESMANAGER_INCLUDE
 
+#include <memory>
+#include <mutex>
 #include <string>
 #include <map>
 #include <iostream>
@@ -11,9 +13,14 @@
 class ResourcesManager
 {
 public:
-	ResourcesManager() {};
+	static ResourcesManager& instance()
+	{
+		static ResourcesManager theSingleInstance;
+		return theSingleInstance;
+	}
 
 private:
+	ResourcesManager() {};
 	ResourcesManager( const ResourcesManager& );
 	ResourcesManager& operator =( const ResourcesManager& );
 

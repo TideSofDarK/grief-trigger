@@ -8,8 +8,8 @@
 #include <Thor/Math.hpp>
 #include <Thor/Vectors.hpp>
 
-#include "Animation.hpp"
-#include "AnimatedSprite.hpp"
+#include "os_animation.hpp"
+#include "os_animatedsprite.hpp"
 
 #include "h_config.h"
 #include "g_playerobject.h"

@@ -13,7 +13,7 @@
 
 #include <pugixml/pugixml.hpp>
 
-#include "dbtweener.h"
+#include "os_dbtweener.h"
 
 #include "d_dialogueinfo.h"
 #include "h_config.h"
@@ -35,9 +35,6 @@ protected:
 	//Buffer for enter sound
 	sf::SoundBuffer								enterBuffer;
 	sf::Sound									enter;
-
-	//Images manager
-	ResourcesManager manager;
 
 	//Pointer to dialogue data
 	DialogueInfo								*di;

@@ -14,12 +14,17 @@
 #include "g_playerobject.h"
 #include "g_particlesmanager.h"
 #include "d_resourcesmanager.H"
+#include "g_monsters.h"
+#include "d_parser.h"
 
 class Scene
 {
 private:
 	//Is loaded
 	bool loaded;
+
+	//Enemy squads
+	std::vector<Squad> squads;
 
 	//Player object
 	PlayerObject po;
@@ -71,8 +76,6 @@ private:
 	//Current scene pointer
 	Scene current;
 
-	//Main manager
-	ResourcesManager manager;
 public:
 	SceneManager(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml);
 	void draw(sf::RenderTarget &rt);

@@ -17,4 +17,10 @@ static const sf::Uint32 HEIGHT = 720;
 static const sf::Uint32 HALF_WIDTH = WIDTH / 2;
 static const sf::Uint32 HALF_HEIGHT = HEIGHT / 2;
 
+static const sf::Uint32 DIR_IDLE = -1;
+static const sf::Uint32 DIR_TOP = 0;
+static const sf::Uint32 DIR_RIGHT = 1;
+static const sf::Uint32 DIR_LEFT = 2;
+static const sf::Uint32 DIR_DOWN = 3;
+
 #endif

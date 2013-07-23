@@ -8,13 +8,11 @@ PlayerObject::PlayerObject()
 
 void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart)
 {
-	texture.loadFromFile("assets/player.png");
-
 	for (int a = 0; a < 4; a++)
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			walkingAnimation[a].setSpriteSheet(texture);
+			walkingAnimation[a].setSpriteSheet(ResourcesManager::instance().getTexture("assets/player.png"));
 			walkingAnimation[a].addFrame(sf::IntRect(i * 32, a * 32, 32, 32));
 		}
 	}
@@ -49,8 +47,13 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
 			{
 				tmx::MapObject &object = *it;
-				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE)) && object.GetName() != "hero") isMovable = false;
-				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE)) && object.GetName() != "" && object.GetName() != "hero") at.openDialogue(object.GetName(), "day1");
+				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE)) 
+					&& object.GetName() != "hero" 
+					&& object.GetName() != "squad") isMovable = false;
+				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE)) 
+					&& object.GetName() != "" 
+					&& object.GetName() != "hero" 
+					&& object.GetName() != "squad") at.openDialogue(object.GetName(), "day1");
 			}
 
 			if(walking == false && isMovable == true)
@@ -74,8 +77,13 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
 			{
 				tmx::MapObject &object = *it;
-				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE)) && object.GetName() != "hero") isMovable = false;
-				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE)) && object.GetName() != "" && object.GetName() != "hero") at.openDialogue(object.GetName(), "day1");
+				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE)) 
+					&& object.GetName() != "hero" 
+					&& object.GetName() != "squad") isMovable = false;
+				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE)) 
+					&& object.GetName() != "" 
+					&& object.GetName() != "hero" 
+					&& object.GetName() != "squad") at.openDialogue(object.GetName(), "day1");
 			}
 
 			if(walking == false && isMovable == true)
@@ -99,8 +107,13 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
 			{
 				tmx::MapObject &object = *it;
-				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y)) && object.GetName() != "hero") isMovable = false;
-				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y)) && object.GetName() != "" && object.GetName() != "hero") at.openDialogue(object.GetName(), "day1");
+				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y)) 
+					&& object.GetName() != "hero" 
+					&& object.GetName() != "squad") isMovable = false;
+				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y)) 
+					&& object.GetName() != "" 
+					&& object.GetName() != "hero" 
+					&& object.GetName() != "squad") at.openDialogue(object.GetName(), "day1");
 			}
 
 			if(walking == false && isMovable == true)
@@ -124,8 +137,13 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
 			{
 				tmx::MapObject &object = *it;
-				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y)) && object.GetName() != "hero") isMovable = false;
-				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y)) && object.GetName() != "" && object.GetName() != "hero") at.openDialogue(object.GetName(), "day1");
+				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y)) 
+					&& object.GetName() != "hero" 
+					&& object.GetName() != "squad") isMovable = false;
+				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y)) 
+					&& object.GetName() != "" 
+					&& object.GetName() != "hero" 
+					&& object.GetName() != "squad") at.openDialogue(object.GetName(), "day1");
 			}
 
 			if(walking == false && isMovable == true)

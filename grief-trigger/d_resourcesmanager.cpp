@@ -9,7 +9,6 @@ const sf::Texture& ResourcesManager::getTexture( const std::string& filename )
 	{
 		if( filename == it->first )
 		{
-			std::cout << "DEBUG_MESSAGE: using existing image.\n";
 			return it->second;
 		}
 	}
@@ -19,11 +18,9 @@ const sf::Texture& ResourcesManager::getTexture( const std::string& filename )
 	if( image.loadFromFile( filename ) )
 	{
 		textures[filename] = image;
-		std::cout << "DEBUG_MESSAGE: loading image.\n";
 		return textures[filename];
 	}
 
-	std::cout << "GAME_ERROR: Image was not found. It is filled with an empty image.\n";
 	textures[filename] = image;
 	return textures[filename];
 }

@@ -7,6 +7,7 @@ class Bar
 {
 private:
 public:
+	Bar();
 };
 
 class Battle
