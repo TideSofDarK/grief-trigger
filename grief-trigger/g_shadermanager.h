@@ -25,6 +25,9 @@ private:
 
 	//Is working
 	bool working;
+
+	//Shader list
+	std::map< std::string, sf::Shader > shaders;
 public:
 	ShaderManager(void);
 	void init(sf::Vector2f resolution);

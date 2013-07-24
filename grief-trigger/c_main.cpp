@@ -14,7 +14,6 @@
 #include "h_config.h"
 #include "g_playerobject.h"
 #include "i_dialoguepanel.h"
-#include "d_dialogueinfo.h"
 #include "g_shadermanager.h"
 #include "g_scenemanager.h"
 
@@ -63,11 +62,11 @@ int main()
 			manager.input(event);
 		}
 
-		float currentTime = clock.restart().asSeconds();
-		float fpsf = 1.f / currentTime;
-		lastTime = currentTime;
+		//float currentTime = clock.restart().asSeconds();
+		//float fpsf = 1.f / currentTime;
+		//lastTime = currentTime;
 
-		fps.setString(std::to_string((int)fpsf));
+		//fps.setString(std::to_string((int)fpsf));
 		
 		manager.update(frameClock.restart());
 

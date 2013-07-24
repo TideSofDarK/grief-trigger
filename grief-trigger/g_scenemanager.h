@@ -8,7 +8,6 @@
 
 #include <MapLoader.h>
 
-#include "d_dialogueinfo.h"
 #include "g_shadermanager.h"
 #include "i_dialoguepanel.h"
 #include "g_playerobject.h"
@@ -16,6 +15,7 @@
 #include "d_resourcesmanager.h"
 #include "g_monsters.h"
 #include "d_parser.h"
+#include "d_objects.h"
 
 class Scene
 {
@@ -26,6 +26,9 @@ private:
 	//Enemy squads
 	std::vector<Squad> squads;
 
+	//The Doors
+	std::vector<Door> doors;
+
 	//Player object
 	PlayerObject po;
 
@@ -34,9 +37,6 @@ private:
 
 	//Shaders
 	ShaderManager sm;
-
-	//XML Parser
-	DialogueInfo di;
 
 	//Dialogue panel
 	DialoguePanel dp;

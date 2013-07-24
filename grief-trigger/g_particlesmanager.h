@@ -17,16 +17,16 @@
 class ParticlesManager
 {
 private:
-	//Particle texture
+	//Empty texture
 	sf::Texture texture;
-	
+
 	//Particle system
 	thor::ParticleSystem system;
 
 	//Additional particle system for background effects
 	thor::ParticleSystem additionalSystem;
 public:
-	ParticlesManager(void) : system(texture), additionalSystem(texture) { texture.loadFromFile("assets/smoke.png"); };
+	ParticlesManager(void) : system(texture), additionalSystem(texture) {};
 	void init(std::string name);
 	void update(sf::Time &time);
 	void draw(sf::RenderTarget &tg);

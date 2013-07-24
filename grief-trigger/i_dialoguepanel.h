@@ -15,7 +15,6 @@
 
 #include "os_dbtweener.h"
 
-#include "d_dialogueinfo.h"
 #include "h_config.h"
 #include "d_resourcesmanager.h"
 
@@ -35,9 +34,6 @@ protected:
 	//Buffer for enter sound
 	sf::SoundBuffer								enterBuffer;
 	sf::Sound									enter;
-
-	//Pointer to dialogue data
-	DialogueInfo								*di;
 
 	//Simple shape pointer
 	sf::RectangleShape							pointer;
@@ -94,7 +90,7 @@ protected:
 
 public:
 	DialoguePanel();
-	void init(DialogueInfo &dinfo);
+	void init();
 	void openDialogue(std::string name, std::string situation);
 	void update();
 	void input(sf::Event &event);

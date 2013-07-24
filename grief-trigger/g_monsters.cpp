@@ -1,8 +1,11 @@
 #include "g_monsters.h"
 
+#include <math.h>
+
 Monster::Monster(std::string name)
 {
 	setStats(Parser::instance().getMonsterStats(name));
+	std::cout << std::to_string(getStrength()) + "x" + std::to_string(getAgility()) + "x" + std::to_string(getIntelligence()) << std::endl;
 }
 
 Squad::Squad()
@@ -12,7 +15,14 @@ Squad::Squad()
 
 void Squad::init(std::string name, sf::Vector2f pos)
 {
-	//monsters = squad;
+	//Parse squad monsters
+	std::vector<std::string> parsedSquad = Parser::instance().parseSquad(name);
+	for (auto i = parsedSquad.begin(); i != parsedSquad.end(); ++i)
+	{
+		std::string str = *i;
+		Monster newMonster(str);
+		monsters.push_back(newMonster);
+	}
 
 	for (int a = 0; a < 4; a++)
 	{
@@ -36,8 +46,11 @@ void Squad::init(std::string name, sf::Vector2f pos)
 	ny = pos.y;
 
 	counter = 0;
+	maxCounter = 50 + (rand() * (int)(60 - 30) / RAND_MAX);
 
 	bounds = sf::FloatRect(animatedSprite.getPosition().x - (CHARACTER_SIZE * 1), animatedSprite.getPosition().y + (CHARACTER_SIZE * 1), CHARACTER_SIZE * 2, CHARACTER_SIZE * 2);
+
+	agressive = false;
 }
 
 void Squad::draw(sf::RenderTarget &tg)
@@ -47,11 +60,27 @@ void Squad::draw(sf::RenderTarget &tg)
 
 void Squad::update(sf::Time time, std::vector<tmx::MapObject> &objects)
 {
+	if (!agressive)
+	{
+		for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+		{
+			tmx::MapObject &object = *it;
+			if (object.GetName() == "hero")
+			{
+				if (sqrt((object.GetPosition().x - animatedSprite.getPosition().x) * (object.GetPosition().x - animatedSprite.getPosition().x) + (object.GetPosition().y - animatedSprite.getPosition().y) * (object.GetPosition().y - animatedSprite.getPosition().y)) <= 64)
+				{
+					agressive = true;
+					break;
+				}
+			}
+		}
+	}
+
 	if (!walking)
 	{
 		bool isMovable = true;
 		
-		if (counter <= 60)
+		if (counter <= maxCounter)
 		{
 			counter++;
 		}
@@ -60,6 +89,7 @@ void Squad::update(sf::Time time, std::vector<tmx::MapObject> &objects)
 			direction = -1 + (rand() % (int)(5));
 
 			counter = 0;
+			maxCounter = 50 + (rand() * (int)(60 - 30) / RAND_MAX);
 		}
 
 		if(direction == DIR_TOP)

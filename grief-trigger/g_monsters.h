@@ -46,14 +46,18 @@ private:
 	int						nextspot; 
 
 	//Temp variables for smooth moving
-	int nx, ny;
+	int						nx, ny;
 
 	//Random movement counter
-	unsigned int counter;
+	unsigned int			counter;
+	unsigned int			maxCounter;
 
 	//Bounds of movement
-	sf::FloatRect bounds;
-	sf::RectangleShape sh;
+	sf::FloatRect			bounds;
+	sf::RectangleShape		sh;
+
+	//Is agressive
+	bool					agressive;
 
 public:
 	Squad();

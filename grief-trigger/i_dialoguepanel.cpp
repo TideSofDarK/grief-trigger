@@ -1,5 +1,7 @@
 #include "i_dialoguepanel.h"
 
+#include "d_parser.h"
+
 DialoguePanel::DialoguePanel()
 {
 }
@@ -36,10 +38,8 @@ bool DialoguePanel::loadResources(std::string fileName)
 	return true;
 }
 
-void DialoguePanel::init(DialogueInfo &dinfo)
+void DialoguePanel::init()
 {
-	di = &dinfo;
-
 	font.loadFromFile("assets/fonts/default.TTF");
 
 	clickBuffer.loadFromFile("assets/typewriter.wav");
@@ -111,7 +111,7 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		}
 		else 
 		{
-			actualString = di->getDialogue(name, lastSituation);
+			actualString = Parser::instance().parseDialogue(name, lastSituation);
 		}
 
 		//Replace all newlines
@@ -161,9 +161,8 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 bool DialoguePanel::showAnswers()
 {
 	//Get answers
-	if (di->getAnswers(lastName, lastSituation) != "")
+	if (Parser::instance().parseAnswers(lastName, lastSituation).size() != 0)
 	{
-		actualString = di->getAnswers(lastName, lastSituation);
 		//Clear all text
 		text.setString("");
 		answers.clear();
@@ -173,25 +172,9 @@ bool DialoguePanel::showAnswers()
 		return false;
 	}
 
-	//Remove first newline
-	std::string::size_type pos = 0; 
-	pos = actualString.find ("\n",pos);
-	actualString.erase ( pos, 1 );
+	std::vector<std::string> strings = Parser::instance().parseAnswers(lastName, lastSituation);
 
-	//Count answers
-	int s = std::count(actualString.begin(), actualString.end(), '\n');
-
-	std::vector<std::string> strings;
-
-	//Add answers
-	pos = 0;
-	std::string token;
-	while ((pos = actualString.find('\n')) != std::string::npos) {
-		strings.push_back(actualString.substr(0, pos));
-		actualString.erase(0, pos + 1);
-	}
-
-	for (int i = 0; i < s; i++)
+	for (int i = 0; i < strings.size(); i++)
 	{
 		sf::Text ans(strings[i], font, fontSize);
 		ans.setPosition(320, (455 + i * fontSize) + i * 4);

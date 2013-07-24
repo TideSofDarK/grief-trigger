@@ -20,6 +20,7 @@ public:
 
 private:
 	pugi::xml_document monstersDoc;
+	pugi::xml_document dialoguesDoc;
 
 	Parser();
 	Parser( const Parser& );
@@ -27,6 +28,9 @@ private:
 
 public:
 	BasicStats getMonsterStats(std::string name);
+	std::vector<std::string> parseSquad(std::string squad);
+	std::vector<std::string> parseAnswers(std::string name, std::string situation);
+	std::string parseDialogue(std::string name, std::string situation);
 };
 
 #endif

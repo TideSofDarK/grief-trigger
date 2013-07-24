@@ -1,13 +1,17 @@
 #include "g_playerobject.h"
 
 #include "h_config.h"
+#include "d_objects.h"
 
 PlayerObject::PlayerObject()
 {
 }
 
-void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart)
+void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Door> &doorsList)
 {
+	object = &playerObject;
+	doors = &doorsList;
+
 	for (int a = 0; a < 4; a++)
 	{
 		for (int i = 0; i < 4; i++)
@@ -42,18 +46,41 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 		/************************************************************************/
 		/* Check for input and movable space									*/
 		/************************************************************************/
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
 			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
 			{
 				tmx::MapObject &object = *it;
 				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE)) 
-					&& object.GetName() != "hero" 
-					&& object.GetName() != "squad") isMovable = false;
+					&& object.GetName() == "" ) isMovable = false;
 				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE)) 
 					&& object.GetName() != "" 
 					&& object.GetName() != "hero" 
-					&& object.GetName() != "squad") at.openDialogue(object.GetName(), "day1");
+					&& object.GetName() != "door" 
+					&& object.GetName() != "squad")
+				{
+					at.openDialogue(object.GetName(), "day1");
+					isMovable = false;
+				}
+			}
+
+			for (auto it = doors->begin(); it != doors->end(); ++it)
+			{
+				Door &door = *it;
+				if (walking == false && door.getOnMap().Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE))) 
+				{
+					if (!door.isOpened())
+					{
+						door.open();
+						isMovable = false;
+						break;
+					}
+					else
+					{
+						isMovable = true;
+						break;
+					}
+				}
 			}
 
 			if(walking == false && isMovable == true)
@@ -72,18 +99,22 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 			}		
 		}
 
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
 			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
 			{
 				tmx::MapObject &object = *it;
 				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE)) 
-					&& object.GetName() != "hero" 
-					&& object.GetName() != "squad") isMovable = false;
+					&& object.GetName() == "" ) isMovable = false;
 				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE)) 
 					&& object.GetName() != "" 
 					&& object.GetName() != "hero" 
-					&& object.GetName() != "squad") at.openDialogue(object.GetName(), "day1");
+					&& object.GetName() != "door" 
+					&& object.GetName() != "squad") 
+				{
+					at.openDialogue(object.GetName(), "day1");
+					isMovable = false;
+				}
 			}
 
 			if(walking == false && isMovable == true)
@@ -102,18 +133,22 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 			}
 		}
 
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		{
 			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
 			{
 				tmx::MapObject &object = *it;
 				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y)) 
-					&& object.GetName() != "hero" 
-					&& object.GetName() != "squad") isMovable = false;
+					&& object.GetName() == "" ) isMovable = false;
 				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y)) 
 					&& object.GetName() != "" 
 					&& object.GetName() != "hero" 
-					&& object.GetName() != "squad") at.openDialogue(object.GetName(), "day1");
+					&& object.GetName() != "door" 
+					&& object.GetName() != "squad")
+				{
+					at.openDialogue(object.GetName(), "day1");
+					isMovable = false;
+				}
 			}
 
 			if(walking == false && isMovable == true)
@@ -132,18 +167,22 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects, DialoguePanel &at)
 			}	
 		}
 
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
 			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
 			{
 				tmx::MapObject &object = *it;
 				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y)) 
-					&& object.GetName() != "hero" 
-					&& object.GetName() != "squad") isMovable = false;
+					&& object.GetName() == "" ) isMovable = false;
 				if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y)) 
 					&& object.GetName() != "" 
 					&& object.GetName() != "hero" 
-					&& object.GetName() != "squad") at.openDialogue(object.GetName(), "day1");
+					&& object.GetName() != "door" 
+					&& object.GetName() != "squad")
+				{
+					at.openDialogue(object.GetName(), "day1");
+					isMovable = false;
+				}
 			}
 
 			if(walking == false && isMovable == true)
@@ -255,7 +294,7 @@ void PlayerObject::update(sf::Time &time, sf::View &camera)
 		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx - HALF_WIDTH);
 	}
 
-	oTweener.step(time.asMilliseconds() / 1000.f);
+	oTweener.step(time.asSeconds());
 
 	if ((int)ncy % HALF_HEIGHT != 0)
 	{
@@ -269,5 +308,6 @@ void PlayerObject::update(sf::Time &time, sf::View &camera)
 
 	//Update animation and position
 	animatedSprite.setPosition(nx, ny);
+	object->SetPosition(sf::Vector2f(nx, ny));
 	animatedSprite.update(time);
 }

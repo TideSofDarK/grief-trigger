@@ -1,9 +1,6 @@
 #include "g_particlesmanager.h"
 
-//ParticlesManager::ParticlesManager(void)
-//{
-//	texture.loadFromFile("assets/smoke.png");
-//}
+#include "d_resourcesmanager.h"
 
 float RandomFloat(float min, float max)
 {
@@ -13,8 +10,7 @@ float RandomFloat(float min, float max)
 
 void ParticlesManager::init(std::string name)
 {
-	texture.loadFromFile("assets/smoke.png");
-	system.setTexture(texture);
+	system.setTexture(ResourcesManager::instance().getTexture("assets/smoke.png"));
 
 	thor::UniversalEmitter emitter;
 	emitter.setEmissionRate(0.2f);
@@ -34,7 +30,7 @@ void ParticlesManager::init(std::string name)
 	system.addAffector(thor::AnimationAffector(fader));
 
 	//Additional
-	additionalSystem.setTexture(texture);
+	additionalSystem.setTexture(ResourcesManager::instance().getTexture("assets/smoke.png"));
 
 	emitter.setEmissionRate(0.3f);
 	emitter.setParticleLifetime(sf::seconds(15));

@@ -16,38 +16,45 @@
 #include "i_dialoguepanel.h"
 #include "h_config.h"
 #include "d_resourcesmanager.h"
+#include "d_objects.h"
 
 class PlayerObject
 {
 private:
 	//Player animations
-	Animation walkingAnimation[4];
+	Animation		walkingAnimation[4];
 
 	//Animated player sprite itself
-	AnimatedSprite animatedSprite;
+	AnimatedSprite	animatedSprite;
 
 	//Moving direction
-	int direction;
+	int				direction;
 
 	//Is walking
-	bool walking;
+	bool			walking;
 
 	//Next coord
-	int nextspot; 
+	int				nextspot; 
 
 	//Start camera variables
-	sf::Vector2f camStart;
+	sf::Vector2f	camStart;
 
 	//Temp variables for smooth moving
-	int nx, ny;
+	int				nx, ny;
 
 	//Camera tweener
-	CDBTweener oTweener;
-	float ncx, ncy;
+	CDBTweener		oTweener;
+	float			ncx, ncy;
+
+	//Player object on map
+	tmx::MapObject	*object;
+
+	//Pointer to doors
+	std::vector<Door> *doors;
 
 public:
 	PlayerObject();
-	void init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart);
+	void init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Door> &doorsList);
 	void update(sf::Time &time, sf::View &camera);
 	void draw(sf::RenderTarget &tg);
 	void move(std::vector<tmx::MapObject> &objects, DialoguePanel &at);

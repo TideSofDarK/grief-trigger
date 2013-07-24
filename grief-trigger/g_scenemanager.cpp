@@ -13,25 +13,32 @@ void Scene::loadResources()
 		if (object.GetName() == "hero")
 		{
 			//Set center of camera to player coords
-			camera->setCenter(object.GetPosition().x + CHARACTER_SIZE, object.GetPosition().y + (CHARACTER_SIZE / 2));
+			//camera->setCenter(object.GetPosition().x + CHARACTER_SIZE, object.GetPosition().y + (CHARACTER_SIZE / 2));
+			camera->setCenter(0 + (HALF_WIDTH / 2), 0 + (HALF_HEIGHT / 2));
 
 			//Init hero object
-			po.init(object.GetPosition().x, object.GetPosition().y, camera->getCenter());
+			po.init(object.GetPosition().x, object.GetPosition().y, camera->getCenter(), object, doors);
 		}
 		else if (object.GetName() == "squad")
 		{
+			//Init squad
 			Squad newSquad;
 			newSquad.init(object.GetPropertyString("monsters"), object.GetPosition());
 			squads.push_back(newSquad);
 		}
+		else if (object.GetName() == "door")
+		{
+			//Init door
+			Door door;
+			door.init(object.GetPosition(), object);
+			doors.push_back(door);
+		}	
 	}
 
 	sm.init(sf::Vector2f(WIDTH, HEIGHT));
 
-	di.init("text.xml");
-
 	dp.loadResources();
-	dp.init(di);
+	dp.init();
 
 	pm.init("assets/smoke.png");
 
@@ -107,6 +114,10 @@ void Scene::draw(sf::RenderTarget &tg)
 		}
 		//Player object
 		po.draw(finalTexture);
+		for (auto i = doors.begin(); i != doors.end(); ++i)
+		{
+			i->draw(finalTexture);
+		}
 
 		//Unscalable
 		finalTexture.setView(*unscalable);
@@ -117,7 +128,6 @@ void Scene::draw(sf::RenderTarget &tg)
 
 		finalTexture.display();
 
-		//Draw through shader manager
 		sm.draw(finalTexture, tg);
 	}
 	else
@@ -134,7 +144,6 @@ void Scene::input(sf::Event &event)
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) sm.setCurrentEffect("distortion", sf::seconds(1));
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) sm.setCurrentEffect("rgb", sf::seconds(1));
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P) finalTexture.getTexture().copyToImage().saveToFile("screenshot.png");
-		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C) init("test.tmx", camera, unscalable, *map);
 	}
 }
 
