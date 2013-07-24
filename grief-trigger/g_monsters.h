@@ -12,7 +12,7 @@
 #include "d_basicstats.h"
 #include "d_parser.h"
 #include "h_config.h"
-#include "d_resourcesmanager.H"
+#include "d_resourcesmanager.h"
 
 class Monster : BasicStats
 {

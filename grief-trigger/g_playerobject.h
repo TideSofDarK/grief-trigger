@@ -15,7 +15,7 @@
 
 #include "i_dialoguepanel.h"
 #include "h_config.h"
-#include "d_resourcesmanager.H"
+#include "d_resourcesmanager.h"
 
 class PlayerObject
 {

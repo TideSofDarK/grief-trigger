@@ -13,7 +13,7 @@
 #include "i_dialoguepanel.h"
 #include "g_playerobject.h"
 #include "g_particlesmanager.h"
-#include "d_resourcesmanager.H"
+#include "d_resourcesmanager.h"
 #include "g_monsters.h"
 #include "d_parser.h"
 

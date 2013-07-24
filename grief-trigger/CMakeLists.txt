@@ -21,11 +21,20 @@ add_executable(grief-trigger ${SOURCE})
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
+#Xlib
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  find_package( X11 REQUIRED )
+  if ( X11_FOUND )
+      include_directories( ${X11_INCLUDE_DIRS} )
+      target_link_libraries( grief-trigger ${X11_LIBRARIES} )
+  endif( X11_FOUND )
+endif()
+
 #Aurora
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	set(AURORA_INCLUDE_DIR "" CACHE FILEPATH "sets aurora include path")
 	include_directories(${AURORA_INCLUDE_DIR})
-	endif()
+endif()
 
 #zlib
 find_package( ZLIB REQUIRED )

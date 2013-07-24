@@ -17,12 +17,15 @@
 #include "d_dialogueinfo.h"
 #include "g_shadermanager.h"
 #include "g_scenemanager.h"
+#include <X11/Xlib.h>
 
 using namespace sf;
 using namespace tmx;
 
 int main()
 {
+	XInitThreads();
+
 	RenderWindow window(VideoMode(1280, 720), "Grief Trigger Turbo HD", sf::Style::Default);
 	window.setFramerateLimit(60);
 	//window.setVerticalSyncEnabled(true);
