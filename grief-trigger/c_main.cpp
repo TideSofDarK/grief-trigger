@@ -17,14 +17,20 @@
 #include "d_dialogueinfo.h"
 #include "g_shadermanager.h"
 #include "g_scenemanager.h"
+
+//Include X11 header
+#ifdef __GNUC__
 #include <X11/Xlib.h>
+#endif
 
 using namespace sf;
 using namespace tmx;
 
 int main()
 {
+#ifdef __GNUC__
 	XInitThreads();
+#endif
 
 	RenderWindow window(VideoMode(1280, 720), "Grief Trigger Turbo HD", sf::Style::Default);
 	window.setFramerateLimit(60);
