@@ -35,21 +35,11 @@ int main()
 	window.setFramerateLimit(60);
 	//window.setVerticalSyncEnabled(true);
 
-	sf::View camera(sf::FloatRect(0, 0, 1280, 720));
-	sf::View unscalable(sf::FloatRect(0, 0, 1280, 720));
-	camera.zoom(1.f/2.f);
-
 	sf::Clock frameClock;
 
 	tmx::MapLoader ml("assets/");
 
-	SceneManager manager("test.tmx", &camera, &unscalable, ml);
-
-	sf::Font font;
-	font.loadFromFile("assets/fonts/default.TTF");
-	sf::Text fps = sf::Text("", font, 50);
-	float lastTime = 0;
-	sf::Clock clock;
+	SceneManager::instance().setScene("test.tmx", ml);
 
 	while (window.isOpen())
 	{
@@ -59,7 +49,7 @@ int main()
 			if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
 				window.close();
 
-			manager.input(event);
+			SceneManager::instance().input(event);
 		}
 
 		//float currentTime = clock.restart().asSeconds();
@@ -68,12 +58,11 @@ int main()
 
 		//fps.setString(std::to_string((int)fpsf));
 		
-		manager.update(frameClock.restart());
+		SceneManager::instance().update(frameClock.restart());
 
 		window.clear();
 
-		manager.draw(window);
-		window.draw(fps);
+		SceneManager::instance().draw(window);
 
 		window.display();
 	}

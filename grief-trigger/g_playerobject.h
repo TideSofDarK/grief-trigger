@@ -57,9 +57,10 @@ public:
 	void init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Door> &doorsList);
 	void update(sf::Time &time, sf::View &camera);
 	void draw(sf::RenderTarget &tg);
-	void move(std::vector<tmx::MapObject> &objects, DialoguePanel &at);
+	void move(std::vector<tmx::MapObject> &objects);
 	void play();
 	AnimatedSprite& getSprite();
+	bool step(int dir, std::vector<tmx::MapObject> &object);
 };
 
 #endif

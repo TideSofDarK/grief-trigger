@@ -16,6 +16,8 @@
 #include "g_monsters.h"
 #include "d_parser.h"
 #include "d_objects.h"
+#include "g_battle.h"
+#include "h_config.h"
 
 class Scene
 {
@@ -38,9 +40,6 @@ private:
 	//Shaders
 	ShaderManager sm;
 
-	//Dialogue panel
-	DialoguePanel dp;
-
 	//Particles manager
 	ParticlesManager pm;
 
@@ -61,6 +60,9 @@ private:
 	sf::Font font;
 	unsigned int counter;
 	sf::Text loadingText;
+	
+	//Is paused
+	bool paused;
 
 public:
 	Scene();
@@ -68,20 +70,40 @@ public:
 	void update(sf::Time time);
 	void draw(sf::RenderTarget &tg);
 	void input(sf::Event &event);
+	void startBattle(Squad squad);
 };
 
 class SceneManager
 {
+public:
+	static SceneManager& instance()
+	{
+		static SceneManager theSingleInstance;
+		return theSingleInstance;
+	}
+
 private:
+	SceneManager() {
+		camera = sf::View(sf::FloatRect(sf::FloatRect(0, 0, WIDTH, HEIGHT)));
+		unscalable = sf::View(sf::FloatRect(0, 0, WIDTH, HEIGHT));
+		camera.zoom(1.f/2.f);
+	};
+
+	SceneManager( const SceneManager& );
+	SceneManager& operator =( const SceneManager& );
+
 	//Current scene pointer
 	Scene current;
 
+	sf::View camera;
+	sf::View unscalable;
+
 public:
-	SceneManager(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml);
 	void draw(sf::RenderTarget &rt);
 	void update(sf::Time time);
 	void input(sf::Event &event);
-	void setScene(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml);
+	void setScene(std::string name, tmx::MapLoader &ml);
+	void initBattle(Squad &squad);
 };
 
 #endif

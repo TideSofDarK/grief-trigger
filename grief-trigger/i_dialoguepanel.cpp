@@ -2,10 +2,6 @@
 
 #include "d_parser.h"
 
-DialoguePanel::DialoguePanel()
-{
-}
-
 bool DialoguePanel::loadResources(std::string fileName)
 {
 	//Load resources list file
@@ -33,7 +29,7 @@ bool DialoguePanel::loadResources(std::string fileName)
 
 	for (int i = 0; i < s; i++)
 	{
-		ResourcesManager::instance().getTexture("assets/" + resourcesNames[i]);
+		TextureManager::instance().getTexture("assets/" + resourcesNames[i]);
 	}
 	return true;
 }
@@ -42,14 +38,8 @@ void DialoguePanel::init()
 {
 	font.loadFromFile("assets/fonts/default.TTF");
 
-	clickBuffer.loadFromFile("assets/typewriter.wav");
-	click.setBuffer(clickBuffer);
-
-	enterBuffer.loadFromFile("assets/enter.wav");
-	enter.setBuffer(enterBuffer);
-
 	nby = HEIGHT / 2;
-	background.setTexture(ResourcesManager::instance().getTexture("assets/dbox.png"));
+	background.setTexture(TextureManager::instance().getTexture("assets/dbox.png"));
 	background.setPosition(0, nby);
 
 	pointer = sf::RectangleShape();
@@ -99,7 +89,7 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		//Load new art image
 		if (lastName != name) {
 			lastName = name;
-			art.setTexture(ResourcesManager::instance().getTexture("assets/" + lastName + "_art.png"));
+			art.setTexture(TextureManager::instance().getTexture("assets/" + lastName + "_art.png"));
 		}
 		if (lastSituation != situation) lastSituation = situation + '/';
 
@@ -222,12 +212,12 @@ void DialoguePanel::update()
 					//Play sound if it is not a space
 					if (text.getString().toAnsiString().c_str()[text.getString().getSize()] != ' ')
 					{
-						click.play();
+						SoundManager::instance().playClickSound();
 					}
 					if (text.getString().getSize() + 1 == actualString.size())
 					{
 						//If last - play enter sound
-						enter.play();
+						SoundManager::instance().playEnterSound();
 					}
 					clock.restart();
 					character++;
@@ -256,24 +246,24 @@ void DialoguePanel::input(sf::Event &event)
 		{
 			if (isAnswering)
 			{
-				if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down && selected < answers.size() - 1)
+				if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S && selected < answers.size() - 1)
 				{
 					selected++;
 				}
-				else if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up && selected - 1 >= 0)
+				else if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::W && selected - 1 >= 0)
 				{
 					selected--;
 				}
 				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) 
 				{
-					enter.play();
+					SoundManager::instance().playEnterSound();
 
 					applyAnswer(selected);
 				}
 			}
 			else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && ended == true) 
 			{
-				enter.play();
+				SoundManager::instance().playEnterSound();
 
 				//Leave dialogue if no text
 				if (nextString == "")
@@ -284,7 +274,7 @@ void DialoguePanel::input(sf::Event &event)
 			}
 			else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && ended != true)
 			{
-				enter.play();
+				SoundManager::instance().playEnterSound();
 
 				stop();
 			}

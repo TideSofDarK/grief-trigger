@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <cmath>
 
 #include <SFML/Graphics.hpp>
 
@@ -56,8 +57,8 @@ private:
 	sf::FloatRect			bounds;
 	sf::RectangleShape		sh;
 
-	//Is agressive
-	bool					agressive;
+	//Pointer to player object
+	tmx::MapObject			*hero;
 
 public:
 	Squad();
@@ -66,6 +67,7 @@ public:
 	void draw(sf::RenderTarget &tg);
 	void update(sf::Time time, std::vector<tmx::MapObject> &objects);
 	bool isWalking() {return walking;};
+	void step(int dir, std::vector<tmx::MapObject> &objects);
 };
 
 #endif

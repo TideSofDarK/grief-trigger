@@ -1,6 +1,6 @@
 #include "d_resourcesmanager.h"
 
-const sf::Texture& ResourcesManager::getTexture( const std::string& filename )
+const sf::Texture& TextureManager::getTexture( const std::string& filename )
 {
 	// Check, whether the image already exists
 	for( std::map<std::string, sf::Texture>::const_iterator it = textures.begin();
@@ -25,7 +25,7 @@ const sf::Texture& ResourcesManager::getTexture( const std::string& filename )
 	return textures[filename];
 }
 
-void ResourcesManager::deleteTexture( const sf::Texture& image )
+void TextureManager::deleteTexture( const sf::Texture& image )
 {
 	for( std::map<std::string, sf::Texture>::const_iterator it = textures.begin();
 		it != textures.end(); 
@@ -40,9 +40,36 @@ void ResourcesManager::deleteTexture( const sf::Texture& image )
 	}
 }
 
-void ResourcesManager::deleteTexture( const std::string& filename )
+void TextureManager::deleteTexture( const std::string& filename )
 {
 	std::map<std::string, sf::Texture>::const_iterator it = textures.find( filename );
 	if( it != textures.end() )
 		textures.erase( it );
+}
+
+SoundManager::SoundManager()
+{
+	doorBuffer.loadFromFile("assets/door.wav");
+	doorSound.setBuffer(doorBuffer);
+
+	clickBuffer.loadFromFile("assets/typewriter.wav");
+	clickSound.setBuffer(clickBuffer);
+
+	enterBuffer.loadFromFile("assets/enter.wav");
+	enterSound.setBuffer(enterBuffer);
+}
+
+void SoundManager::playDoorSound()
+{
+	doorSound.play();
+}
+
+void SoundManager::playClickSound()
+{
+	clickSound.play();
+}
+
+void SoundManager::playEnterSound()
+{
+	enterSound.play();
 }

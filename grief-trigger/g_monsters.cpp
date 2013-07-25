@@ -28,7 +28,7 @@ void Squad::init(std::string name, sf::Vector2f pos)
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			walkingAnimation[a].setSpriteSheet(ResourcesManager::instance().getTexture("assets/player.png"));
+			walkingAnimation[a].setSpriteSheet(TextureManager::instance().getTexture("assets/player.png"));
 			walkingAnimation[a].addFrame(sf::IntRect(i * 32, a * 32, 32, 32));
 		}
 	}
@@ -49,8 +49,6 @@ void Squad::init(std::string name, sf::Vector2f pos)
 	maxCounter = 50 + (rand() * (int)(60 - 30) / RAND_MAX);
 
 	bounds = sf::FloatRect(animatedSprite.getPosition().x - (CHARACTER_SIZE * 1), animatedSprite.getPosition().y + (CHARACTER_SIZE * 1), CHARACTER_SIZE * 2, CHARACTER_SIZE * 2);
-
-	agressive = false;
 }
 
 void Squad::draw(sf::RenderTarget &tg)
@@ -60,26 +58,20 @@ void Squad::draw(sf::RenderTarget &tg)
 
 void Squad::update(sf::Time time, std::vector<tmx::MapObject> &objects)
 {
-	if (!agressive)
+	bool isMovable = true;
+
+	//Set player pointer
+	for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
 	{
-		for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+		tmx::MapObject &object = *it;
+		if (object.GetName() == "hero")
 		{
-			tmx::MapObject &object = *it;
-			if (object.GetName() == "hero")
-			{
-				if (sqrt((object.GetPosition().x - animatedSprite.getPosition().x) * (object.GetPosition().x - animatedSprite.getPosition().x) + (object.GetPosition().y - animatedSprite.getPosition().y) * (object.GetPosition().y - animatedSprite.getPosition().y)) <= 64)
-				{
-					agressive = true;
-					break;
-				}
-			}
+			hero = &object;
 		}
 	}
 
 	if (!walking)
 	{
-		bool isMovable = true;
-		
 		if (counter <= maxCounter)
 		{
 			counter++;
@@ -92,111 +84,33 @@ void Squad::update(sf::Time time, std::vector<tmx::MapObject> &objects)
 			maxCounter = 50 + (rand() * (int)(60 - 30) / RAND_MAX);
 		}
 
-		if(direction == DIR_TOP)
+		if(direction != DIR_IDLE)
 		{
-			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
-			{
-				tmx::MapObject &object = *it;
-				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE))) isMovable = false;
-			}
-
-			if (bounds.contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y - CHARACTER_SIZE))) isMovable = true;
-			else isMovable = false;
-
-			if(isMovable == true)
-			{
-				nextspot = animatedSprite.getPosition().y - CHARACTER_SIZE; 
-				walking = true;
-
-				animatedSprite.setAnimation(walkingAnimation[direction]);
-				animatedSprite.play();
-			}
-			else if (isMovable == false)
-			{
-				animatedSprite.setAnimation(walkingAnimation[DIR_TOP]);
-				animatedSprite.setFrame(0);
-			}		
-		}
-
-		if(direction == DIR_DOWN)
-		{
-			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
-			{
-				tmx::MapObject &object = *it;
-				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE))) isMovable = false;
-			}
-
-			if (bounds.contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + CHARACTER_SIZE))) isMovable = true;
-			else isMovable = false;
-
-			if(walking == false && isMovable == true)
-			{
-				nextspot = animatedSprite.getPosition().y + CHARACTER_SIZE; 
-				walking = true;
-
-				animatedSprite.setAnimation(walkingAnimation[direction]);
-				animatedSprite.play();
-			}
-			else if (isMovable == false && walking == false)
-			{
-				animatedSprite.setAnimation(walkingAnimation[DIR_DOWN]);
-				animatedSprite.setFrame(0);
-			}
-		}
-
-		if(direction == DIR_LEFT)
-		{
-			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
-			{
-				tmx::MapObject &object = *it;
-				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y))) isMovable = false;
-			}
-
-			if (bounds.contains(sf::Vector2f(animatedSprite.getPosition().x - CHARACTER_SIZE, animatedSprite.getPosition().y))) isMovable = true;
-			else isMovable = false;
-
-			if(walking == false && isMovable == true)
-			{
-				nextspot = animatedSprite.getPosition().x - CHARACTER_SIZE; 
-				walking = true;
-
-				animatedSprite.setAnimation(walkingAnimation[direction]);
-				animatedSprite.play();
-			}
-			else if (isMovable == false && walking == false)
-			{
-				animatedSprite.setAnimation(walkingAnimation[DIR_LEFT]);
-				animatedSprite.setFrame(0);
-			}	
-		}
-
-		if(direction == DIR_RIGHT)
-		{
-			for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
-			{
-				tmx::MapObject &object = *it;
-				if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y))) isMovable = false;
-			}
-
-			if (bounds.contains(sf::Vector2f(animatedSprite.getPosition().x + CHARACTER_SIZE, animatedSprite.getPosition().y))) isMovable = true;
-			else isMovable = false;
-
-			if(walking == false && isMovable == true)
-			{
-				nextspot = animatedSprite.getPosition().x + CHARACTER_SIZE; 
-				walking = true;
-
-				animatedSprite.setAnimation(walkingAnimation[direction]);
-				animatedSprite.play();
-			}
-			else if (isMovable == false && walking == false)
-			{
-				animatedSprite.setAnimation(walkingAnimation[DIR_RIGHT]);
-				animatedSprite.setFrame(0);
-			}	
+			step(direction, objects);
 		}
 	}
-	else
+
+	if (counter < maxCounter / 2)
+	{
+		if ( animatedSprite.getPosition().x + CHARACTER_SIZE == hero->GetPosition().x)
+		{
+
+		}
+		if ( animatedSprite.getPosition().x - CHARACTER_SIZE == hero->GetPosition().x)
+		{
+
+		}
+		if ( animatedSprite.getPosition().y + CHARACTER_SIZE == hero->GetPosition().y)
+		{
+
+		}
+		if ( animatedSprite.getPosition().y - CHARACTER_SIZE == hero->GetPosition().y)
+		{
+
+		}
+	}
+	
+	if (walking)
 	{
 		if(direction == DIR_TOP)
 		{
@@ -254,4 +168,56 @@ void Squad::update(sf::Time time, std::vector<tmx::MapObject> &objects)
 
 	animatedSprite.setPosition(nx, ny);
 	animatedSprite.update(time);
+}
+
+void Squad::step(int dir, std::vector<tmx::MapObject> &objects)
+{
+	if (!walking)
+	{
+		bool isMovable = true;
+		sf::Vector2f movement;
+
+		switch (dir)
+		{
+		case DIR_TOP:
+			movement.y -= CHARACTER_SIZE;
+			break;
+		case DIR_DOWN:
+			movement.y += CHARACTER_SIZE;
+			break;
+		case DIR_RIGHT:
+			movement.x += CHARACTER_SIZE;
+			break;
+		case DIR_LEFT:
+			movement.x -= CHARACTER_SIZE;
+			break;
+		default:
+			break;
+		}
+
+		if (bounds.contains(sf::Vector2f(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y))) isMovable = true;
+		else isMovable = false;
+
+		for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+		{
+			tmx::MapObject &object = *it;
+			if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y))) isMovable = false;
+		}
+
+		if(isMovable == true)
+		{
+			if (dir == DIR_DOWN || dir == DIR_TOP) nextspot = animatedSprite.getPosition().y + movement.y; 
+			else if (dir == DIR_LEFT || dir == DIR_RIGHT) nextspot = animatedSprite.getPosition().x + movement.x; 
+			direction = dir;
+			walking = true;
+
+			animatedSprite.setAnimation(walkingAnimation[direction]);
+			animatedSprite.play();
+		}	
+		else
+		{
+			animatedSprite.setAnimation(walkingAnimation[dir]);
+			animatedSprite.setFrame(0);
+		}
+	}
 }

@@ -20,20 +20,24 @@
 
 class DialoguePanel
 {
+public:
+	static DialoguePanel& instance()
+	{
+		static DialoguePanel theSingleInstance;
+		return theSingleInstance;
+	}
+
+private:
+	DialoguePanel() {};
+	DialoguePanel( const DialoguePanel& );
+	DialoguePanel& operator =( const DialoguePanel& );
+
 protected:
 	//Font size
 	static const unsigned int fontSize =		40;
 
 	//resource.tmx parsing
 	pugi::xml_document doc;
-
-	//Buffer for typewriter sound
-	sf::SoundBuffer								clickBuffer;
-	sf::Sound									click;
-
-	//Buffer for enter sound
-	sf::SoundBuffer								enterBuffer;
-	sf::Sound									enter;
 
 	//Simple shape pointer
 	sf::RectangleShape							pointer;
@@ -89,7 +93,6 @@ protected:
 	CDBTweener									oTweener;
 
 public:
-	DialoguePanel();
 	void init();
 	void openDialogue(std::string name, std::string situation);
 	void update();

@@ -8,28 +8,6 @@
 
 #include <MapLoader.h>
 
-class ObjectSounds
-{
-public:
-	static ObjectSounds& instance()
-	{
-		static ObjectSounds theSingleInstance;
-		return theSingleInstance;
-	}
-
-private:
-	ObjectSounds();
-	ObjectSounds( const ObjectSounds& );
-	ObjectSounds& operator =( const ObjectSounds& );
-
-	sf::SoundBuffer doorBuffer;
-	sf::Sound doorSound;
-
-public:
-	void playDoorSound();
-};
-
-
 class Object
 {
 public:
