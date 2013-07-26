@@ -8,7 +8,8 @@ Monster::Monster(std::string name_)
 {
 	name = name_;
 	setStats(Parser::instance().getMonsterStats(name));
-	std::cout << std::to_string(getStrength()) + "x" + std::to_string(getAgility()) + "x" + std::to_string(getIntelligence()) << std::endl;
+	std::cout << std::to_string(getStrength()) + "x" + std::to_string(getAgility()) + "x" + std::to_string(getIntelligence()) + "x" + std::to_string(getHP()) << std::endl;
+	state = ALIVE;
 }
 
 Squad::Squad()

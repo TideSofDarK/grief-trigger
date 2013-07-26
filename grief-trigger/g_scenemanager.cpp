@@ -91,10 +91,6 @@ void Scene::update(sf::Time time)
 				po.move(map->GetLayers().back().objects);
 				po.update(time, *camera);
 			}
-			else
-			{
-				battle.update(time);
-			}
 		}
 		sm.update();
 	}
@@ -107,6 +103,7 @@ void Scene::update(sf::Time time)
 		else if (counter >= 20) counter = 0;
 		counter++;
 	}
+	if (isBattle) battle.update(time);
 }
 
 void Scene::draw(sf::RenderTarget &tg)
@@ -149,6 +146,10 @@ void Scene::draw(sf::RenderTarget &tg)
 			//Scaled
 			finalTexture.setView(*camera);
 			battle.draw(finalTexture);
+
+			//Unscalable
+			finalTexture.setView(*unscalable);
+			battle.drawUI(finalTexture);
 		}
 
 		finalTexture.display();

@@ -19,7 +19,7 @@
 #include "d_objects.h"
 #include "g_monsters.h"
 
-class PlayerObject : BasicStats
+class PlayerObject
 {
 private:
 	//Player animations

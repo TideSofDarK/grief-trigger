@@ -23,11 +23,13 @@ private:
 	
 	typedef enum { ALIVE, DIED } MONSTER_STATE;
 
+	MONSTER_STATE state;
+
 public:
 	Monster(std::string name);
-	unsigned int getStrength() {return strength;};
-	unsigned int getAgility() {return agility;};
-	unsigned int getIntelligence() {return intelligence;};
+	unsigned int &getStrength() {return strength;};
+	unsigned int &getAgility() {return agility;};
+	unsigned int &getIntelligence() {return intelligence;};
 	void setStrength(unsigned int newStrength) {strength = newStrength;};
 	void setAgility(unsigned int newAgility) {agility = newAgility;};
 	void setIntelligence(unsigned int newIntelligence) {intelligence = newIntelligence;};

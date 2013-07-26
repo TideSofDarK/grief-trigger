@@ -69,7 +69,7 @@ int main()
 		window.clear();
 
 		SceneManager::instance().draw(window);
-		window.draw(fps);
+		//window.draw(fps);
 
 		window.display();
 	}

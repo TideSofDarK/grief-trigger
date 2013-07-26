@@ -15,6 +15,7 @@ BasicStats Parser::getMonsterStats(std::string name)
 	newStats.setStrength(atoi(monster.child_value("str")));
 	newStats.setIntelligence(atoi(monster.child_value("agi")));
 	newStats.setAgility(atoi(monster.child_value("int")));
+	newStats.setHP(atoi(monster.child_value("hp")));
 
 	return newStats;
 }
