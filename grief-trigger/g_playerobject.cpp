@@ -2,15 +2,17 @@
 
 #include "h_config.h"
 #include "d_objects.h"
+#include "g_scenemanager.h"
 
 PlayerObject::PlayerObject()
 {
 }
 
-void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Door> &doorsList)
+void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Door> &doorsList, std::vector<Squad> &squadsList)
 {
 	object = &playerObject;
 	doors = &doorsList;
+	squads = &squadsList;
 
 	for (int a = 0; a < 4; a++)
 	{
@@ -215,6 +217,19 @@ bool PlayerObject::step(int dir, std::vector<tmx::MapObject> &objects)
 			{
 				DialoguePanel::instance().openDialogue(object.GetName(), "day1");
 				isMovable = false;
+			}
+			else if (object.GetName() == "squad")
+			{
+				
+			}	
+		}
+
+		for (auto it = squads->begin(); it != squads->end(); ++it)
+		{
+			Squad &squad = *it;
+			if (walking == false && squad.getOnMap().Contains(sf::Vector2f(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y))) 
+			{
+				SceneManager::instance().initBattle(squad);
 			}
 		}
 

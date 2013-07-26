@@ -22,6 +22,12 @@
 class Scene
 {
 private:
+	//Battle screen
+	Battle battle;
+
+	//Is battle
+	bool isBattle;
+
 	//Is loaded
 	bool loaded;
 
@@ -71,6 +77,8 @@ public:
 	void draw(sf::RenderTarget &tg);
 	void input(sf::Event &event);
 	void startBattle(Squad squad);
+	void setPaused(bool p) {paused = p;};
+	void setCurrentEffect(std::string string, sf::Time time);
 };
 
 class SceneManager

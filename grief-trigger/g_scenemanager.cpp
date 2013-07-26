@@ -17,13 +17,13 @@ void Scene::loadResources()
 			camera->setCenter(0 + (HALF_WIDTH / 2), 0 + (HALF_HEIGHT / 2));
 
 			//Init hero object
-			po.init(object.GetPosition().x, object.GetPosition().y, camera->getCenter(), object, doors);
+			po.init(object.GetPosition().x, object.GetPosition().y, camera->getCenter(), object, doors, squads);
 		}
 		else if (object.GetName() == "squad")
 		{
 			//Init squad
 			Squad newSquad;
-			newSquad.init(object.GetPropertyString("monsters"), object.GetPosition());
+			newSquad.init(object.GetPropertyString("monsters"), object.GetPosition(), object);
 			squads.push_back(newSquad);
 		}
 		else if (object.GetName() == "door")
@@ -42,7 +42,10 @@ void Scene::loadResources()
 
 	pm.init("assets/smoke.png");
 
+	battle.loadResources();
+
 	loaded = true;
+	isBattle = false;
 }
 
 Scene::Scene() : loadingThread(&Scene::loadResources, this)
@@ -77,16 +80,23 @@ void Scene::update(sf::Time time)
 	{
 		if (!paused)
 		{
-			//pm.update(time);
-			for (auto i = squads.begin(); i != squads.end(); ++i)
+			if (!isBattle)
 			{
-				i->update(time, map->GetLayers().back().objects);
+				//pm.update(time);
+				for (auto i = squads.begin(); i != squads.end(); ++i)
+				{
+					i->update(time, map->GetLayers().back().objects);
+				}	
+				DialoguePanel::instance().update();
+				po.move(map->GetLayers().back().objects);
+				po.update(time, *camera);
 			}
-			sm.update();
-			DialoguePanel::instance().update();
-			po.move(map->GetLayers().back().objects);
-			po.update(time, *camera);
+			else
+			{
+				battle.update(time);
+			}
 		}
+		sm.update();
 	}
 	else
 	{
@@ -105,31 +115,41 @@ void Scene::draw(sf::RenderTarget &tg)
 	{
 		finalTexture.clear(sf::Color(24u, 19u, 27u));
 
-		//Particle effect under game map
-		//pm.drawUnder(finalTexture);
-
-		//Game content
-		finalTexture.setView(*camera);
-		//Map
-		map->Draw(finalTexture);
-		//Enemy squads
-		for (auto i = squads.begin(); i != squads.end(); ++i)
+		//Draw map and hero
+		if (!isBattle)
 		{
-			i->draw(finalTexture);
-		}
-		//Player object
-		po.draw(finalTexture);
-		for (auto i = doors.begin(); i != doors.end(); ++i)
-		{
-			i->draw(finalTexture);
-		}
+			//Particle effect under game map
+			//pm.drawUnder(finalTexture);
 
-		//Unscalable
-		finalTexture.setView(*unscalable);
-		//Particles
-		//pm.draw(finalTexture);
-		//Dialogue UI
-		DialoguePanel::instance().draw(finalTexture);
+			//Game content
+			finalTexture.setView(*camera);
+			//Map
+			map->Draw(finalTexture);
+			//Enemy squads
+			for (auto i = squads.begin(); i != squads.end(); ++i)
+			{
+				i->draw(finalTexture);
+			}
+			//Player object
+			po.draw(finalTexture);
+			for (auto i = doors.begin(); i != doors.end(); ++i)
+			{
+				i->draw(finalTexture);
+			}
+
+			//Unscalable
+			finalTexture.setView(*unscalable);
+			//Particles
+			//pm.draw(finalTexture);
+			//Dialogue UI
+			DialoguePanel::instance().draw(finalTexture);
+		}
+		else //Draw battle
+		{
+			//Scaled
+			finalTexture.setView(*camera);
+			battle.draw(finalTexture);
+		}
 
 		finalTexture.display();
 
@@ -141,24 +161,42 @@ void Scene::draw(sf::RenderTarget &tg)
 	}
 }
 
+void Scene::startBattle(Squad squad)
+{
+	battle.start(squad);
+	isBattle = true;
+}
+
 void Scene::input(sf::Event &event)
 {
 	if (loaded)
 	{
-		DialoguePanel::instance().input(event);
-		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) sm.setCurrentEffect("distortion", sf::seconds(1));
-		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) sm.setCurrentEffect("battle", sf::seconds(1));
-		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P) finalTexture.getTexture().copyToImage().saveToFile("screenshot.png");
-		
-		if (!paused)
+		if (!isBattle)
 		{
-			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::V) paused = true;
+			DialoguePanel::instance().input(event);
+			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) setCurrentEffect("distortion", sf::seconds(1));
+			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) setCurrentEffect("battle", sf::seconds(1));
+			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P) finalTexture.getTexture().copyToImage().saveToFile("screenshot.png");
+
+			if (!paused)
+			{
+				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::V) paused = true;
+			}
+			else
+			{
+				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::V) paused = false;
+			}
 		}
-		else
+		else 
 		{
-			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::V) paused = false;
+			battle.input(event);
 		}
 	}
+}
+
+void Scene::setCurrentEffect(std::string string, sf::Time time)
+{
+	sm.setCurrentEffect(string, time);
 }
 
 void SceneManager::setScene(std::string name, tmx::MapLoader &ml)
@@ -183,5 +221,7 @@ void SceneManager::input(sf::Event &event)
 
 void SceneManager::initBattle(Squad &squad)
 {
-
+	current.setPaused(true);
+	current.setCurrentEffect("battle", sf::seconds(1));
+	current.startBattle(squad);
 }

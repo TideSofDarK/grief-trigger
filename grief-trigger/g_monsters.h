@@ -20,9 +20,18 @@ class Monster : BasicStats
 private:
 	//Name
 	std::string name;
+	
+	typedef enum { ALIVE, DIED } MONSTER_STATE;
 
 public:
 	Monster(std::string name);
+	unsigned int getStrength() {return strength;};
+	unsigned int getAgility() {return agility;};
+	unsigned int getIntelligence() {return intelligence;};
+	void setStrength(unsigned int newStrength) {strength = newStrength;};
+	void setAgility(unsigned int newAgility) {agility = newAgility;};
+	void setIntelligence(unsigned int newIntelligence) {intelligence = newIntelligence;};
+	std::string getName() {return name;};
 };
 
 class Squad
@@ -60,14 +69,18 @@ private:
 	//Pointer to player object
 	tmx::MapObject			*hero;
 
+	//Pointer to itself on map 
+	tmx::MapObject			*object;
+
 public:
 	Squad();
-	void init(std::string name, sf::Vector2f pos);
+	void init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap);
 	std::vector<Monster> getMonsters() {return monsters;};
 	void draw(sf::RenderTarget &tg);
 	void update(sf::Time time, std::vector<tmx::MapObject> &objects);
 	bool isWalking() {return walking;};
 	void step(int dir, std::vector<tmx::MapObject> &objects);
+	tmx::MapObject& getOnMap(){return *object;};
 };
 
 #endif

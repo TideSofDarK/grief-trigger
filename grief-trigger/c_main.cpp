@@ -32,14 +32,20 @@ int main()
 #endif
 
 	RenderWindow window(VideoMode(1280, 720), "Grief Trigger Turbo HD", sf::Style::Default);
-	window.setFramerateLimit(60);
-	//window.setVerticalSyncEnabled(true);
+	//window.setFramerateLimit(60);
+	window.setVerticalSyncEnabled(true);
 
 	sf::Clock frameClock;
 
 	tmx::MapLoader ml("assets/");
 
 	SceneManager::instance().setScene("test.tmx", ml);
+
+	sf::Font font;
+	font.loadFromFile("assets/fonts/default.TTF");
+	sf::Text fps = sf::Text("", font, 50);
+	float lastTime = 0;
+	sf::Clock clock;
 
 	while (window.isOpen())
 	{
@@ -52,17 +58,18 @@ int main()
 			SceneManager::instance().input(event);
 		}
 
-		//float currentTime = clock.restart().asSeconds();
-		//float fpsf = 1.f / currentTime;
-		//lastTime = currentTime;
+		float currentTime = clock.restart().asSeconds();
+		float fpsf = 1.f / currentTime;
+		lastTime = currentTime;
 
-		//fps.setString(std::to_string((int)fpsf));
+		fps.setString(std::to_string((int)fpsf));
 		
 		SceneManager::instance().update(frameClock.restart());
 
 		window.clear();
 
 		SceneManager::instance().draw(window);
+		window.draw(fps);
 
 		window.display();
 	}

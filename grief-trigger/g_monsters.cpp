@@ -2,8 +2,11 @@
 
 #include <math.h>
 
-Monster::Monster(std::string name)
+#include "g_scenemanager.h"
+
+Monster::Monster(std::string name_)
 {
+	name = name_;
 	setStats(Parser::instance().getMonsterStats(name));
 	std::cout << std::to_string(getStrength()) + "x" + std::to_string(getAgility()) + "x" + std::to_string(getIntelligence()) << std::endl;
 }
@@ -13,8 +16,10 @@ Squad::Squad()
 
 }
 
-void Squad::init(std::string name, sf::Vector2f pos)
+void Squad::init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap)
 {
+	object = &onMap;
+
 	//Parse squad monsters
 	std::vector<std::string> parsedSquad = Parser::instance().parseSquad(name);
 	for (auto i = parsedSquad.begin(); i != parsedSquad.end(); ++i)
@@ -90,23 +95,23 @@ void Squad::update(sf::Time time, std::vector<tmx::MapObject> &objects)
 		}
 	}
 
-	if (counter < maxCounter / 2)
+	if ((rand() % (int)(100)) == 50 && !walking)
 	{
-		if ( animatedSprite.getPosition().x + CHARACTER_SIZE == hero->GetPosition().x)
+		if (hero->GetPosition().x == animatedSprite.getPosition().x + CHARACTER_SIZE && hero->GetPosition().y == animatedSprite.getPosition().y)
 		{
-
+			SceneManager::instance().initBattle(*this);
 		}
-		if ( animatedSprite.getPosition().x - CHARACTER_SIZE == hero->GetPosition().x)
+		else if (hero->GetPosition().x == animatedSprite.getPosition().x - CHARACTER_SIZE && hero->GetPosition().y == animatedSprite.getPosition().y)
 		{
-
+			SceneManager::instance().initBattle(*this);
 		}
-		if ( animatedSprite.getPosition().y + CHARACTER_SIZE == hero->GetPosition().y)
+		else if (hero->GetPosition().x == animatedSprite.getPosition().x && hero->GetPosition().y == animatedSprite.getPosition().y + CHARACTER_SIZE)
 		{
-
+			SceneManager::instance().initBattle(*this);
 		}
-		if ( animatedSprite.getPosition().y - CHARACTER_SIZE == hero->GetPosition().y)
+		else if (hero->GetPosition().x == animatedSprite.getPosition().x && hero->GetPosition().y == animatedSprite.getPosition().y - CHARACTER_SIZE)
 		{
-
+			SceneManager::instance().initBattle(*this);	
 		}
 	}
 	
@@ -168,6 +173,7 @@ void Squad::update(sf::Time time, std::vector<tmx::MapObject> &objects)
 
 	animatedSprite.setPosition(nx, ny);
 	animatedSprite.update(time);
+	object->SetPosition(animatedSprite.getPosition());
 }
 
 void Squad::step(int dir, std::vector<tmx::MapObject> &objects)

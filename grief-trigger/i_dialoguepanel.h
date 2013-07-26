@@ -36,7 +36,7 @@ protected:
 	//Font size
 	static const unsigned int fontSize =		40;
 
-	//resource.tmx parsing
+	//resource.xml parsing
 	pugi::xml_document doc;
 
 	//Simple shape pointer

@@ -17,44 +17,48 @@
 #include "h_config.h"
 #include "d_resourcesmanager.h"
 #include "d_objects.h"
+#include "g_monsters.h"
 
-class PlayerObject
+class PlayerObject : BasicStats
 {
 private:
 	//Player animations
-	Animation		walkingAnimation[4];
+	Animation			walkingAnimation[4];
 
 	//Animated player sprite itself
-	AnimatedSprite	animatedSprite;
+	AnimatedSprite		animatedSprite;
 
 	//Moving direction
-	int				direction;
+	int					direction;
 
 	//Is walking
-	bool			walking;
+	bool				walking;
 
 	//Next coord
-	int				nextspot; 
+	int					nextspot; 
 
 	//Start camera variables
-	sf::Vector2f	camStart;
+	sf::Vector2f		camStart;
 
 	//Temp variables for smooth moving
-	int				nx, ny;
+	int					nx, ny;
 
 	//Camera tweener
-	CDBTweener		oTweener;
-	float			ncx, ncy;
+	CDBTweener			oTweener;
+	float				ncx, ncy;
 
 	//Player object on map
-	tmx::MapObject	*object;
+	tmx::MapObject		*object;
 
 	//Pointer to doors
-	std::vector<Door> *doors;
+	std::vector<Door>	*doors;
+
+	//Pointer to sqauds
+	std::vector<Squad>	*squads;
 
 public:
 	PlayerObject();
-	void init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Door> &doorsList);
+	void init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Door> &doorsList, std::vector<Squad> &squadsList);
 	void update(sf::Time &time, sf::View &camera);
 	void draw(sf::RenderTarget &tg);
 	void move(std::vector<tmx::MapObject> &objects);
