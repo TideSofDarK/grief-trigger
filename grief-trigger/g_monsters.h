@@ -30,9 +30,11 @@ public:
 	unsigned int &getStrength() {return strength;};
 	unsigned int &getAgility() {return agility;};
 	unsigned int &getIntelligence() {return intelligence;};
+	unsigned int &getHP() {return hp;};
 	void setStrength(unsigned int newStrength) {strength = newStrength;};
 	void setAgility(unsigned int newAgility) {agility = newAgility;};
 	void setIntelligence(unsigned int newIntelligence) {intelligence = newIntelligence;};
+	void setHP(unsigned int newHP) {hp = newHP;};
 	std::string getName() {return name;};
 };
 
@@ -77,7 +79,7 @@ private:
 public:
 	Squad();
 	void init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap);
-	std::vector<Monster> getMonsters() {return monsters;};
+	std::vector<Monster> &getMonsters() {return monsters;};
 	void draw(sf::RenderTarget &tg);
 	void update(sf::Time time, std::vector<tmx::MapObject> &objects);
 	bool isWalking() {return walking;};

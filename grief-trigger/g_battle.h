@@ -24,15 +24,13 @@ private:
 
 	float		ny;
 	float		na;
+	float		dirY;
 
 	//Is active
 	bool active;
 
-	CDBTweener oTweener;
-
 public:
 	Damage(sf::Vector2f pos, std::string str, sf::Font &font);
-	void init();
 	void draw(sf::RenderTarget &tg);
 	void update(sf::Time time);
 	bool isActive() {return active;};
@@ -48,11 +46,13 @@ private:
 	sf::RectangleShape shape;
 	sf::RectangleShape bar;
 
+	bool vertical;
+
 public:
 	Bar();
-	void init(sf::Vector2f pos, unsigned int &var, sf::Color color = sf::Color(145, 199, 105));
+	void init(bool vert, sf::Vector2f pos, unsigned int &var, sf::Color color = sf::Color(145, 199, 105));
 	void draw(sf::RenderTarget &tg);
-	void update(sf::Time time);
+	void update(sf::Time time, sf::Vector2f np = sf::Vector2f());
 };
 
 class Battle
@@ -64,10 +64,13 @@ private:
 	unsigned int turnNumber;
 
 	//Font
-	sf::Font font;
+	sf::Font					font;
+	
+	//Text shader
+	sf::Shader textShader;
 
 	//Damage effect
-	std::vector<Damage> damage;
+	std::vector<Damage>			damageEffects;
 
 	//Enemy squad
 	Squad						squad;
@@ -80,8 +83,6 @@ private:
 
 	//List of monsters on screen
 	std::vector<sf::Sprite>		monsters;
-
-	
 
 	//Selection animation
 	unsigned int				counter;
