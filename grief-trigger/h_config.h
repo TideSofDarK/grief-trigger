@@ -1,6 +1,8 @@
 #ifndef CONFIG_INCLUDE
 #define CONFIG_INCLUDE
 
+#include "string"
+
 #include <SFML/System.hpp>
 
 static const sf::Uint32 TILE_SIZE = 32;
@@ -22,5 +24,7 @@ static const sf::Uint32 DIR_TOP = 0;
 static const sf::Uint32 DIR_RIGHT = 1;
 static const sf::Uint32 DIR_LEFT = 2;
 static const sf::Uint32 DIR_DOWN = 3;
+
+static const std::string fontPath = "assets/fonts/default.TTF";
 
 #endif

@@ -4,6 +4,7 @@ Parser::Parser()
 {
 	monstersDoc.load_file("assets/monsters.xml");
 	dialoguesDoc.load_file("assets/text.xml");
+	resourcesDoc.load_file("assets/resources.xml");
 }
 
 BasicStats Parser::getMonsterStats(std::string name)
@@ -97,4 +98,29 @@ std::string Parser::parseDialogue(std::string name, std::string situation)
 	}
 
 	return str;
+}
+
+std::vector<std::string> Parser::parseResources(std::string block)
+{	
+	std::string resourcesList = resourcesDoc.child(block.c_str()).child_value();
+
+	//Remove first newline
+	std::string::size_type pos = 0; 
+	pos = resourcesList.find ("\n",pos);
+	resourcesList.erase ( pos, 1 );
+
+	//Count resources
+	int s = std::count(resourcesList.begin(), resourcesList.end(), '\n');
+
+	std::vector<std::string> resourcesNames;
+
+	//Add resources
+	pos = 0;
+	std::string token;
+	while ((pos = resourcesList.find('\n')) != std::string::npos) {
+		resourcesNames.push_back(resourcesList.substr(0, pos));
+		resourcesList.erase(0, pos + 1);
+	}
+
+	return resourcesNames;
 }

@@ -15,6 +15,30 @@
 #include "g_monsters.h"
 #include "d_gamedata.h"
 
+//Similar to DialoguePanel but simpler
+class Logger
+{
+private:
+	std::string		actualString;
+	unsigned int	character;
+	sf::Text		text;
+	sf::Font		font;
+	bool			ended;
+	bool			read;
+	sf::Clock		clock;
+
+public:
+	Logger();
+	void init(sf::Vector2f pos);
+	void update(sf::Time time);
+	void draw(sf::RenderTarget &tg);
+	void input(sf::Event &event);
+	void stop();
+	void setString(std::string str);
+	bool isEnded() {return ended;};
+	bool isRead() {return read;};
+};
+
 class Damage
 {
 private:
@@ -55,6 +79,33 @@ public:
 	void update(sf::Time time, sf::Vector2f np = sf::Vector2f());
 };
 
+typedef enum { ATTACKED, NOT_ATTACKED } ENEMY_STATE;
+
+class Enemy
+{
+private:
+	ENEMY_STATE state;
+
+	Monster				&monster;
+	sf::Sprite			sprite;
+	Bar					hpBar;
+	unsigned int		counter;
+	bool				fading;
+	sf::Clock clock;
+	bool animation;
+
+public:
+	Enemy(sf::Vector2f pos, const sf::Texture &texture, Monster &monster);
+	void draw(sf::RenderTarget &tg, bool selected = false);
+	void drawUI(sf::RenderTarget &tg);
+	void update(sf::Time time);
+	sf::Vector2f getPosition() {return sprite.getPosition();};
+	Monster &getMonster() {return monster;};
+	void setState(ENEMY_STATE newState) {state = newState;};
+	void playAnimation();
+	void stopAnimation() {animation = false;};
+};
+
 class Battle
 {
 private:
@@ -62,6 +113,9 @@ private:
 	typedef enum { PLAYER, AI } BATTLE_STATE;
 	BATTLE_STATE				state;
 	unsigned int turnNumber;
+	unsigned int currentAttacking;
+
+	sf::Clock clock;
 
 	//Font
 	sf::Font					font;
@@ -72,6 +126,9 @@ private:
 	//Damage effect
 	std::vector<Damage>			damageEffects;
 
+	//Enemies on screen
+	std::vector<Enemy> enemies;
+
 	//Enemy squad
 	Squad						squad;
 
@@ -80,13 +137,6 @@ private:
 
 	//Resources loader
 	pugi::xml_document			doc;
-
-	//List of monsters on screen
-	std::vector<sf::Sprite>		monsters;
-
-	//Selection animation
-	unsigned int				counter;
-	bool						fading;
 
 	//Top panel's back
 	sf::Sprite					battleBox;
@@ -112,11 +162,11 @@ private:
 	Bar thunderManaBar;
 	Bar playerManaBar;
 
-	//Enemy bars
-	std::list<Bar> enemyBars;
-
 	//Tweener
 	CDBTweener oTweener;
+
+	//Battle logger
+	Logger log;
 
 public:
 	Battle();
@@ -125,7 +175,9 @@ public:
 	void drawUI(sf::RenderTarget &tg);
 	void update(sf::Time time);
 	void input(sf::Event &event);
-	void loadResources(std::string fileName = "assets/resources.xml");
+	void init(std::string fileName = "assets/resources.xml");
+	void damagePlayer(Monster &monster);
+	void nextStep();
 };
 
 #endif

@@ -70,6 +70,12 @@ private:
 	//Is paused
 	bool paused;
 
+	//Is transition
+	bool transition;
+
+	//Transition timer
+	sf::Clock transitionClock;
+
 public:
 	Scene();
 	void init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml);

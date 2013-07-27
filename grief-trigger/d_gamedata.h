@@ -19,12 +19,12 @@ public:
 	unsigned int &getHP() {return hp;};
 	unsigned int &getMP() {return mp;};
 	unsigned int &getSocial() {return social;};
-	void setStrength(unsigned int newStrength) {if (newStrength > 0) strength = newStrength;};
-	void setAgility(unsigned int newAgility) {if (newAgility > 0) agility = newAgility;};
-	void setIntelligence(unsigned int newIntelligence) {if (newIntelligence > 0) intelligence = newIntelligence;};
-	void setHP(unsigned int newHP) {if (newHP > 0) hp = newHP;};
-	void setMP(unsigned int newMP) {if (newMP > 0) mp = newMP;};
-	void setSocial(unsigned int newSocial) {if (newSocial > 0) social = newSocial;};
+	void setStrength(unsigned int newStrength) {if (newStrength >= 0) strength = newStrength;};
+	void setAgility(unsigned int newAgility) {if (newAgility >= 0) agility = newAgility;};
+	void setIntelligence(unsigned int newIntelligence) {if (newIntelligence >= 0) intelligence = newIntelligence;};
+	void setHP(unsigned int newHP) {if (newHP >= 0) hp = newHP;};
+	void setMP(unsigned int newMP) {if (newMP >= 0) mp = newMP;};
+	void setSocial(unsigned int newSocial) {if (newSocial >= 0) social = newSocial;};
 
 	void setStats(HeroStats stats)
 	{

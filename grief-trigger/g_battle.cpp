@@ -1,6 +1,7 @@
 #include "g_battle.h"
 
 #include "h_config.h"
+#include "d_parser.h"
 
 #define SHAPE_WIDTH 180.0
 #define BAR_WIDTH 170.0
@@ -10,9 +11,85 @@
 
 #define OFFSET 5.0
 
+#define ANIMATIONTIME 1.0
+
+Logger::Logger()
+{
+
+}
+
+void Logger::init(sf::Vector2f pos)
+{
+	font.loadFromFile(fontPath);
+	text = sf::Text();
+	text.setPosition(pos);
+	text.setString("");
+	text.setFont(font);
+	text.setCharacterSize(33);
+	text.setColor(sf::Color::Black);
+	ended = true;
+	read = true;
+	character = 0;
+}
+
+void Logger::draw(sf::RenderTarget &tg)
+{
+	tg.draw(text);
+}
+
+void Logger::update(sf::Time time)
+{
+	if (ended == false)
+	{
+		if (clock.getElapsedTime().asMilliseconds() > 60 && character < actualString.length())
+		{
+			if (text.getString().toAnsiString().c_str()[text.getString().getSize()] != ' ')
+			{
+				SoundManager::instance().playClickSound();
+			}
+			if (text.getString().getSize() + 1 == actualString.size())
+			{
+				SoundManager::instance().playEnterSound();
+			}
+			clock.restart();
+			character++;
+			text.setString( sf::String(actualString.substr(0, character)));				
+		}
+		else if (character >= actualString.length())
+		{
+			stop();
+		}
+	}
+}
+
+void Logger::input(sf::Event &event)
+{
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && ended) read = true;
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && !ended) stop();
+}
+
+void Logger::stop()
+{
+	text.setString(actualString);
+	ended = true;
+	character = actualString.length();
+}
+
+void Logger::setString(std::string str)
+{
+	if (ended) 
+	{
+		ended = false;
+		read = false;
+		actualString = str;
+		character = 0;
+		clock.restart();
+	}
+}
+
 Damage::Damage(sf::Vector2f pos, std::string str, sf::Font &font)
 {
-	text = sf::Text(str, font, 50);
+	text = sf::Text(str, font, 80);
 	text.setColor(sf::Color::Red);
 	text.setPosition(pos);
 
@@ -92,8 +169,8 @@ void Bar::init(bool vert, sf::Vector2f pos, unsigned int &var, sf::Color color)
 	}
 	else
 	{
-		shape = sf::RectangleShape(sf::Vector2f(SHAPE_HEIGHT, SHAPE_WIDTH));
-		bar = sf::RectangleShape(sf::Vector2f(BAR_HEIGHT, BAR_WIDTH));
+		shape = sf::RectangleShape(sf::Vector2f(SHAPE_HEIGHT / 2, SHAPE_WIDTH));
+		bar = sf::RectangleShape(sf::Vector2f(BAR_HEIGHT/ 2, BAR_WIDTH));
 		shape.setPosition(pos);
 		shape.move(0, SHAPE_WIDTH / 2);		
 		bar.setPosition(shape.getPosition().x + OFFSET, shape.getPosition().y + OFFSET);	
@@ -130,20 +207,123 @@ void Bar::update(sf::Time time, sf::Vector2f np)
 	}
 	else
 	{
-		bar.setSize(sf::Vector2f(BAR_HEIGHT, ((BAR_WIDTH / 100) * p) + OFFSET)); 
-		shape.setSize(sf::Vector2f(SHAPE_HEIGHT, bar.getSize().y + (OFFSET * 2)));
+		bar.setSize(sf::Vector2f((BAR_HEIGHT / 2) - OFFSET, ((BAR_WIDTH / 100) * p) + OFFSET)); 
+		shape.setSize(sf::Vector2f(SHAPE_HEIGHT/ 2, bar.getSize().y + (OFFSET * 2)));
 	}
+}
+
+Enemy::Enemy(sf::Vector2f pos, const sf::Texture &texture, Monster &monsterRef) : monster(monsterRef)
+{
+	sprite.setPosition(pos);
+	sprite.setTexture(texture);
+	hpBar.init(true, sf::Vector2f(sprite.getPosition().x * 2, sprite.getPosition().y), 
+		monster.getHP());
+	counter = 0;
+	fading = false;
+	animation = false;
+}
+
+void Enemy::draw(sf::RenderTarget &tg, bool selected)
+{
+	if (selected)
+	{
+		sprite.setColor(sf::Color(255, 255, 255, counter));
+	}
+	else if (animation)
+	{
+		sprite.setColor(sf::Color(counter, counter, counter, 255));
+	}
+	else
+	{
+		sprite.setColor(sf::Color(255u, 255u, 255u, 255u));
+	}
+	tg.draw(sprite);
+}
+
+void Enemy::drawUI(sf::RenderTarget &tg)
+{
+	hpBar.draw(tg);
+
+	if (animation && clock.getElapsedTime().asSeconds() >= ANIMATIONTIME) 
+	{
+		animation = false;
+		counter = 0;
+		fading = false;
+	}
+}
+
+void Enemy::update(sf::Time time)
+{
+	if (!animation)
+	{
+		if (-20 + (rand() % (int)(21)) == -3)
+		{
+			sprite.move(-1 + (rand() % (int)(3)), -1 + (rand() % (int)(3)));
+		}
+
+		if (fading == false)
+		{
+			if (counter<255) counter+=15;
+			else 
+			{
+				counter = 255;
+				fading = true;
+			}
+		}
+		if (fading == true)
+		{
+			if (counter>0) counter-=15;
+			else 
+			{
+				counter = 0; 
+				fading = false;
+			}
+		}
+	}
+	else
+	{
+		if (fading == false)
+		{
+			if (counter<255) counter+=51;
+			else 
+			{
+				counter = 255;
+				fading = true;
+			}
+		}
+		if (fading == true)
+		{
+			if (counter>0) counter-=51;
+			else 
+			{
+				counter = 0; 
+				fading = false;
+			}
+		}
+	}
+
+	hpBar.update(time, sf::Vector2f(sprite.getPosition().x * 2, sprite.getPosition().y));
+}
+
+void Enemy::playAnimation()
+{
+	animation = true;
+	clock.restart();
+	counter = 0;
+	fading = false;
 }
 
 Battle::Battle()
 {
 }
 
-void Battle::loadResources(std::string fileName)
+void Battle::init(std::string fileName)
 {
 	std::cout << std::to_string(GameData::instance().getPlayer().getHP()) << std::endl;
 
-	font.loadFromFile("assets/fonts/default.TTF");
+	font.loadFromFile(fontPath);
+
+	log.init(sf::Vector2f(110, 21));
 
 	//Some shitty code here
 	//At least it is fast lol
@@ -178,30 +358,9 @@ void Battle::loadResources(std::string fileName)
 
 	background.create(WIDTH, HEIGHT);
 
-	//Load resources list file
-	pugi::xml_parse_result result = doc.load_file((fileName).c_str());
+	std::vector<std::string> resourcesNames = Parser::instance().parseResources("battle");
 
-	std::string resourcesList = doc.child("battle").child_value();
-
-	//Remove first newline
-	std::string::size_type pos = 0; 
-	pos = resourcesList.find ("\n",pos);
-	resourcesList.erase ( pos, 1 );
-
-	//Count resources
-	int s = std::count(resourcesList.begin(), resourcesList.end(), '\n');
-
-	std::vector<std::string> resourcesNames;
-
-	//Add resources
-	pos = 0;
-	std::string token;
-	while ((pos = resourcesList.find('\n')) != std::string::npos) {
-		resourcesNames.push_back(resourcesList.substr(0, pos));
-		resourcesList.erase(0, pos + 1);
-	}
-
-	for (int i = 0; i < s; i++)
+	for (int i = 0; i < resourcesNames.size(); i++)
 	{
 		TextureManager::instance().getTexture("assets/" + resourcesNames[i]);
 	}
@@ -214,31 +373,23 @@ void Battle::start(Squad &squad_)
 	std::vector<Monster> &list = squad.getMonsters();
 
 	sf::FloatRect bounds(HALF_WIDTH / 4, HALF_HEIGHT / 5, (HALF_WIDTH / 4) * 3, (HALF_HEIGHT / 5) * 3);
-
 	for (auto i = list.begin(); i != list.end(); i++)
 	{
 		Monster &m = *i;
-
-		sf::Sprite sprite;
-		sprite.setTexture(TextureManager::instance().getTexture("assets/" + i->getName() + ".png"));
-		sprite.setPosition(((HALF_WIDTH) - (sprite.getTextureRect().width * (list.size() + 1))) + (sprite.getTextureRect().width * (i - list.begin())), bounds.top + ((((i - list.begin()) % 2)) ? 10 : -10));
-		monsters.push_back(sprite);
-
-		Bar b;
-		b.init(true, sf::Vector2f(sprite.getPosition().x * 2, sprite.getPosition().y), 
-			m.getHP());
-		std::cout << std::to_string(i->getHP()) << std::endl;
-		enemyBars.push_back(b);
+		Enemy newEnemy(sf::Vector2f(HALF_WIDTH - ((67 * 2) * (list.size())) + ((67 * 2) * (i - list.begin())), bounds.top + ((((i - list.begin()) % 2)) ? 10 : -10)), TextureManager::instance().getTexture("assets/" + i->getName() + ".png"), m);
+		enemies.push_back(newEnemy);
 	}
 
 	battleBox.setTexture(TextureManager::instance().getTexture("assets/battlebox.png"));
 
 	selected = 0;
-	counter = 0;
-	fading = false;
 	seconds = 0;
+	currentAttacking = 0;
+	turnNumber = 0;
 
 	state = AI;
+
+	clock.restart();
 }
 
 void Battle::drawUI(sf::RenderTarget &tg)
@@ -253,39 +404,75 @@ void Battle::drawUI(sf::RenderTarget &tg)
 	emberManaBar.draw(tg);
 	thunderManaBar.draw(tg);
 	playerManaBar.draw(tg);
-	//std::cout << std::to_string(damageEffects.size()) << std::endl;
 
 	for (auto i = damageEffects.begin(); i != damageEffects.end(); ++i)
 	{
 		i->draw(tg);
 	}
 
-	for (auto i = enemyBars.begin(); i != enemyBars.end(); ++i)
+	for (auto i = enemies.begin(); i != enemies.end(); ++i)
 	{
-		if (std::distance(enemyBars.begin(), i) == selected)
-		{
-			i->draw(tg);
-		}		
+		i->drawUI(tg);		
 	}
+
+	log.draw(tg);
 }
 
 void Battle::draw(sf::RenderTarget &tg)
 {
 	sf::Sprite back(background);
 	tg.draw(back, &fire);
-	for (auto i = monsters.begin(); i != monsters.end(); ++i)
+
+	for (auto i = enemies.begin(); i != enemies.end(); ++i)
 	{
-		if (i - monsters.begin() == selected)
+		if (i - enemies.begin() == selected)
 		{
-			i->setColor(sf::Color::White);
-			i->setColor(sf::Color(255, 255, 255, counter));
+			i->draw(tg, true);
 		}
 		else
 		{
-			i->setColor(sf::Color(255u, 255u, 255u, 255u));
+			i->draw(tg);
 		}
-		tg.draw(*i);
-	}	
+	}
+}
+
+void Battle::damagePlayer(Monster &monster)
+{
+	//GameData::instance().getEmber()
+	int hero = (rand() % (int)(3));
+
+	//Random formula
+	int dmg = (monster.getStrength() / 2 + monster.getAgility() / 3 + monster.getIntelligence() / 4) + (rand() % (int)(2));
+	std::string name;
+
+	switch (hero)
+	{
+	case 0:
+		damageEffects.push_back(Damage(sf::Vector2f(playerSprite.getPosition().x + (playerSprite.getTextureRect().width / 4), 
+			playerSprite.getPosition().y + (playerSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg), font));
+		GameData::instance().getPlayer().setHP(GameData::instance().getPlayer().getHP() - dmg);
+		name = "Player";
+		break;
+	case 1:
+		damageEffects.push_back(Damage(sf::Vector2f(emberSprite.getPosition().x + (emberSprite.getTextureRect().width / 4), 
+			emberSprite.getPosition().y + (emberSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg), font));
+		GameData::instance().getEmber().setHP(GameData::instance().getEmber().getHP() - dmg);
+		name = "Ember";
+		break;
+	case 2:
+		damageEffects.push_back(Damage(sf::Vector2f(thunderSprite.getPosition().x + (thunderSprite.getTextureRect().width / 4), 
+			thunderSprite.getPosition().y + (thunderSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg), font));
+		GameData::instance().getThunder().setHP(GameData::instance().getThunder().getHP() - dmg);
+		name = "Thunder";
+		break;
+	default:
+		break;
+	}
+
+	std::string tmp = enemies[currentAttacking].getMonster().getName();
+	tmp[0] = toupper(tmp[0]);
+
+	log.setString(tmp + " damaged " + name + " for " + std::to_string(dmg) + " points.");
 }
 
 void Battle::update(sf::Time time)
@@ -304,46 +491,15 @@ void Battle::update(sf::Time time)
 		}
 	}
 
-	for (auto i = enemyBars.begin(); i != enemyBars.end(); ++i)
-	{
-		auto t = std::distance(enemyBars.begin(), i);
-		i->update(time, sf::Vector2f(monsters[t].getPosition().x * 2, monsters[t].getPosition().y));
-	}
-
 	fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
 	fire.setParameter("seconds", seconds);
 
 	seconds++;
 
-	if (fading == false)
+	for (auto i = enemies.begin(); i != enemies.end(); ++i)
 	{
-		if (counter<255) counter+=15;
-		else 
-		{
-			counter = 255;
-			fading = true;
-		}
+		i->update(time);
 	}
-	if (fading == true)
-	{
-		if (counter>0) counter-=15;
-		else 
-		{
-			counter = 0; 
-			fading = false;
-		}
-	}
-
-	if (monsters.size() != 0)
-	{
-		for (auto i = monsters.begin(); i != monsters.end(); ++i)
-		{
-			if (-20 + (rand() % (int)(21)) == -3)
-			{
-				i->move(-1 + (rand() % (int)(3)), -1 + (rand() % (int)(3)));
-			}
-		}
-	}	
 
 	emberHPBar.update(time);
 	thunderHPBar.update(time);
@@ -353,10 +509,51 @@ void Battle::update(sf::Time time)
 	playerManaBar.update(time);
 
 	oTweener.step(time.asSeconds());
+
+	log.update(time);
+
+	if (state == AI && log.isRead())
+	{
+		enemies[currentAttacking].stopAnimation();
+		selected = currentAttacking;
+		nextStep();
+	}
+}
+
+void Battle::nextStep()
+{
+	if (state == AI && log.isEnded())
+	{
+		if (currentAttacking + 1 > enemies.size())
+		{
+			turnNumber++;
+			currentAttacking = 0;
+			for (auto i = enemies.begin(); i != enemies.end(); i++)
+			{
+				i->setState(NOT_ATTACKED);
+			}		
+			if (state == AI) state = PLAYER;
+		}
+		else
+		{
+			damagePlayer(enemies[currentAttacking].getMonster());
+
+			enemies[currentAttacking].playAnimation();
+			enemies[currentAttacking].setState(ATTACKED);
+
+			currentAttacking++;	
+		}		
+	}	
 }
 
 void Battle::input(sf::Event &event)
 {
+	//For some fucking reason only works if update log's input firstly
+	log.input(event);
+
+	//if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && log.isEnded()) nextStep();
+	
+
 	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::T)	
 	{
 		damageEffects.push_back(Damage(sf::Vector2f(100, playerSprite.getPosition().y), "-1", font));
@@ -367,33 +564,46 @@ void Battle::input(sf::Event &event)
 	}
 	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Y)	
 	{
-		damageEffects.push_back(Damage(sf::Vector2f(monsters.back().getPosition().x * 2, monsters.back().getPosition().y * 2), "-1", font));
+		damageEffects.push_back(Damage(sf::Vector2f(enemies[selected].getPosition().x * 2, enemies[selected].getPosition().y * 2), "-1", font));
 
-		squad.getMonsters().back().setHP(squad.getMonsters().back().getHP() - 1);
+		enemies[selected].getMonster().setHP(enemies[selected].getMonster().getHP() - 1);
+		//squad.getMonsters()[selected].setHP(squad.getMonsters()[selected].getHP() - 1);
 		//std::cout << std::to_string(squad.getMonsters().back().getHP()) << std::endl;
 	}
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::A)
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::U)	
 	{
-		if (selected > 0)
-		{
-			selected--;
-		}
-		else
-		{
-			selected = monsters.size() - 1;
-		}
+		//damageEffects.push_back(Damage(sf::Vector2f(enemies[selected].getPosition().x * 2, enemies[selected].getPosition().y * 2), "-1", font));
+		//setHP(enemies[selected].getMonster().getHP() - 1);
 
-		std::cout << std::to_string(selected) << std::endl;
+		damagePlayer(enemies[selected].getMonster());
+
+		//squad.getMonsters()[selected].setHP(squad.getMonsters()[selected].getHP() - 1);
+		//std::cout << std::to_string(squad.getMonsters().back().getHP()) << std::endl;
 	}
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D)
+
+	if (state != AI)
 	{
-		if (selected + 1 < monsters.size())
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::A)
 		{
-			selected++;
+			if (selected > 0)
+			{
+				selected--;
+			}
+			else
+			{
+				selected = enemies.size() - 1;
+			}
 		}
-		else
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D)
 		{
-			selected = 0;
+			if (selected + 1 < enemies.size())
+			{
+				selected++;
+			}
+			else
+			{
+				selected = 0;
+			}
 		}
 	}
 }

@@ -42,7 +42,7 @@ void Scene::loadResources()
 
 	pm.init("assets/smoke.png");
 
-	battle.loadResources();
+	battle.init();
 
 	loaded = true;
 	isBattle = false;
@@ -72,13 +72,14 @@ void Scene::init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader 
 	finalTexture.create(WIDTH, HEIGHT);
 
 	paused = false;
+	transition = false;
 }
 
 void Scene::update(sf::Time time)
 {
 	if (loaded)
 	{
-		if (!paused)
+		if (!paused && !transition)
 		{
 			if (!isBattle)
 			{
@@ -90,6 +91,13 @@ void Scene::update(sf::Time time)
 				DialoguePanel::instance().update();
 				po.move(map->GetLayers().back().objects);
 				po.update(time, *camera);
+			}
+		}
+		else
+		{
+			if (transitionClock.getElapsedTime().asSeconds() >= 0.5)
+			{
+				isBattle = true;
 			}
 		}
 		sm.update();
@@ -164,8 +172,10 @@ void Scene::draw(sf::RenderTarget &tg)
 
 void Scene::startBattle(Squad squad)
 {
+	transitionClock.restart();
+	transition = true;
+
 	battle.start(squad);
-	isBattle = true;
 }
 
 void Scene::input(sf::Event &event)
