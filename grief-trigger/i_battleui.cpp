@@ -34,10 +34,6 @@ void Logger::update(sf::Time time)
 			{
 				SoundManager::instance().playClickSound();
 			}
-			if (text.getString().getSize() + 1 == actualString.size())
-			{
-				SoundManager::instance().playEnterSound();
-			}
 			clock.restart();
 			character++;
 			text.setString( sf::String(actualString.substr(0, character)));				
@@ -215,7 +211,9 @@ void Menu::init(std::vector<std::wstring> newItems)
 	items.clear();
 	for (auto i = newItems.begin(); i != newItems.end(); i++)
 	{
-		sf::Text text(*i, font, 20);
+		sf::String s(*i);
+
+		sf::Text text(s, font, 20);
 		text.setColor(sf::Color::Black);
 		text.setPosition(0, (i - newItems.begin()) * 20);
 		items.push_back(text);
@@ -226,14 +224,16 @@ void Menu::init(std::vector<std::wstring> newItems)
 
 	selector = sf::RectangleShape(sf::Vector2f());
 	selector.setFillColor(sf::Color::Blue);
+
+	selected = NOT_SELECTED;
 }
 
 void Menu::update(sf::Time time)
 {
 	if (items.size() != 0 && working)
 	{
-		selector.setSize(sf::Vector2f(items[selected].getGlobalBounds().width, items[selected].getGlobalBounds().height));
-		selector.setPosition(items[selected].getPosition().x, items[selected].getPosition().y + (items[selected].getGlobalBounds().height / 3) - 2);
+		selector.setSize(sf::Vector2f(items[selection].getGlobalBounds().width, items[selection].getGlobalBounds().height));
+		selector.setPosition(items[selection].getPosition().x, items[selection].getPosition().y + (items[selection].getGlobalBounds().height / 3) - 2);
 	}
 }
 
@@ -245,6 +245,8 @@ void Menu::draw(sf::RenderTarget &tg)
 		tg.draw(selector);
 		for (auto i = items.begin(); i != items.end(); i++)
 		{
+			if (i - items.begin() == selection) i->setColor(sf::Color::White);
+			else i->setColor(sf::Color::Black);
 			tg.draw(*i);
 		}	
 	}
@@ -256,30 +258,31 @@ void Menu::input(sf::Event &event)
 	{
 		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
 		{
-
+			select();
+			disappear();
 		}
 		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::W)
 		{
-			if (selected > 0)
+			if (selection > 0)
 			{
-				selected--;
+				selection--;
 			}
 			else
 			{
-				selected = items.size() - 1;
+				selection = items.size() - 1;
 			}
 
 			SoundManager::instance().playSelectSound();
 		}
 		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S)
 		{
-			if (selected + 1 < items.size())
+			if (selection + 1 < items.size())
 			{
-				selected++;
+				selection++;
 			}
 			else
 			{
-				selected = 0;
+				selection = 0;
 			}
 
 			SoundManager::instance().playSelectSound();
@@ -303,4 +306,10 @@ void Menu::disappear()
 	{
 		working = false;
 	}
+}
+
+void Menu::select()
+{
+	selected = selection;
+	working = false;
 }

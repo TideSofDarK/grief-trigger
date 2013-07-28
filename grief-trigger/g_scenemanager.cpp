@@ -88,12 +88,12 @@ void Scene::update(sf::Time time)
 				{
 					i->update(time, map->GetLayers().back().objects);
 				}	
-				DialoguePanel::instance().update();
+				if (!DialoguePanel::instance().isHided()) DialoguePanel::instance().update();			
 				po.move(map->GetLayers().back().objects);
 				po.update(time, *camera);
 			}
 		}
-		sm.update();
+		if (sm.isWorking()) sm.update();
 	}
 	else
 	{
@@ -200,7 +200,7 @@ void Scene::input(sf::Event &event)
 				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::V) paused = false;
 			}
 		}
-		else 
+		else if (isBattle)
 		{
 			battle.input(event);
 		}

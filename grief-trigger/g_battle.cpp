@@ -3,6 +3,8 @@
 #include "h_config.h"
 #include "d_parser.h"
 
+//Every time when i use "* 2" it means that i'm fag
+
 Enemy::Enemy(sf::Vector2f pos, const sf::Texture &texture, Monster &monsterRef) : monster(monsterRef)
 {
 	sprite.setPosition(pos);
@@ -12,7 +14,7 @@ Enemy::Enemy(sf::Vector2f pos, const sf::Texture &texture, Monster &monsterRef) 
 	counter = 0;
 	fading = false;
 	animation = false;
-	bounds = sf::FloatRect(sprite.getPosition().x, sprite.getPosition().y, texture.getSize().x, texture.getSize().y);
+	bounds = sf::FloatRect(sprite.getPosition().x - 10, sprite.getPosition().y - 10, texture.getSize().x + 10, texture.getSize().y + 10);
 }
 
 void Enemy::draw(sf::RenderTarget &tg, bool selected)
@@ -50,10 +52,13 @@ void Enemy::update(sf::Time time)
 	{
 		if (-20 + (rand() % (int)(21)) == -3)
 		{
-			//if (sprite.getGlobalBounds().intersects(bounds))
-			//{
-			sprite.move(-1 + (rand() % (int)(3)), -1 + (rand() % (int)(3)));
-			//}	
+			float ox = -1 + (rand() % (int)(3));
+			float oy =  -1 + (rand() % (int)(3));
+
+			if (bounds.intersects(sf::FloatRect(sprite.getPosition().x  + ox, sprite.getPosition().y + oy, sprite.getLocalBounds().width, sprite.getLocalBounds().height), sf::FloatRect(0, 0, sprite.getLocalBounds().width, sprite.getLocalBounds().height)))
+			{
+				sprite.move(ox, oy);
+			}	
 		}
 
 		if (fading == false)
@@ -120,6 +125,11 @@ void Battle::init(std::string fileName)
 
 	log.init(sf::Vector2f(110, 21));
 
+	pointer.setTexture(TextureManager::instance().getTexture("assets/pointer.png"));
+	
+	effectRect = sf::RectangleShape(sf::Vector2f(WIDTH, HEIGHT));
+	effectRect.setFillColor(sf::Color(0,0,0,155));
+
 	//Some shitty code here
 	//At least it is fast lol
 	playerSprite.setTexture(TextureManager::instance().getTexture("assets/girl_art.png"));
@@ -163,7 +173,7 @@ void Battle::init(std::string fileName)
 	std::vector<std::wstring> str;
 	str.push_back(L"Атака");
 	str.push_back(L"Способность");
-	str.push_back(L"Предмет");
+	str.push_back(L"Предметы");
 
 	menu.init(str);
 }
@@ -220,6 +230,18 @@ void Battle::drawUI(sf::RenderTarget &tg)
 	log.draw(tg);
 
 	menu.draw(tg);
+
+	if (state == SPELL) tg.draw(effectRect);
+
+	if (state == PLAYER) tg.draw(pointer);
+
+	if (state == PLAYER && menu.getSelected() != NOT_SELECTED) 
+	{
+		if (menu.getSelected() == 1)
+		{			
+			state = SPELL;
+		}
+	}
 }
 
 void Battle::draw(sf::RenderTarget &tg)
@@ -261,19 +283,19 @@ void Battle::damagePlayer(Monster &monster)
 	switch (hero)
 	{
 	case 0:
-		damageEffects.push_back(Damage(sf::Vector2f(playerSprite.getPosition().x + (playerSprite.getTextureRect().width / 4), 
+		damageEffects.push_back(Damage(sf::Vector2f(playerSprite.getPosition().x + (playerSprite.getTextureRect().width / 3), 
 			playerSprite.getPosition().y + (playerSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg), font));
 		GameData::instance().getPlayer().setHP(GameData::instance().getPlayer().getHP() - dmg);
 		name = L"Игрок";
 		break;
 	case 1:
-		damageEffects.push_back(Damage(sf::Vector2f(emberSprite.getPosition().x + (emberSprite.getTextureRect().width / 4), 
+		damageEffects.push_back(Damage(sf::Vector2f(emberSprite.getPosition().x + (emberSprite.getTextureRect().width / 3), 
 			emberSprite.getPosition().y + (emberSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg), font));
 		GameData::instance().getEmber().setHP(GameData::instance().getEmber().getHP() - dmg);
 		name = L"Эмбер";
 		break;
 	case 2:
-		damageEffects.push_back(Damage(sf::Vector2f(thunderSprite.getPosition().x + (thunderSprite.getTextureRect().width / 4), 
+		damageEffects.push_back(Damage(sf::Vector2f(thunderSprite.getPosition().x + (thunderSprite.getTextureRect().width / 3), 
 			thunderSprite.getPosition().y + (thunderSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg), font));
 		GameData::instance().getThunder().setHP(GameData::instance().getThunder().getHP() - dmg);
 		name = L"Сандер";
@@ -293,52 +315,60 @@ void Battle::damagePlayer(Monster &monster)
 
 void Battle::update(sf::Time time)
 {
-	//Update damage effect
-	for (auto i = damageEffects.begin(); i != damageEffects.end();)
+	if (state != SPELL)
 	{
-		Damage &d = *i;
-		if (d.isActive())
+		//Update damage effect
+		for (auto i = damageEffects.begin(); i != damageEffects.end();)
 		{
-			d.update(time);
-			i++;
+			Damage &d = *i;
+			if (d.isActive())
+			{
+				d.update(time);
+				i++;
+			}
+			else
+			{
+				i = damageEffects.erase(i);
+			}
 		}
-		else
-		{
-			i = damageEffects.erase(i);
-		}
-	}
 
+		//Update enemies
+		for (auto i = enemies.begin(); i != enemies.end(); ++i)
+		{
+			i->update(time);
+		}
+
+		//Bla-bla-bla
+		emberHPBar.update(time);
+		thunderHPBar.update(time);
+		playerHPBar.update(time);
+		emberManaBar.update(time);
+		thunderManaBar.update(time);
+		playerManaBar.update(time);
+
+		oTweener.step(time.asSeconds());
+
+		log.update(time);
+
+		//Is message completely read
+		if (state == AI && log.isRead())
+		{
+			//Let them turn
+			nextAIStep();
+		}
+
+		if (state == PLAYER)
+		{
+			pointer.setPosition((currentAttacking * playerSprite.getLocalBounds().width) + 160, playerSprite.getPosition().y + 100);
+		}
+
+		menu.update(time);
+	}
+	
 	//Update shader
 	fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
 	fire.setParameter("seconds", seconds);
 	seconds++;
-
-	//Update enemies
-	for (auto i = enemies.begin(); i != enemies.end(); ++i)
-	{
-		i->update(time);
-	}
-
-	//Bla-bla-bla
-	emberHPBar.update(time);
-	thunderHPBar.update(time);
-	playerHPBar.update(time);
-	emberManaBar.update(time);
-	thunderManaBar.update(time);
-	playerManaBar.update(time);
-
-	oTweener.step(time.asSeconds());
-
-	log.update(time);
-
-	//Is message completely read
-	if (state == AI && log.isRead())
-	{
-		//Let them turn
-		nextAIStep();
-	}
-
-	menu.update(time);
 }
 
 void Battle::nextAIStep()
@@ -375,15 +405,13 @@ void Battle::input(sf::Event &event)
 {
 	//For some fucking reason only works if update log's input firstly
 	log.input(event);
-	if (menu.isWorking())
+	if (menu.isWorking() && state == PLAYER)
 	{
 		menu.input(event);
 	}
 
 	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && state == PLAYER && !menu.isWorking() && log.isRead())
 	{
-		
-
 		menu.appear(sf::Vector2f(enemies[selected].getPosition().x * 2, enemies[selected].getPosition().y));
 	}
 
@@ -397,8 +425,6 @@ void Battle::input(sf::Event &event)
 	{
 		enemies[currentAttacking - 1].stopAnimation();
 	}
-
-	//std::cout << std::to_string(squad.getMonsters().back().getHP()) << std::endl;
 
 	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::U)	
 	{

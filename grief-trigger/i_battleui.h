@@ -28,6 +28,8 @@
 
 #define ANIMATIONTIME 1.0
 
+#define NOT_SELECTED -1
+
 //Similar to DialoguePanel but simpler
 class Logger
 {
@@ -99,12 +101,13 @@ private:
 	bool						working;
 	bool						initialized;
 	std::vector<sf::Text>		items;
-	unsigned int				selected;
+	unsigned int				selection;
 	sf::RectangleShape			selector;
 	float						nx;
 	float						counter;
 	sf::Sprite					back;
 	sf::Font					font;
+	int							selected;
 
 public:
 	Menu(void);
@@ -116,6 +119,8 @@ public:
 	void disappear();
 	bool isWorking() {return working;};
 	bool isInitialized() {return initialized;};
+	void select();
+	unsigned int getSelected(){return selected;};
 };
 
 #endif

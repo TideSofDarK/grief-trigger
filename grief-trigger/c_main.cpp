@@ -69,7 +69,9 @@ int main()
 		window.clear();
 
 		SceneManager::instance().draw(window);
-		//window.draw(fps);
+		window.draw(fps);
+
+		sf::sleep(sf::milliseconds(5));
 
 		window.display();
 	}

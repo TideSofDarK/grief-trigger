@@ -41,7 +41,7 @@ void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tm
 
 void PlayerObject::move(std::vector<tmx::MapObject> &objects)
 {
-	if (DialoguePanel::instance().isHided() == false)
+	if (DialoguePanel::instance().isHided() == false && !walking)
 	{
 		bool isMovable = true;
 

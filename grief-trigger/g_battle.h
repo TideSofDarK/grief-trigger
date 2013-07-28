@@ -116,6 +116,12 @@ private:
 	//Appearing menu
 	Menu menu;
 
+	//Pointer to hero
+	sf::Sprite					pointer;
+
+	//Shadow effect
+	sf::RectangleShape			effectRect;
+
 public:
 	Battle();
 	void start(Squad &squad);
