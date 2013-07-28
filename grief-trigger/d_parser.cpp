@@ -25,11 +25,12 @@ std::vector<std::string> Parser::parseSquad(std::string squad)
 {
 	std::vector<std::string> monsters;
 
-	unsigned pos = 0;
+	size_t pos = 0;
 	std::string token;
 	while ((pos = squad.find(';')) != std::string::npos) {
-		monsters.push_back(squad.substr(0, pos));
-		squad.erase(0, pos + 1);
+	    token = squad.substr(0, pos);
+	    monsters.push_back(token);
+	    squad.erase(0, pos + 1);
 	}
 
 	return monsters;
