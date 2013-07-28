@@ -93,13 +93,6 @@ void Scene::update(sf::Time time)
 				po.update(time, *camera);
 			}
 		}
-		else
-		{
-			if (transitionClock.getElapsedTime().asSeconds() >= 0.5)
-			{
-				isBattle = true;
-			}
-		}
 		sm.update();
 	}
 	else
@@ -116,6 +109,15 @@ void Scene::update(sf::Time time)
 
 void Scene::draw(sf::RenderTarget &tg)
 {
+	if (transition)
+	{
+		if (!sm.isWorking())
+		{
+			isBattle = true;
+			transition = false;
+		}
+	}
+
 	if (loaded)
 	{
 		finalTexture.clear(sf::Color(24u, 19u, 27u));

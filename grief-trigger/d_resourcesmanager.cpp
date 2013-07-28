@@ -57,6 +57,9 @@ SoundManager::SoundManager()
 
 	enterBuffer.loadFromFile("assets/enter.wav");
 	enterSound.setBuffer(enterBuffer);
+
+	selectBuffer.loadFromFile("assets/select.wav");
+	selectSound.setBuffer(enterBuffer);
 }
 
 void SoundManager::playDoorSound()
@@ -72,4 +75,9 @@ void SoundManager::playClickSound()
 void SoundManager::playEnterSound()
 {
 	enterSound.play();
+}
+
+void SoundManager::playSelectSound()
+{
+	selectSound.play();
 }

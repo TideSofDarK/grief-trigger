@@ -8,76 +8,13 @@
 
 #include <SFML/Graphics.hpp>
 
-#include <pugixml/pugiconfig.hpp>
+#include <pugixml/pugixml.hpp>
 
 #include "os_dbtweener.h"
 
 #include "g_monsters.h"
 #include "d_gamedata.h"
-
-//Similar to DialoguePanel but simpler
-class Logger
-{
-private:
-	std::string		actualString;
-	unsigned int	character;
-	sf::Text		text;
-	sf::Font		font;
-	bool			ended;
-	bool			read;
-	sf::Clock		clock;
-
-public:
-	Logger();
-	void init(sf::Vector2f pos);
-	void update(sf::Time time);
-	void draw(sf::RenderTarget &tg);
-	void input(sf::Event &event);
-	void stop();
-	void setString(std::string str);
-	bool isEnded() {return ended;};
-	bool isRead() {return read;};
-};
-
-class Damage
-{
-private:
-	sf::Text	text;
-
-	sf::Font	font;
-
-	float		ny;
-	float		na;
-	float		dirY;
-
-	//Is active
-	bool active;
-
-public:
-	Damage(sf::Vector2f pos, std::string str, sf::Font &font);
-	void draw(sf::RenderTarget &tg);
-	void update(sf::Time time);
-	bool isActive() {return active;};
-	void changeActive() {active = !active;};
-};
-
-class Bar
-{
-private:
-	unsigned int *variable;
-	unsigned int maxVariable;
-
-	sf::RectangleShape shape;
-	sf::RectangleShape bar;
-
-	bool vertical;
-
-public:
-	Bar();
-	void init(bool vert, sf::Vector2f pos, unsigned int &var, sf::Color color = sf::Color(145, 199, 105));
-	void draw(sf::RenderTarget &tg);
-	void update(sf::Time time, sf::Vector2f np = sf::Vector2f());
-};
+#include "i_battleui.h"
 
 typedef enum { ATTACKED, NOT_ATTACKED } ENEMY_STATE;
 
@@ -86,13 +23,23 @@ class Enemy
 private:
 	ENEMY_STATE state;
 
+	//Ref to monster
 	Monster				&monster;
+
+	//Sprite
 	sf::Sprite			sprite;
+
+	//Hp bar
 	Bar					hpBar;
+
+	//Animation
 	unsigned int		counter;
 	bool				fading;
-	sf::Clock clock;
-	bool animation;
+	sf::Clock			clock;
+	bool				animation;
+
+	//Movement bounds
+	sf::FloatRect		bounds;
 
 public:
 	Enemy(sf::Vector2f pos, const sf::Texture &texture, Monster &monster);
@@ -104,13 +51,14 @@ public:
 	void setState(ENEMY_STATE newState) {state = newState;};
 	void playAnimation();
 	void stopAnimation() {animation = false;};
+	bool isAnimation() {return animation;};
 };
 
 class Battle
 {
 private:
 	//Current state
-	typedef enum { PLAYER, AI } BATTLE_STATE;
+	typedef enum { PLAYER, AI, SPELL } BATTLE_STATE;
 	BATTLE_STATE				state;
 	unsigned int turnNumber;
 	unsigned int currentAttacking;
@@ -119,15 +67,12 @@ private:
 
 	//Font
 	sf::Font					font;
-	
-	//Text shader
-	sf::Shader textShader;
 
 	//Damage effect
 	std::vector<Damage>			damageEffects;
 
 	//Enemies on screen
-	std::vector<Enemy> enemies;
+	std::vector<Enemy>			enemies;
 
 	//Enemy squad
 	Squad						squad;
@@ -153,20 +98,23 @@ private:
 	sf::Texture					background;
 
 	//HP Bars
-	Bar emberHPBar;
-	Bar thunderHPBar;
-	Bar playerHPBar;
+	Bar							emberHPBar;
+	Bar							thunderHPBar;
+	Bar							playerHPBar;
 
 	//Mana Bars
-	Bar emberManaBar;
-	Bar thunderManaBar;
-	Bar playerManaBar;
+	Bar							emberManaBar;
+	Bar							thunderManaBar;
+	Bar							playerManaBar;
 
 	//Tweener
-	CDBTweener oTweener;
+	CDBTweener					oTweener;
 
 	//Battle logger
-	Logger log;
+	Logger						log;
+
+	//Appearing menu
+	Menu menu;
 
 public:
 	Battle();
@@ -177,7 +125,7 @@ public:
 	void input(sf::Event &event);
 	void init(std::string fileName = "assets/resources.xml");
 	void damagePlayer(Monster &monster);
-	void nextStep();
+	void nextAIStep();
 };
 
 #endif

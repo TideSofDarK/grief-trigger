@@ -3,215 +3,6 @@
 #include "h_config.h"
 #include "d_parser.h"
 
-#define SHAPE_WIDTH 180.0
-#define BAR_WIDTH 170.0
-
-#define SHAPE_HEIGHT 18.0
-#define BAR_HEIGHT 8.0
-
-#define OFFSET 5.0
-
-#define ANIMATIONTIME 1.0
-
-Logger::Logger()
-{
-
-}
-
-void Logger::init(sf::Vector2f pos)
-{
-	font.loadFromFile(fontPath);
-	text = sf::Text();
-	text.setPosition(pos);
-	text.setString("");
-	text.setFont(font);
-	text.setCharacterSize(33);
-	text.setColor(sf::Color::Black);
-	ended = true;
-	read = true;
-	character = 0;
-}
-
-void Logger::draw(sf::RenderTarget &tg)
-{
-	tg.draw(text);
-}
-
-void Logger::update(sf::Time time)
-{
-	if (ended == false)
-	{
-		if (clock.getElapsedTime().asMilliseconds() > 60 && character < actualString.length())
-		{
-			if (text.getString().toAnsiString().c_str()[text.getString().getSize()] != ' ')
-			{
-				SoundManager::instance().playClickSound();
-			}
-			if (text.getString().getSize() + 1 == actualString.size())
-			{
-				SoundManager::instance().playEnterSound();
-			}
-			clock.restart();
-			character++;
-			text.setString( sf::String(actualString.substr(0, character)));				
-		}
-		else if (character >= actualString.length())
-		{
-			stop();
-		}
-	}
-}
-
-void Logger::input(sf::Event &event)
-{
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && ended) read = true;
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && !ended) stop();
-}
-
-void Logger::stop()
-{
-	text.setString(actualString);
-	ended = true;
-	character = actualString.length();
-}
-
-void Logger::setString(std::string str)
-{
-	if (ended) 
-	{
-		ended = false;
-		read = false;
-		actualString = str;
-		character = 0;
-		clock.restart();
-	}
-}
-
-Damage::Damage(sf::Vector2f pos, std::string str, sf::Font &font)
-{
-	text = sf::Text(str, font, 80);
-	text.setColor(sf::Color::Red);
-	text.setPosition(pos);
-
-	active = true;
-
-	ny = pos.y;
-	na = 255;
-	dirY = pos.y - 100;
-}
-
-void Damage::draw(sf::RenderTarget &tg)
-{
-	if (active)
-	{
-		text.setColor(sf::Color(255u, 255u, 255u, na));
-		text.move(1,0);
-		tg.draw(text);
-
-		text.move(-2,0);
-		tg.draw(text);
-
-		text.move(1,0);
-
-		text.move(0,1);
-		tg.draw(text);
-
-		text.move(0,-2);
-		tg.draw(text);
-
-		text.move(0,1);
-
-		text.setColor(sf::Color(255u, 0, 0, na));
-		tg.draw(text);
-	}
-}
-
-void Damage::update(sf::Time time)
-{
-	if (active)
-	{
-		if (na > 0)
-		{
-			na -= 5.0;
-		}
-
-		if (ny > dirY)
-		{
-			ny -= 5.0;
-		}
-
-		if (na <= 0)
-		{
-			changeActive();
-		}
-
-		text.setPosition(text.getPosition().x, ny);
-		text.setColor(sf::Color(255, 255, 255, na));
-	}
-}
-
-Bar::Bar()
-{
-}
-
-void Bar::init(bool vert, sf::Vector2f pos, unsigned int &var, sf::Color color)
-{
-	variable = &var;
-	maxVariable = var;
-	vertical = vert;
-
-	if (!vertical)
-	{
-		shape = sf::RectangleShape(sf::Vector2f(SHAPE_WIDTH, SHAPE_HEIGHT));
-		bar = sf::RectangleShape(sf::Vector2f(BAR_WIDTH, BAR_HEIGHT));
-		shape.setPosition(pos);
-		bar.setPosition(pos.x + OFFSET, pos.y + OFFSET);
-	}
-	else
-	{
-		shape = sf::RectangleShape(sf::Vector2f(SHAPE_HEIGHT / 2, SHAPE_WIDTH));
-		bar = sf::RectangleShape(sf::Vector2f(BAR_HEIGHT/ 2, BAR_WIDTH));
-		shape.setPosition(pos);
-		shape.move(0, SHAPE_WIDTH / 2);		
-		bar.setPosition(shape.getPosition().x + OFFSET, shape.getPosition().y + OFFSET);	
-	}
-
-	bar.setFillColor(color);
-	shape.setFillColor(sf::Color::White);
-
-	bar.setOutlineColor(sf::Color::Black);
-	bar.setOutlineThickness(1.0);
-}
-
-void Bar::draw(sf::RenderTarget &tg)
-{
-	tg.draw(shape);
-	tg.draw(bar);
-}
-
-void Bar::update(sf::Time time, sf::Vector2f np)
-{
-	float t = *variable;
-	double p = (t / maxVariable) * 100.0;
-
-	if (np != sf::Vector2f())
-	{
-		bar.setPosition(sf::Vector2f(np.x + OFFSET - OFFSET, np.y + (BAR_WIDTH / 2) + OFFSET)); // Im tired so enjoy shit
-		shape.setPosition(sf::Vector2f(np.x - OFFSET, np.y + (BAR_WIDTH / 2)));
-	}
-
-	if(!vertical)
-	{
-		bar.setSize(sf::Vector2f(((BAR_WIDTH / 100) * p) + OFFSET, BAR_HEIGHT)); 
-		shape.setSize(sf::Vector2f(bar.getSize().x + (OFFSET * 2), SHAPE_HEIGHT));
-	}
-	else
-	{
-		bar.setSize(sf::Vector2f((BAR_HEIGHT / 2) - OFFSET, ((BAR_WIDTH / 100) * p) + OFFSET)); 
-		shape.setSize(sf::Vector2f(SHAPE_HEIGHT/ 2, bar.getSize().y + (OFFSET * 2)));
-	}
-}
-
 Enemy::Enemy(sf::Vector2f pos, const sf::Texture &texture, Monster &monsterRef) : monster(monsterRef)
 {
 	sprite.setPosition(pos);
@@ -221,6 +12,7 @@ Enemy::Enemy(sf::Vector2f pos, const sf::Texture &texture, Monster &monsterRef) 
 	counter = 0;
 	fading = false;
 	animation = false;
+	bounds = sf::FloatRect(sprite.getPosition().x, sprite.getPosition().y, texture.getSize().x, texture.getSize().y);
 }
 
 void Enemy::draw(sf::RenderTarget &tg, bool selected)
@@ -258,7 +50,10 @@ void Enemy::update(sf::Time time)
 	{
 		if (-20 + (rand() % (int)(21)) == -3)
 		{
+			//if (sprite.getGlobalBounds().intersects(bounds))
+			//{
 			sprite.move(-1 + (rand() % (int)(3)), -1 + (rand() % (int)(3)));
+			//}	
 		}
 
 		if (fading == false)
@@ -364,6 +159,13 @@ void Battle::init(std::string fileName)
 	{
 		TextureManager::instance().getTexture("assets/" + resourcesNames[i]);
 	}
+
+	std::vector<std::wstring> str;
+	str.push_back(L"Атака");
+	str.push_back(L"Способность");
+	str.push_back(L"Предмет");
+
+	menu.init(str);
 }
 
 void Battle::start(Squad &squad_)
@@ -416,6 +218,8 @@ void Battle::drawUI(sf::RenderTarget &tg)
 	}
 
 	log.draw(tg);
+
+	menu.draw(tg);
 }
 
 void Battle::draw(sf::RenderTarget &tg)
@@ -425,7 +229,7 @@ void Battle::draw(sf::RenderTarget &tg)
 
 	for (auto i = enemies.begin(); i != enemies.end(); ++i)
 	{
-		if (i - enemies.begin() == selected)
+		if (i - enemies.begin() == selected && state == PLAYER)
 		{
 			i->draw(tg, true);
 		}
@@ -436,6 +240,15 @@ void Battle::draw(sf::RenderTarget &tg)
 	}
 }
 
+int stringToWString(std::wstring &ws, const std::string &s)
+{
+	std::wstring wsTmp(s.begin(), s.end());
+
+	ws = wsTmp;
+
+	return 0;
+}
+
 void Battle::damagePlayer(Monster &monster)
 {
 	//GameData::instance().getEmber()
@@ -443,7 +256,7 @@ void Battle::damagePlayer(Monster &monster)
 
 	//Random formula
 	int dmg = (monster.getStrength() / 2 + monster.getAgility() / 3 + monster.getIntelligence() / 4) + (rand() % (int)(2));
-	std::string name;
+	std::wstring name;
 
 	switch (hero)
 	{
@@ -451,32 +264,36 @@ void Battle::damagePlayer(Monster &monster)
 		damageEffects.push_back(Damage(sf::Vector2f(playerSprite.getPosition().x + (playerSprite.getTextureRect().width / 4), 
 			playerSprite.getPosition().y + (playerSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg), font));
 		GameData::instance().getPlayer().setHP(GameData::instance().getPlayer().getHP() - dmg);
-		name = "Player";
+		name = L"Игрок";
 		break;
 	case 1:
 		damageEffects.push_back(Damage(sf::Vector2f(emberSprite.getPosition().x + (emberSprite.getTextureRect().width / 4), 
 			emberSprite.getPosition().y + (emberSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg), font));
 		GameData::instance().getEmber().setHP(GameData::instance().getEmber().getHP() - dmg);
-		name = "Ember";
+		name = L"Эмбер";
 		break;
 	case 2:
 		damageEffects.push_back(Damage(sf::Vector2f(thunderSprite.getPosition().x + (thunderSprite.getTextureRect().width / 4), 
 			thunderSprite.getPosition().y + (thunderSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg), font));
 		GameData::instance().getThunder().setHP(GameData::instance().getThunder().getHP() - dmg);
-		name = "Thunder";
+		name = L"Сандер";
 		break;
 	default:
 		break;
 	}
 
+	std::wstring tmpw;
 	std::string tmp = enemies[currentAttacking].getMonster().getName();
 	tmp[0] = toupper(tmp[0]);
 
-	log.setString(tmp + " damaged " + name + " for " + std::to_string(dmg) + " points.");
+	stringToWString(tmpw, tmp);
+
+	log.setString(tmpw + L" нанес " + std::to_wstring(dmg) + L" урона персонажу " + name + L".");
 }
 
 void Battle::update(sf::Time time)
 {
+	//Update damage effect
 	for (auto i = damageEffects.begin(); i != damageEffects.end();)
 	{
 		Damage &d = *i;
@@ -491,16 +308,18 @@ void Battle::update(sf::Time time)
 		}
 	}
 
+	//Update shader
 	fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
 	fire.setParameter("seconds", seconds);
-
 	seconds++;
 
+	//Update enemies
 	for (auto i = enemies.begin(); i != enemies.end(); ++i)
 	{
 		i->update(time);
 	}
 
+	//Bla-bla-bla
 	emberHPBar.update(time);
 	thunderHPBar.update(time);
 	playerHPBar.update(time);
@@ -512,15 +331,17 @@ void Battle::update(sf::Time time)
 
 	log.update(time);
 
+	//Is message completely read
 	if (state == AI && log.isRead())
 	{
-		enemies[currentAttacking].stopAnimation();
-		selected = currentAttacking;
-		nextStep();
+		//Let them turn
+		nextAIStep();
 	}
+
+	menu.update(time);
 }
 
-void Battle::nextStep()
+void Battle::nextAIStep()
 {
 	if (state == AI && log.isEnded())
 	{
@@ -531,8 +352,11 @@ void Battle::nextStep()
 			for (auto i = enemies.begin(); i != enemies.end(); i++)
 			{
 				i->setState(NOT_ATTACKED);
+				i->stopAnimation();
 			}		
-			if (state == AI) state = PLAYER;
+			state = PLAYER;
+			log.setString(L"Атакуйте!");
+			selected = 0;
 		}
 		else
 		{
@@ -541,6 +365,7 @@ void Battle::nextStep()
 			enemies[currentAttacking].playAnimation();
 			enemies[currentAttacking].setState(ATTACKED);
 
+			selected = currentAttacking;
 			currentAttacking++;	
 		}		
 	}	
@@ -550,40 +375,39 @@ void Battle::input(sf::Event &event)
 {
 	//For some fucking reason only works if update log's input firstly
 	log.input(event);
-
-	//if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && log.isEnded()) nextStep();
-	
-
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::T)	
+	if (menu.isWorking())
 	{
-		damageEffects.push_back(Damage(sf::Vector2f(100, playerSprite.getPosition().y), "-1", font));
-
-		GameData::instance().getPlayer().setHP(GameData::instance().getPlayer().getHP() - 1);
-		//GameData::instance().getPlayer().setMP(GameData::instance().getPlayer().getMP() - 1);
-		//std::cout << std::to_string(GameData::instance().getPlayer().getHP()) << std::endl;
+		menu.input(event);
 	}
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Y)	
+
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && state == PLAYER && !menu.isWorking() && log.isRead())
 	{
-		damageEffects.push_back(Damage(sf::Vector2f(enemies[selected].getPosition().x * 2, enemies[selected].getPosition().y * 2), "-1", font));
+		
 
-		enemies[selected].getMonster().setHP(enemies[selected].getMonster().getHP() - 1);
-		//squad.getMonsters()[selected].setHP(squad.getMonsters()[selected].getHP() - 1);
-		//std::cout << std::to_string(squad.getMonsters().back().getHP()) << std::endl;
+		menu.appear(sf::Vector2f(enemies[selected].getPosition().x * 2, enemies[selected].getPosition().y));
 	}
+
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape && state == PLAYER && menu.isWorking())
+	{
+		menu.disappear();
+		SoundManager::instance().playSelectSound();
+	}
+
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && !log.isRead() && state == AI)
+	{
+		enemies[currentAttacking - 1].stopAnimation();
+	}
+
+	//std::cout << std::to_string(squad.getMonsters().back().getHP()) << std::endl;
+
 	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::U)	
 	{
-		//damageEffects.push_back(Damage(sf::Vector2f(enemies[selected].getPosition().x * 2, enemies[selected].getPosition().y * 2), "-1", font));
-		//setHP(enemies[selected].getMonster().getHP() - 1);
-
 		damagePlayer(enemies[selected].getMonster());
-
-		//squad.getMonsters()[selected].setHP(squad.getMonsters()[selected].getHP() - 1);
-		//std::cout << std::to_string(squad.getMonsters().back().getHP()) << std::endl;
 	}
 
-	if (state != AI)
+	if (state != AI && !menu.isWorking())
 	{
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::A)
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::A && !menu.isWorking())
 		{
 			if (selected > 0)
 			{
@@ -593,8 +417,10 @@ void Battle::input(sf::Event &event)
 			{
 				selected = enemies.size() - 1;
 			}
+
+			SoundManager::instance().playSelectSound();
 		}
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D)
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D && !menu.isWorking())
 		{
 			if (selected + 1 < enemies.size())
 			{
@@ -604,6 +430,8 @@ void Battle::input(sf::Event &event)
 			{
 				selected = 0;
 			}
+
+			SoundManager::instance().playSelectSound();
 		}
 	}
 }

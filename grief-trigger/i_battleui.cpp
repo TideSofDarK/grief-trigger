@@ -1,321 +1,306 @@
-#include "i_dialoguepanel.h"
+#include "i_battleui.h"
 
-#include "d_parser.h"
-
-bool DialoguePanel::loadResources(std::string fileName)
+Logger::Logger()
 {
-	//Load resources list file
-	pugi::xml_parse_result result = doc.load_file((fileName).c_str());
 
-	std::string resourcesList = doc.child("hires").child_value("dialogues");
+}
 
-	//Remove first newline
-	std::string::size_type pos = 0; 
-	pos = resourcesList.find ("\n",pos);
-	resourcesList.erase ( pos, 1 );
+void Logger::init(sf::Vector2f pos)
+{
+	font.loadFromFile(fontPath);
+	text = sf::Text();
+	text.setPosition(pos);
+	text.setString("");
+	text.setFont(font);
+	text.setCharacterSize(33);
+	text.setColor(sf::Color::Black);
+	ended = true;
+	read = true;
+	character = 0;
+}
 
-	//Count resources
-	int s = std::count(resourcesList.begin(), resourcesList.end(), '\n');
+void Logger::draw(sf::RenderTarget &tg)
+{
+	tg.draw(text);
+}
 
-	std::vector<std::string> resourcesNames;
-
-	//Add resources
-	pos = 0;
-	std::string token;
-	while ((pos = resourcesList.find('\n')) != std::string::npos) {
-		resourcesNames.push_back(resourcesList.substr(0, pos));
-		resourcesList.erase(0, pos + 1);
-	}
-
-	for (int i = 0; i < s; i++)
+void Logger::update(sf::Time time)
+{
+	if (ended == false)
 	{
-		TextureManager::instance().getTexture("assets/" + resourcesNames[i]);
+		if (clock.getElapsedTime().asMilliseconds() > 60 && character < actualString.length())
+		{
+			if (text.getString().toAnsiString().c_str()[text.getString().getSize()] != ' ')
+			{
+				SoundManager::instance().playClickSound();
+			}
+			if (text.getString().getSize() + 1 == actualString.size())
+			{
+				SoundManager::instance().playEnterSound();
+			}
+			clock.restart();
+			character++;
+			text.setString( sf::String(actualString.substr(0, character)));				
+		}
+		else if (character >= actualString.length())
+		{
+			stop();
+		}
 	}
-	return true;
 }
 
-void DialoguePanel::init()
+void Logger::input(sf::Event &event)
 {
-	font.loadFromFile("assets/fonts/default.TTF");
-
-	nby = HEIGHT / 2;
-	background.setTexture(TextureManager::instance().getTexture("assets/dbox.png"));
-	background.setPosition(0, nby);
-
-	pointer = sf::RectangleShape();
-	pointer.setFillColor(sf::Color::Blue);
-
-	hide();
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) 
+	{
+		SoundManager::instance().playEnterSound();
+		if (ended) read = true;
+		else stop();
+	}
 }
 
-void DialoguePanel::stop()
+void Logger::stop()
 {
 	text.setString(actualString);
 	ended = true;
 	character = actualString.length();
 }
 
-std::string wordWrap( std::string str, size_t width = 50 ) {
-	size_t curWidth = width;
-	while( curWidth < str.length() ) {
-		std::string::size_type spacePos = str.rfind( ' ', curWidth );
-		if( spacePos == std::string::npos )
-			spacePos = str.find( ' ', curWidth );
-		if( spacePos != std::string::npos ) {
-			str[ spacePos ] = '\n';
-			curWidth = spacePos + width + 1;
-		}
-	}
-
-	return str;
-}
-
-void DialoguePanel::openDialogue(std::string name, std::string situation)
+void Logger::setString(std::wstring str)
 {
-	selected = 0;
-	isAnswering = false;
-
-	if (ended == false && text.getString().toAnsiString().c_str() != actualString.c_str())
+	if (ended) 
 	{
-		stop();
-	}
-	else
-	{
-		text = sf::Text("", font, fontSize);
-
-		text.setPosition(320, 455);
-		text.setColor(sf::Color::Black);
-
-		//Load new art image
-		if (lastName != name) {
-			lastName = name;
-			art.setTexture(TextureManager::instance().getTexture("assets/" + lastName + "_art.png"));
-		}
-		if (lastSituation != situation) lastSituation = situation + '/';
-
-		//If next string is
-		if (nextString != "") 
-		{
-			actualString = nextString;
-			nextString = "";
-		}
-		else 
-		{
-			actualString = Parser::instance().parseDialogue(name, lastSituation);
-		}
-
-		//Replace all newlines
-		while ( actualString.find ("\n") != std::string::npos )
-		{
-			actualString.replace( actualString.find ("\n"), 1 ," ");
-		}
-
-		//Wrap words
-		actualString = wordWrap(actualString);
-
-		//Check height
-		size_t n = std::count(actualString.begin(), actualString.end(), '\n');
-		const int maxLines = 3;
-		if (n > maxLines)
-		{
-			//Find first space after last line
-			unsigned int a = actualString.find(' ', maxLines*50);
-			a++;
-
-			//Cut all to next string
-			nextString = actualString.substr(a, actualString.length());
-			actualString.erase(a, actualString.length());
-		}
-
-		//Reset tweener
-		if (!visible)
-		{
-			nby = HALF_HEIGHT;
-			oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 1.0f, &nby, 0.0f);
-
-			nax = -640 / 2;
-			oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 0.5f, &nax, 0.0f);
-
-			background.setPosition(0, nby);
-			art.setPosition(nax, 0);
-		}
-
-		//Reset variables
+		ended = false;
+		read = false;
+		actualString = str;
 		character = 0;
 		clock.restart();
-		ended = false;
-		visible = true;
 	}
 }
 
-bool DialoguePanel::showAnswers()
+Damage::Damage(sf::Vector2f pos, std::string str, sf::Font &font)
 {
-	//Get answers
-	if (Parser::instance().parseAnswers(lastName, lastSituation).size() != 0)
+	text = sf::Text(str, font, 80);
+	text.setColor(sf::Color::Red);
+	text.setPosition(pos);
+
+	active = true;
+
+	ny = pos.y;
+	na = 255;
+	dirY = pos.y - 100;
+}
+
+void Damage::draw(sf::RenderTarget &tg)
+{
+	if (active)
 	{
-		//Clear all text
-		text.setString("");
-		answers.clear();
+		text.setColor(sf::Color(255u, 255u, 255u, na));
+		text.move(1,0);
+		tg.draw(text);
+
+		text.move(-2,0);
+		tg.draw(text);
+
+		text.move(1,0);
+
+		text.move(0,1);
+		tg.draw(text);
+
+		text.move(0,-2);
+		tg.draw(text);
+
+		text.move(0,1);
+
+		text.setColor(sf::Color(255u, 0, 0, na));
+		tg.draw(text);
+	}
+}
+
+void Damage::update(sf::Time time)
+{
+	if (active)
+	{
+		if (na > 0)
+		{
+			na -= 5.0;
+		}
+
+		if (ny > dirY)
+		{
+			ny -= 5.0;
+		}
+
+		if (na <= 0)
+		{
+			changeActive();
+		}
+
+		text.setPosition(text.getPosition().x, ny);
+		text.setColor(sf::Color(255, 255, 255, na));
+	}
+}
+
+Bar::Bar()
+{
+}
+
+void Bar::init(bool vert, sf::Vector2f pos, unsigned int &var, sf::Color color)
+{
+	variable = &var;
+	maxVariable = var;
+	vertical = vert;
+
+	if (!vertical)
+	{
+		shape = sf::RectangleShape(sf::Vector2f(SHAPE_WIDTH, SHAPE_HEIGHT));
+		bar = sf::RectangleShape(sf::Vector2f(BAR_WIDTH, BAR_HEIGHT));
+		shape.setPosition(pos);
+		bar.setPosition(pos.x + OFFSET, pos.y + OFFSET);
 	}
 	else
 	{
-		return false;
+		shape = sf::RectangleShape(sf::Vector2f(SHAPE_HEIGHT / 2, SHAPE_WIDTH));
+		bar = sf::RectangleShape(sf::Vector2f(BAR_HEIGHT/ 2, BAR_WIDTH));
+		shape.setPosition(pos);
+		shape.move(0, SHAPE_WIDTH / 2);		
+		bar.setPosition(shape.getPosition().x + OFFSET, shape.getPosition().y + OFFSET);	
 	}
 
-	std::vector<std::string> strings = Parser::instance().parseAnswers(lastName, lastSituation);
+	bar.setFillColor(color);
+	shape.setFillColor(sf::Color::White);
 
-	for (int i = 0; i < strings.size(); i++)
+	bar.setOutlineColor(sf::Color::Black);
+	bar.setOutlineThickness(1.0);
+}
+
+void Bar::draw(sf::RenderTarget &tg)
+{
+	tg.draw(shape);
+	tg.draw(bar);
+}
+
+void Bar::update(sf::Time time, sf::Vector2f np)
+{
+	float t = *variable;
+	double p = (t / maxVariable) * 100.0;
+
+	if (np != sf::Vector2f())
 	{
-		sf::Text ans(strings[i], font, fontSize);
-		ans.setPosition(320, (455 + i * fontSize) + i * 4);
-		ans.setColor(sf::Color::Black);
-		answers.push_back(ans);
+		bar.setPosition(sf::Vector2f(np.x + OFFSET - OFFSET, np.y + (BAR_WIDTH / 2) + OFFSET)); // Im tired so enjoy shit
+		shape.setPosition(sf::Vector2f(np.x - OFFSET, np.y + (BAR_WIDTH / 2)));
 	}
 
-	isAnswering = true;
-	ended = true;
-	visible = true;
-	return true;
-}
-
-void DialoguePanel::hide()
-{
-	selected = 0;
-	isAnswering = false;
-	visible = false;
-	ended = true;
-	text.setString("");
-	actualString = "";
-	answers.clear();
-}
-
-void DialoguePanel::update()
-{
-	if (visible)
+	if(!vertical)
 	{
-		sf::Uint32 elapsed = clock.getElapsedTime().asMilliseconds();
-
-		//Update tween if animation is not ended
-		if (nby != 0 || nax != 0)
-		{
-			oTweener.step(elapsed / 1000.f);
-			background.setPosition(0, nby);
-			art.setPosition(nax, 0);
-			clock.restart();
-		}
-		else
-		{
-			if (ended == false)
-			{
-				if (elapsed > 60 && character < actualString.length())
-				{
-					//Play sound if it is not a space
-					if (text.getString().toAnsiString().c_str()[text.getString().getSize()] != ' ')
-					{
-						SoundManager::instance().playClickSound();
-					}
-					if (text.getString().getSize() + 1 == actualString.size())
-					{
-						//If last - play enter sound
-						SoundManager::instance().playEnterSound();
-					}
-					clock.restart();
-					character++;
-					text.setString( sf::String(actualString.substr(0, character)));				
-				}
-				else if (character >= actualString.length())
-				{
-					stop();
-				}
-			}
-			if (isAnswering)
-			{
-				pointer.setPosition(answers[selected].getPosition().x, answers[selected].getPosition().y + fontSize / 6);
-				pointer.setSize(sf::Vector2f(answers[selected].getGlobalBounds().width, fontSize));
-			}
-		}
+		bar.setSize(sf::Vector2f(((BAR_WIDTH / 100) * p) + OFFSET, BAR_HEIGHT)); 
+		shape.setSize(sf::Vector2f(bar.getSize().x + (OFFSET * 2), SHAPE_HEIGHT));
 	}
-}
-
-void DialoguePanel::input(sf::Event &event)
-{
-	if (visible)
+	else
 	{
-		//Check if tween ended...
-		if (nby == 0)
-		{
-			if (isAnswering)
-			{
-				if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S && selected < answers.size() - 1)
-				{
-					selected++;
-				}
-				else if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::W && selected - 1 >= 0)
-				{
-					selected--;
-				}
-				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) 
-				{
-					SoundManager::instance().playEnterSound();
-
-					applyAnswer(selected);
-				}
-			}
-			else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && ended == true) 
-			{
-				SoundManager::instance().playEnterSound();
-
-				//Leave dialogue if no text
-				if (nextString == "")
-				{
-					if (showAnswers() == false) hide();
-				}	
-				else openDialogue(lastName, lastSituation);
-			}
-			else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && ended != true)
-			{
-				SoundManager::instance().playEnterSound();
-
-				stop();
-			}
-		}
+		bar.setSize(sf::Vector2f((BAR_HEIGHT / 2) - OFFSET, ((BAR_WIDTH / 100) * p) + OFFSET)); 
+		shape.setSize(sf::Vector2f(SHAPE_HEIGHT/ 2, bar.getSize().y + (OFFSET * 2)));
 	}
 }
 
-void DialoguePanel::applyAnswer(unsigned int number)
+Menu::Menu()
 {
-	openDialogue(lastName, lastSituation + "speech" + std::to_string(number + 1));
+	back.setTexture(TextureManager::instance().getTexture("assets/menu.png"));
 }
 
-void DialoguePanel::draw(sf::RenderTarget &rt)
+void Menu::init(std::vector<std::wstring> newItems)
 {
-	if (visible)
+	font.loadFromFile("assets/fonts/default.TTF");
+
+	items.clear();
+	for (auto i = newItems.begin(); i != newItems.end(); i++)
 	{
-		rt.draw(background);
-		rt.draw(art);
+		sf::Text text(*i, font, 20);
+		text.setColor(sf::Color::Black);
+		text.setPosition(0, (i - newItems.begin()) * 20);
+		items.push_back(text);
+	}
 
-		if (isAnswering)
+	initialized = true;
+	working = false;
+
+	selector = sf::RectangleShape(sf::Vector2f());
+	selector.setFillColor(sf::Color::Blue);
+}
+
+void Menu::update(sf::Time time)
+{
+	if (items.size() != 0 && working)
+	{
+		selector.setSize(sf::Vector2f(items[selected].getGlobalBounds().width, items[selected].getGlobalBounds().height));
+		selector.setPosition(items[selected].getPosition().x, items[selected].getPosition().y + (items[selected].getGlobalBounds().height / 3) - 2);
+	}
+}
+
+void Menu::draw(sf::RenderTarget &tg)
+{
+	if (working)
+	{
+		tg.draw(back);
+		tg.draw(selector);
+		for (auto i = items.begin(); i != items.end(); i++)
 		{
-			rt.draw(pointer);
+			tg.draw(*i);
+		}	
+	}
+}
 
-			for (auto i = answers.begin(); i != answers.end(); i++)
-			{
-				rt.draw(*i);
-			}
+void Menu::input(sf::Event &event)
+{
+	if (working)
+	{
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
+		{
+
 		}
-		else
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::W)
 		{
-			rt.draw(text);
+			if (selected > 0)
+			{
+				selected--;
+			}
+			else
+			{
+				selected = items.size() - 1;
+			}
+
+			SoundManager::instance().playSelectSound();
+		}
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S)
+		{
+			if (selected + 1 < items.size())
+			{
+				selected++;
+			}
+			else
+			{
+				selected = 0;
+			}
+
+			SoundManager::instance().playSelectSound();
 		}
 	}
 }
 
-bool DialoguePanel::isHided()
+void Menu::appear(sf::Vector2f pos)
 {
-	return visible;
+	working = true;
+	back.setPosition(pos.x, (pos.y * 2) + 150);
+	for (auto i = items.begin(); i != items.end(); i++)
+	{
+		i->setPosition(pos.x + 20, ((back.getPosition().y) + (i - items.begin()) * 20) + 20);
+	}
 }
 
-bool DialoguePanel::isEnded()
+void Menu::disappear()
 {
-	return ended;
+	if (working)
+	{
+		working = false;
+	}
 }

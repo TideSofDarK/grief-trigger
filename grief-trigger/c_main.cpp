@@ -32,8 +32,8 @@ int main()
 #endif
 
 	RenderWindow window(VideoMode(1280, 720), "Grief Trigger Turbo HD", sf::Style::Default);
-	//window.setFramerateLimit(60);
-	window.setVerticalSyncEnabled(true);
+	window.setFramerateLimit(60);
+	//window.setVerticalSyncEnabled(true);
 
 	sf::Clock frameClock;
 
@@ -52,7 +52,7 @@ int main()
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
-			if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+			if (event.type == sf::Event::Closed)
 				window.close();
 
 			SceneManager::instance().input(event);

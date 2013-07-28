@@ -1,5 +1,5 @@
-#ifndef DIALOGUEPANEL_INCLUDE
-#define DIALOGUEPANEL_INCLUDE
+#ifndef BATTLEUI_INCLUDE
+#define BATTLEUI_INCLUDE
 
 #include <list>
 #include <iostream>
@@ -18,94 +18,104 @@
 #include "h_config.h"
 #include "d_resourcesmanager.h"
 
-class DialoguePanel
+#define SHAPE_WIDTH 180.0
+#define BAR_WIDTH 170.0
+
+#define SHAPE_HEIGHT 18.0
+#define BAR_HEIGHT 8.0
+
+#define OFFSET 5.0
+
+#define ANIMATIONTIME 1.0
+
+//Similar to DialoguePanel but simpler
+class Logger
 {
-public:
-	static DialoguePanel& instance()
-	{
-		static DialoguePanel theSingleInstance;
-		return theSingleInstance;
-	}
-
 private:
-	DialoguePanel() {};
-	DialoguePanel( const DialoguePanel& );
-	DialoguePanel& operator =( const DialoguePanel& );
-
-protected:
-	//Font size
-	static const unsigned int fontSize =		40;
-
-	//resource.xml parsing
-	pugi::xml_document doc;
-
-	//Simple shape pointer
-	sf::RectangleShape							pointer;
-
-	//Default clock
-	sf::Clock									clock;
-
-	//Default font
-	sf::Font									font;
-
-	//Current drawable text
-	sf::Text									text;
-
-	//Answers list
-	std::vector<sf::Text>						answers;
-
-	//Background panel
-	sf::Sprite									background;
-	//Tween variable
-	float										nby;
-
-	//Portrait
-	sf::Sprite									art;
-	//Tween variable
-	float										nax;
-
-	//Current text
-	std::string									actualString;
-
-	//Next string
-	std::string									nextString;
-
-	//Last used name and situation
-	std::string									lastName;
-	std::string									lastSituation;
-
-	//Number of letter
-	unsigned int								character;
-
-	//Number of selected answer
-	int											selected;
-
-	//Is string animation ended
-	bool										ended;
-
-	//Is dialogue panel visible
-	bool										visible;
-
-	//Is answering state
-	bool										isAnswering;
-
-	//Tweener itself
-	CDBTweener									oTweener;
+	std::wstring		actualString;
+	unsigned int	character;
+	sf::Text		text;
+	sf::Font		font;
+	bool			ended;
+	bool			read;
+	sf::Clock		clock;
 
 public:
-	void init();
-	void openDialogue(std::string name, std::string situation);
-	void update();
+	Logger();
+	void init(sf::Vector2f pos);
+	void update(sf::Time time);
+	void draw(sf::RenderTarget &tg);
 	void input(sf::Event &event);
 	void stop();
-	void draw(sf::RenderTarget &rt);
-	void hide();
-	void next();
-	bool showAnswers();
-	void applyAnswer(unsigned int number);
-	bool isHided();
-	bool isEnded();
-	bool loadResources(std::string fileName = "assets/resources.xml");
+	void setString(std::wstring str);
+	bool isEnded() {return ended;};
+	bool isRead() {return read;};
+};
+
+class Damage
+{
+private:
+	sf::Text	text;
+
+	sf::Font	font;
+
+	float		ny;
+	float		na;
+	float		dirY;
+
+	//Is active
+	bool active;
+
+public:
+	Damage(sf::Vector2f pos, std::string str, sf::Font &font);
+	void draw(sf::RenderTarget &tg);
+	void update(sf::Time time);
+	bool isActive() {return active;};
+	void changeActive() {active = !active;};
+};
+
+class Bar
+{
+private:
+	unsigned int *variable;
+	unsigned int maxVariable;
+
+	sf::RectangleShape shape;
+	sf::RectangleShape bar;
+
+	bool vertical;
+
+public:
+	Bar();
+	void init(bool vert, sf::Vector2f pos, unsigned int &var, sf::Color color = sf::Color(145, 199, 105));
+	void draw(sf::RenderTarget &tg);
+	void update(sf::Time time, sf::Vector2f np = sf::Vector2f());
+};
+
+class Menu
+{
+private:
+	static const unsigned int	appearingSpeed = 2;
+	bool						working;
+	bool						initialized;
+	std::vector<sf::Text>		items;
+	unsigned int				selected;
+	sf::RectangleShape			selector;
+	float						nx;
+	float						counter;
+	sf::Sprite					back;
+	sf::Font					font;
+
+public:
+	Menu(void);
+	void init(std::vector<std::wstring> newItems);
+	void draw(sf::RenderTarget &tg);
+	void update(sf::Time time);
+	void input(sf::Event &event);
+	void appear(sf::Vector2f pos);
+	void disappear();
+	bool isWorking() {return working;};
+	bool isInitialized() {return initialized;};
 };
 
 #endif

@@ -56,10 +56,14 @@ private:
 	sf::SoundBuffer clickBuffer;
 	sf::Sound clickSound;
 
+	sf::SoundBuffer selectBuffer;
+	sf::Sound selectSound;
+
 public:
 	void playDoorSound();
 	void playClickSound();
 	void playEnterSound();
+	void playSelectSound();
 };
 
 #endif
