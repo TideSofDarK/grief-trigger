@@ -75,6 +75,24 @@ void Scene::init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader 
 	transition = false;
 }
 
+void Scene::endBattle()
+{
+	isBattle = false;
+	paused = false;
+	for (auto i = squads.begin(); i != squads.end();)
+	{
+		Squad &squad = *i;
+		if (squadToDelete.getOnMap().GetPosition() == squad.getOnMap().GetPosition())
+		{
+			i = squads.erase(i);
+		}
+		else
+		{
+			i++;
+		}
+	}
+}
+
 void Scene::update(sf::Time time)
 {
 	if (loaded)
@@ -88,7 +106,7 @@ void Scene::update(sf::Time time)
 				{
 					i->update(time, map->GetLayers().back().objects);
 				}	
-				if (!DialoguePanel::instance().isHided()) DialoguePanel::instance().update();			
+				DialoguePanel::instance().update();			
 				po.move(map->GetLayers().back().objects);
 				po.update(time, *camera);
 			}
@@ -172,12 +190,14 @@ void Scene::draw(sf::RenderTarget &tg)
 	}
 }
 
-void Scene::startBattle(Squad squad)
+void Scene::startBattle(Squad &squad)
 {
 	transitionClock.restart();
 	transition = true;
 
 	battle.start(squad);
+
+	squadToDelete = squad;
 }
 
 void Scene::input(sf::Event &event)
@@ -237,4 +257,9 @@ void SceneManager::initBattle(Squad &squad)
 	current.setPaused(true);
 	current.setCurrentEffect("battle", sf::seconds(1));
 	current.startBattle(squad);
+}
+
+void SceneManager::endBattle()
+{
+	current.endBattle();
 }

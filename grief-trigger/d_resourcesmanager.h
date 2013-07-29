@@ -62,12 +62,20 @@ private:
 	sf::SoundBuffer hurtBuffer;
 	sf::Sound hurtSound;
 
+	sf::SoundBuffer dieBuffer;
+	sf::Sound dieSound;
+
+	sf::SoundBuffer winBuffer;
+	sf::Sound winSound;
+
 public:
 	void playDoorSound();
 	void playClickSound();
 	void playEnterSound();
 	void playSelectSound();
 	void playHurtSound();
+	void playDieSound();
+	void playWinSound();
 };
 
 #endif

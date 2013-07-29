@@ -59,7 +59,7 @@ class Battle
 {
 private:
 	//Current state
-	typedef enum { PLAYER, AI, SPELL } BATTLE_STATE;
+	typedef enum { PLAYER, AI, SPELL, ENDED } BATTLE_STATE;
 	BATTLE_STATE				state;
 	unsigned int turnNumber;
 	unsigned int currentAttacking;

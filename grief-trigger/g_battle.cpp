@@ -2,6 +2,7 @@
 
 #include "h_config.h"
 #include "d_parser.h"
+#include "g_scenemanager.h"
 
 //Every time when i use "* 2" means that i'm fag
 
@@ -30,6 +31,10 @@ void Enemy::draw(sf::RenderTarget &tg, bool selected)
 	else
 	{
 		sprite.setColor(sf::Color(255u, 255u, 255u, 255u));
+	}
+	if (monster.isDied() && !animation)
+	{
+		sprite.setColor(sf::Color(100, 100, 100, 255u));
 	}
 	tg.draw(sprite);
 }
@@ -385,6 +390,23 @@ void Battle::update(sf::Time time)
 		}
 	}
 
+	bool allDead = true;
+	for (auto i = enemies.begin(); i != enemies.end(); i++)
+	{
+		if (!i->isDied())
+		{
+			allDead = false;
+			break;
+		}
+	}
+
+	if(allDead && state != ENDED)
+	{
+		state = ENDED;
+		log.setString(L"Бой окончен!");
+		SoundManager::instance().playWinSound();
+	}
+
 	//Update shader
 	fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
 	fire.setParameter("seconds", seconds);
@@ -438,7 +460,7 @@ void Battle::nextAIStep()
 {
 	if (state == AI && log.isEnded())
 	{
-		while (currentAttacking < enemies.size() - 1 && enemies[currentAttacking].isDied())
+		while (currentAttacking < enemies.size() && enemies[currentAttacking].isDied())
 		{
 			currentAttacking++;
 		}
@@ -466,7 +488,8 @@ void Battle::nextAIStep()
 			selected = currentAttacking;
 			currentAttacking++;	
 		}		
-	}	
+	}
+
 }
 
 void Battle::input(sf::Event &event)
@@ -476,6 +499,11 @@ void Battle::input(sf::Event &event)
 	if (menu.isWorking() && state == PLAYER)
 	{
 		menu.input(event);
+	}
+
+	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && state == ENDED && log.isRead())
+	{
+		SceneManager::instance().endBattle();
 	}
 
 	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && state == PLAYER && !menu.isWorking() && log.isRead())
@@ -494,7 +522,7 @@ void Battle::input(sf::Event &event)
 		enemies[currentAttacking - 1].stopAnimation();
 	}
 
-	if (state != AI && !menu.isWorking())
+	if (state == PLAYER && !menu.isWorking())
 	{
 		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::A && !menu.isWorking())
 		{

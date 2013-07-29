@@ -63,6 +63,12 @@ SoundManager::SoundManager()
 
 	hurtBuffer.loadFromFile("assets/hurt.wav");
 	hurtSound.setBuffer(hurtBuffer);
+
+	dieBuffer.loadFromFile("assets/die.wav");
+	dieSound.setBuffer(dieBuffer);
+
+	winBuffer.loadFromFile("assets/win.wav");
+	winSound.setBuffer(winBuffer);
 }
 
 void SoundManager::playDoorSound()
@@ -88,4 +94,14 @@ void SoundManager::playSelectSound()
 void SoundManager::playHurtSound()
 {
 	hurtSound.play();
+}
+
+void SoundManager::playDieSound()
+{
+	dieSound.play();
+}
+
+void SoundManager::playWinSound()
+{
+	winSound.play();
 }

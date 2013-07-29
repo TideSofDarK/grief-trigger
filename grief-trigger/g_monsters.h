@@ -35,6 +35,7 @@ public:
 		std::cout << std::to_string(finally) << std::endl;
 		if (finally <= 0)
 		{
+			SoundManager::instance().playDieSound();
 			hp = 0;
 			state = DIED;
 			std::cout << "null" << std::endl;

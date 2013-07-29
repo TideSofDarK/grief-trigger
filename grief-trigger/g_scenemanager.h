@@ -76,13 +76,18 @@ private:
 	//Transition timer
 	sf::Clock transitionClock;
 
+	//Squad to delete
+	Squad squadToDelete;
+	unsigned int toDelete;
+
 public:
 	Scene();
 	void init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml);
 	void update(sf::Time time);
 	void draw(sf::RenderTarget &tg);
 	void input(sf::Event &event);
-	void startBattle(Squad squad);
+	void startBattle(Squad &squad);
+	void endBattle();
 	void setPaused(bool p) {paused = p;};
 	void setCurrentEffect(std::string string, sf::Time time);
 };
@@ -118,6 +123,7 @@ public:
 	void input(sf::Event &event);
 	void setScene(std::string name, tmx::MapLoader &ml);
 	void initBattle(Squad &squad);
+	void endBattle();
 };
 
 #endif
