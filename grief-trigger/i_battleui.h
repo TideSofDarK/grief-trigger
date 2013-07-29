@@ -121,6 +121,7 @@ public:
 	bool isInitialized() {return initialized;};
 	void select();
 	unsigned int getSelected(){return selected;};
+	void clean() {selected = NOT_SELECTED;};
 };
 
 #endif

@@ -60,6 +60,9 @@ SoundManager::SoundManager()
 
 	selectBuffer.loadFromFile("assets/select.wav");
 	selectSound.setBuffer(enterBuffer);
+
+	hurtBuffer.loadFromFile("assets/hurt.wav");
+	hurtSound.setBuffer(hurtBuffer);
 }
 
 void SoundManager::playDoorSound()
@@ -80,4 +83,9 @@ void SoundManager::playEnterSound()
 void SoundManager::playSelectSound()
 {
 	selectSound.play();
+}
+
+void SoundManager::playHurtSound()
+{
+	hurtSound.play();
 }

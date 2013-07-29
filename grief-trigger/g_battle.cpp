@@ -3,7 +3,7 @@
 #include "h_config.h"
 #include "d_parser.h"
 
-//Every time when i use "* 2" it means that i'm fag
+//Every time when i use "* 2" means that i'm fag
 
 Enemy::Enemy(sf::Vector2f pos, const sf::Texture &texture, Monster &monsterRef) : monster(monsterRef)
 {
@@ -19,13 +19,13 @@ Enemy::Enemy(sf::Vector2f pos, const sf::Texture &texture, Monster &monsterRef) 
 
 void Enemy::draw(sf::RenderTarget &tg, bool selected)
 {
-	if (selected)
-	{
-		sprite.setColor(sf::Color(255, 255, 255, counter));
-	}
-	else if (animation)
+	if (animation)
 	{
 		sprite.setColor(sf::Color(counter, counter, counter, 255));
+	}
+	else if (selected)
+	{
+		sprite.setColor(sf::Color(255, 255, 255, counter));
 	}
 	else
 	{
@@ -126,7 +126,7 @@ void Battle::init(std::string fileName)
 	log.init(sf::Vector2f(110, 21));
 
 	pointer.setTexture(TextureManager::instance().getTexture("assets/pointer.png"));
-	
+
 	effectRect = sf::RectangleShape(sf::Vector2f(WIDTH, HEIGHT));
 	effectRect.setFillColor(sf::Color(0,0,0,155));
 
@@ -234,14 +234,6 @@ void Battle::drawUI(sf::RenderTarget &tg)
 	if (state == SPELL) tg.draw(effectRect);
 
 	if (state == PLAYER) tg.draw(pointer);
-
-	if (state == PLAYER && menu.getSelected() != NOT_SELECTED) 
-	{
-		if (menu.getSelected() == 1)
-		{			
-			state = SPELL;
-		}
-	}
 }
 
 void Battle::draw(sf::RenderTarget &tg)
@@ -359,22 +351,98 @@ void Battle::update(sf::Time time)
 
 		if (state == PLAYER)
 		{
-			pointer.setPosition((currentAttacking * playerSprite.getLocalBounds().width) + 160, playerSprite.getPosition().y + 100);
+			switch (currentAttacking)
+			{
+			case 0:
+				pointer.setPosition(playerSprite.getPosition().x + 150, playerSprite.getPosition().y + 100);
+				break;
+			case 1:
+				pointer.setPosition(emberSprite.getPosition().x + 190, emberSprite.getPosition().y + 100);
+				break;
+			case 2:
+				pointer.setPosition(thunderSprite.getPosition().x + 170, thunderSprite.getPosition().y + 100);
+				break;
+			default:
+				break;
+			}		
 		}
 
 		menu.update(time);
 	}
-	
+
+	if (state == PLAYER && menu.getSelected() != NOT_SELECTED) 
+	{
+		if (menu.getSelected() == 0)
+		{			
+			nextPlayerStep();
+			menu.clean();
+			menu.disappear();
+		}
+
+		if (menu.getSelected() == 1)
+		{			
+			state = SPELL;
+		}
+	}
+
 	//Update shader
 	fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
 	fire.setParameter("seconds", seconds);
 	seconds++;
 }
 
+void Battle::damageMonster()
+{
+	int dmg;
+	//Count damage
+	switch (currentAttacking)
+	{
+	case 0:
+		dmg = (GameData::instance().getPlayer().getStrength() / 4 + GameData::instance().getPlayer().getAgility() / 5 + GameData::instance().getPlayer().getIntelligence() / 6) + (rand() % (int)(2));
+		break;
+	case 1:
+		dmg = (GameData::instance().getEmber().getStrength() / 4 + GameData::instance().getEmber().getAgility() / 5 + GameData::instance().getEmber().getIntelligence() / 6) + (rand() % (int)(2));
+		break;
+	case 2:
+		dmg = (GameData::instance().getThunder().getStrength() / 4 + GameData::instance().getThunder().getAgility() / 5 + GameData::instance().getThunder().getIntelligence() / 6) + (rand() % (int)(2));
+		break;
+	default:
+		break;
+	} 
+
+	enemies[selected].playAnimation();
+	enemies[selected].getMonster().receiveDamage(dmg);
+	SoundManager::instance().playHurtSound();
+}
+
+void Battle::nextPlayerStep()
+{
+	if (state == PLAYER)
+	{
+		SoundManager::instance().playHurtSound();
+		damageMonster();
+
+		if (currentAttacking == 2)
+		{
+			currentAttacking = 0;
+			state = AI;
+		}
+		else
+		{
+			currentAttacking++;
+		}
+	}
+}
+
 void Battle::nextAIStep()
 {
 	if (state == AI && log.isEnded())
 	{
+		while (currentAttacking < enemies.size() - 1 && enemies[currentAttacking].isDied())
+		{
+			currentAttacking++;
+		}
+
 		if (currentAttacking + 1 > enemies.size())
 		{
 			turnNumber++;
@@ -424,11 +492,6 @@ void Battle::input(sf::Event &event)
 	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && !log.isRead() && state == AI)
 	{
 		enemies[currentAttacking - 1].stopAnimation();
-	}
-
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::U)	
-	{
-		damagePlayer(enemies[selected].getMonster());
 	}
 
 	if (state != AI && !menu.isWorking())

@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <iostream>
 
 #include <SFML/Graphics.hpp>
 
@@ -27,6 +28,24 @@ private:
 
 public:
 	Monster(std::string name);
+	void receiveDamage(unsigned int damage) 
+	{ 
+		//got fucked with it
+		int finally = hp - damage;
+		std::cout << std::to_string(finally) << std::endl;
+		if (finally <= 0)
+		{
+			hp = 0;
+			state = DIED;
+			std::cout << "null" << std::endl;
+		}
+		else
+		{
+			hp -= damage;
+			std::cout << "minus" << std::endl;
+		}
+	};
+	bool isDied(){return (state == DIED ? true : false);};
 	unsigned int &getStrength() {return strength;};
 	unsigned int &getAgility() {return agility;};
 	unsigned int &getIntelligence() {return intelligence;};

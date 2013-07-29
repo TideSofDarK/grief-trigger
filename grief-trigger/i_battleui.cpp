@@ -179,23 +179,40 @@ void Bar::draw(sf::RenderTarget &tg)
 void Bar::update(sf::Time time, sf::Vector2f np)
 {
 	float t = *variable;
-	double p = (t / maxVariable) * 100.0;
+	if (t > 0)
+	{
+		double p = (t / maxVariable) * 100.0;
 
-	if (np != sf::Vector2f())
-	{
-		bar.setPosition(sf::Vector2f(np.x + OFFSET - OFFSET, np.y + (BAR_WIDTH / 2) + OFFSET)); // Im tired so enjoy shit
-		shape.setPosition(sf::Vector2f(np.x - OFFSET, np.y + (BAR_WIDTH / 2)));
-	}
+		if (np != sf::Vector2f())
+		{
+			bar.setPosition(sf::Vector2f(np.x + OFFSET - OFFSET, np.y + (BAR_WIDTH / 2) + OFFSET)); // Im tired so enjoy shit
+			shape.setPosition(sf::Vector2f(np.x - OFFSET, np.y + (BAR_WIDTH / 2)));
+		}
 
-	if(!vertical)
-	{
-		bar.setSize(sf::Vector2f(((BAR_WIDTH / 100) * p) + OFFSET, BAR_HEIGHT)); 
-		shape.setSize(sf::Vector2f(bar.getSize().x + (OFFSET * 2), SHAPE_HEIGHT));
+		if(!vertical)
+		{
+			bar.setSize(sf::Vector2f(((BAR_WIDTH / 100) * p) + OFFSET, BAR_HEIGHT)); 
+			shape.setSize(sf::Vector2f(bar.getSize().x + (OFFSET * 2), SHAPE_HEIGHT));
+		}
+		else
+		{
+			bar.setSize(sf::Vector2f((BAR_HEIGHT / 2) - OFFSET, ((BAR_WIDTH / 100) * p) + OFFSET)); 
+			shape.setSize(sf::Vector2f(SHAPE_HEIGHT/ 2, bar.getSize().y + (OFFSET * 2)));
+		}
 	}
-	else
+	else if (t <= 0)
 	{
-		bar.setSize(sf::Vector2f((BAR_HEIGHT / 2) - OFFSET, ((BAR_WIDTH / 100) * p) + OFFSET)); 
-		shape.setSize(sf::Vector2f(SHAPE_HEIGHT/ 2, bar.getSize().y + (OFFSET * 2)));
+		if(!vertical)
+		{
+			bar.setSize(sf::Vector2f(((BAR_WIDTH / 100) * 1) + OFFSET, BAR_HEIGHT)); 
+			shape.setSize(sf::Vector2f(bar.getSize().x + (OFFSET * 2), SHAPE_HEIGHT));
+		}
+		else
+		{
+			bar.setSize(sf::Vector2f((BAR_HEIGHT / 2) - OFFSET, ((BAR_WIDTH / 100) * 1) + OFFSET)); 
+			shape.setSize(sf::Vector2f(SHAPE_HEIGHT/ 2, bar.getSize().y + (OFFSET * 2)));
+		}
+		bar.setFillColor(sf::Color::Black);
 	}
 }
 

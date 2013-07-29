@@ -52,6 +52,7 @@ public:
 	void playAnimation();
 	void stopAnimation() {animation = false;};
 	bool isAnimation() {return animation;};
+	bool isDied(){return monster.isDied();};
 };
 
 class Battle
@@ -131,7 +132,9 @@ public:
 	void input(sf::Event &event);
 	void init(std::string fileName = "assets/resources.xml");
 	void damagePlayer(Monster &monster);
+	void damageMonster();
 	void nextAIStep();
+	void nextPlayerStep();
 };
 
 #endif
