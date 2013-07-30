@@ -32,8 +32,8 @@ int main()
 #endif
 
 	RenderWindow window(VideoMode(1280, 720), "Grief Trigger Turbo HD", sf::Style::Default);
-	window.setFramerateLimit(60);
-	//window.setVerticalSyncEnabled(true);
+	//window.setFramerateLimit(60);
+	window.setVerticalSyncEnabled(true);
 
 	sf::Clock frameClock;
 
@@ -41,11 +41,11 @@ int main()
 
 	SceneManager::instance().setScene("test.tmx", ml);
 
-	sf::Font font;
-	font.loadFromFile("assets/fonts/default.TTF");
-	sf::Text fps = sf::Text("", font, 50);
-	float lastTime = 0;
-	sf::Clock clock;
+	float mCurrentFrameTime = 0;
+	float mCurrentRenderTime = 0;
+	float mCurrentRenderFrameTime = 0;
+	float mUpdateT = 0.1667;
+	float mRenderT = 0.16667;
 
 	while (window.isOpen())
 	{
@@ -56,24 +56,24 @@ int main()
 				window.close();
 
 			SceneManager::instance().input(event);
+		}	
+
+		//sf::sleep(sf::milliseconds(10));
+
+		SceneManager::instance().update(sf::microseconds(mCurrentFrameTime));
+
+		if(mCurrentRenderTime >= mRenderT){
+			window.clear();
+			SceneManager::instance().draw(window);
+			window.display();
+			mCurrentRenderTime = 0.0;
 		}
 
-		float currentTime = clock.restart().asSeconds();
-		float fpsf = 1.f / currentTime;
-		lastTime = currentTime;
+		mCurrentFrameTime = frameClock.restart().asMicroseconds();
+		mCurrentRenderTime += mCurrentFrameTime;
 
-		fps.setString(std::to_string((int)fpsf));
-		
-		SceneManager::instance().update(frameClock.restart());
-
-		window.clear();
-
-		SceneManager::instance().draw(window);
-		//window.draw(fps);
-
-		sf::sleep(sf::milliseconds(4));
-
-		window.display();
+		sf::Time mSleepTime = sf::microseconds(mUpdateT - mCurrentFrameTime);
+		sf::sleep(mSleepTime);
 	}
 
 	return 0;

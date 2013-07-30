@@ -9,7 +9,7 @@ GameData::GameData(void)
 	stats.setSocial(5);
 
 	stats.setMP(6);
-	stats.setHP(10);
+	stats.setHP(15);
 	stats.setStrength(4);
 	stats.setIntelligence(6);
 	stats.setAgility(8);
@@ -17,7 +17,7 @@ GameData::GameData(void)
 	player.setStats(stats);
 
 	stats.setMP(9);
-	stats.setHP(7);
+	stats.setHP(13);
 	stats.setStrength(5);
 	stats.setIntelligence(10);
 	stats.setAgility(4);
@@ -25,7 +25,7 @@ GameData::GameData(void)
 	ember.setStats(stats);
 
 	stats.setMP(6);
-	stats.setHP(10);
+	stats.setHP(15);
 	stats.setStrength(9);
 	stats.setIntelligence(5);
 	stats.setAgility(6);

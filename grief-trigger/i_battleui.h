@@ -124,4 +124,10 @@ public:
 	void clean() {selected = NOT_SELECTED;};
 };
 
+class SpellMenu
+{
+private:
+public:
+};
+
 #endif

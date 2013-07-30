@@ -91,6 +91,7 @@ void Scene::endBattle()
 			i++;
 		}
 	}
+	battle.clean();
 }
 
 void Scene::update(sf::Time time)

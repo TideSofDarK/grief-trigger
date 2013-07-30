@@ -5,6 +5,8 @@ Parser::Parser()
 	monstersDoc.load_file("assets/monsters.xml");
 	dialoguesDoc.load_file("assets/text.xml");
 	resourcesDoc.load_file("assets/resources.xml");
+	spellsDoc.load_file("assets/spells.xml");
+	parseSpells("ember");
 }
 
 BasicStats Parser::getMonsterStats(std::string name)
@@ -124,4 +126,30 @@ std::vector<std::string> Parser::parseResources(std::string block)
 	}
 
 	return resourcesNames;
+}
+
+std::vector<Spell> Parser::parseSpells(std::string hero)
+{
+	pugi::xml_node spellsList = spellsDoc.child(hero.c_str());
+
+	std::vector<Spell> newSpells;
+
+	for (pugi::xml_node spell: spellsList.children())
+	{
+		std::cout << "Spell:";
+
+		for (pugi::xml_attribute attr: spell.attributes())
+		{
+			std::cout << " atr " << attr.name() << "=" << attr.value();
+		}
+
+		for (pugi::xml_node child: spell.children())
+		{
+			std::cout << ", child " << child.value();
+		}
+
+		std::cout << std::endl;
+	}
+
+	return newSpells;
 }

@@ -123,6 +123,15 @@ private:
 	//Shadow effect
 	sf::RectangleShape			effectRect;
 
+	//Battle result
+	typedef struct BattleResult
+	{
+		unsigned int playerXP;
+		unsigned int emberXP;
+		unsigned int thunderXP;
+	};
+	BattleResult res;
+
 public:
 	Battle();
 	void start(Squad &squad);
@@ -135,6 +144,7 @@ public:
 	void damageMonster();
 	void nextAIStep();
 	void nextPlayerStep();
+	void clean();
 };
 
 #endif

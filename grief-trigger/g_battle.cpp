@@ -168,8 +168,9 @@ void Battle::init(std::string fileName)
 
 	background.create(WIDTH, HEIGHT);
 
-	std::vector<std::string> resourcesNames = Parser::instance().parseResources("battle");
+	battleBox.setTexture(TextureManager::instance().getTexture("assets/battlebox.png"));
 
+	std::vector<std::string> resourcesNames = Parser::instance().parseResources("battle");
 	for (int i = 0; i < resourcesNames.size(); i++)
 	{
 		TextureManager::instance().getTexture("assets/" + resourcesNames[i]);
@@ -190,14 +191,13 @@ void Battle::start(Squad &squad_)
 	std::vector<Monster> &list = squad.getMonsters();
 
 	sf::FloatRect bounds(HALF_WIDTH / 4, HALF_HEIGHT / 5, (HALF_WIDTH / 4) * 3, (HALF_HEIGHT / 5) * 3);
+	enemies.clear();
 	for (auto i = list.begin(); i != list.end(); i++)
 	{
 		Monster &m = *i;
 		Enemy newEnemy(sf::Vector2f(HALF_WIDTH - ((67 * 2) * (list.size())) + ((67 * 2) * (i - list.begin())), bounds.top + ((((i - list.begin()) % 2)) ? 10 : -10)), TextureManager::instance().getTexture("assets/" + i->getName() + ".png"), m);
 		enemies.push_back(newEnemy);
 	}
-
-	battleBox.setTexture(TextureManager::instance().getTexture("assets/battlebox.png"));
 
 	selected = 0;
 	seconds = 0;
@@ -207,6 +207,8 @@ void Battle::start(Squad &squad_)
 	state = AI;
 
 	clock.restart();
+
+	res = BattleResult();
 }
 
 void Battle::drawUI(sf::RenderTarget &tg)
@@ -343,8 +345,10 @@ void Battle::update(sf::Time time)
 		thunderManaBar.update(time);
 		playerManaBar.update(time);
 
-		oTweener.step(time.asSeconds());
+		//Tweener updating
+		//oTweener.step(time.asSeconds());
 
+		//Log on top of the screen
 		log.update(time);
 
 		//Is message completely read
@@ -354,6 +358,7 @@ void Battle::update(sf::Time time)
 			nextAIStep();
 		}
 
+		//Change pointer position
 		if (state == PLAYER)
 		{
 			switch (currentAttacking)
@@ -372,9 +377,11 @@ void Battle::update(sf::Time time)
 			}		
 		}
 
+		//Menu, opens by ENTER
 		menu.update(time);
 	}
 
+	//Using menu, 0 is attack, 1 is spell, 2 is item
 	if (state == PLAYER && menu.getSelected() != NOT_SELECTED) 
 	{
 		if (menu.getSelected() == 0)
@@ -388,8 +395,13 @@ void Battle::update(sf::Time time)
 		{			
 			state = SPELL;
 		}
+
+		if (menu.getSelected() == 2)
+		{			
+		}
 	}
 
+	//Very bad handling of game's end
 	bool allDead = true;
 	for (auto i = enemies.begin(); i != enemies.end(); i++)
 	{
@@ -399,7 +411,6 @@ void Battle::update(sf::Time time)
 			break;
 		}
 	}
-
 	if(allDead && state != ENDED)
 	{
 		state = ENDED;
@@ -434,6 +445,33 @@ void Battle::damageMonster()
 
 	enemies[selected].playAnimation();
 	enemies[selected].getMonster().receiveDamage(dmg);
+	if (enemies[selected].isDied())
+	{
+		//Gain XP
+		switch (currentAttacking)
+		{
+		case 0: //Player
+			res.playerXP += enemies[selected].getMonster().getHP();
+			break;
+		case 1: //Ember
+			res.emberXP += enemies[selected].getMonster().getHP();
+			break;
+		case 2: //Thunder
+			res.thunderXP += enemies[selected].getMonster().getHP();
+			break;
+		default:
+			break;
+		} 
+
+		//Select next alive hero
+		for (auto i = enemies.begin(); i != enemies.end(); i++)
+		{
+			if (!i->isDied())
+			{
+				selected = i - enemies.begin();
+			}
+		}
+	}
 	SoundManager::instance().playHurtSound();
 }
 
@@ -456,8 +494,19 @@ void Battle::nextPlayerStep()
 	}
 }
 
+void Battle::clean()
+{
+	//Should i do it in start()?
+	squad = Squad();
+	enemies.clear();
+	selected = 0;
+	seconds = 0;
+	clock.restart();
+}
+
 void Battle::nextAIStep()
 {
+	//Some shit here, yup, i'm really tired
 	if (state == AI && log.isEnded())
 	{
 		while (currentAttacking < enemies.size() && enemies[currentAttacking].isDied())
@@ -476,7 +525,14 @@ void Battle::nextAIStep()
 			}		
 			state = PLAYER;
 			log.setString(L"Атакуйте!");
-			selected = 0;
+			for (auto i = enemies.begin(); i != enemies.end(); i++)
+			{
+				if (!i->isDied())
+				{
+					selected = i - enemies.begin();
+					break;
+				}
+			}		
 		}
 		else
 		{
@@ -501,52 +557,71 @@ void Battle::input(sf::Event &event)
 		menu.input(event);
 	}
 
+	//End battle
 	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && state == ENDED && log.isRead())
 	{
+		//GameData::instance().appendResult(res);
+		GameData::instance().getPlayer().addXP(res.playerXP);
+		GameData::instance().getPlayer().addXP(res.emberXP);
+		GameData::instance().getPlayer().addXP(res.thunderXP);
 		SceneManager::instance().endBattle();
 	}
 
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && state == PLAYER && !menu.isWorking() && log.isRead())
+	//Open menu when player's turn
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && state == PLAYER && !menu.isWorking() && log.isRead() && !enemies[selected].isDied())
 	{
 		menu.appear(sf::Vector2f(enemies[selected].getPosition().x * 2, enemies[selected].getPosition().y));
 	}
 
+	//Close menu on ESCAPE
 	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape && state == PLAYER && menu.isWorking())
 	{
 		menu.disappear();
 		SoundManager::instance().playSelectSound();
 	}
 
+	//Stop animation if log is read
 	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && !log.isRead() && state == AI)
 	{
 		enemies[currentAttacking - 1].stopAnimation();
 	}
 
+	//Update selected
 	if (state == PLAYER && !menu.isWorking())
 	{
 		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::A && !menu.isWorking())
 		{
-			if (selected > 0)
+			do 
 			{
-				selected--;
-			}
-			else
-			{
-				selected = enemies.size() - 1;
-			}
+				if (selected > 0)
+				{
+					selected--;
+				}
+				else
+				{
+					selected = enemies.size() - 1;
+				}
+			} while (enemies[selected].isDied());
+
+			std::cout << std::to_string(selected) << std::endl;
 
 			SoundManager::instance().playSelectSound();
 		}
 		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D && !menu.isWorking())
 		{
-			if (selected + 1 < enemies.size())
+			do 
 			{
-				selected++;
-			}
-			else
-			{
-				selected = 0;
-			}
+				if (selected + 1 < enemies.size())
+				{
+					selected++;
+				}
+				else
+				{
+					selected = 0;
+				}
+			} while (enemies[selected].isDied());	
+
+			std::cout << std::to_string(selected) << std::endl;
 
 			SoundManager::instance().playSelectSound();
 		}
