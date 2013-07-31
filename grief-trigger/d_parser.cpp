@@ -6,7 +6,6 @@ Parser::Parser()
 	dialoguesDoc.load_file("assets/text.xml");
 	resourcesDoc.load_file("assets/resources.xml");
 	spellsDoc.load_file("assets/spells.xml");
-	parseSpells("ember");
 }
 
 BasicStats Parser::getMonsterStats(std::string name)
@@ -38,12 +37,12 @@ std::vector<std::string> Parser::parseSquad(std::string squad)
 	return monsters;
 }
 
-std::vector<std::string> Parser::parseAnswers(std::string name, std::string situation)
+std::vector<std::wstring> Parser::parseAnswers(std::string name, std::string situation)
 {
 	pugi::xml_node text = dialoguesDoc.child("text").child(name.c_str());
 
 	std::vector<std::string> situations;
-	std::vector<std::string> strings;
+	std::vector<std::wstring> strings;
 
 	int pos = 0;
 	std::string token;
@@ -57,13 +56,13 @@ std::vector<std::string> Parser::parseAnswers(std::string name, std::string situ
 		text = text.child(situations[i].c_str());
 	}
 
-	std::string newAnswers = text.child_value("answers");
+	std::wstring newAnswers = pugi::as_wide(text.child_value("answers"));
 
-	if (newAnswers != "")
+	if (newAnswers != L"")
 	{
 		//Remove first newline
 		pos = 0; 
-		pos = newAnswers.find ("\n",pos);
+		pos = newAnswers.find (L"\n",pos);
 		newAnswers.erase ( pos, 1 );
 
 		//Count answers
@@ -80,7 +79,7 @@ std::vector<std::string> Parser::parseAnswers(std::string name, std::string situ
 	return strings;
 }
 
-std::string Parser::parseDialogue(std::string name, std::string situation)
+std::wstring Parser::parseDialogue(std::string name, std::string situation)
 {
 	pugi::xml_node text = dialoguesDoc.child("text").child(name.c_str());
 
@@ -100,7 +99,7 @@ std::string Parser::parseDialogue(std::string name, std::string situation)
 		text = text.child(situations[i].c_str());
 	}
 
-	return str;
+	return pugi::as_wide(str);
 }
 
 std::vector<std::string> Parser::parseResources(std::string block)
@@ -128,7 +127,7 @@ std::vector<std::string> Parser::parseResources(std::string block)
 	return resourcesNames;
 }
 
-std::vector<Spell> Parser::parseSpells(std::string hero)
+std::vector<Spell> Parser::parseSpells(std::string hero, unsigned int level)
 {
 	pugi::xml_node spellsList = spellsDoc.child(hero.c_str());
 
@@ -136,19 +135,23 @@ std::vector<Spell> Parser::parseSpells(std::string hero)
 
 	for (pugi::xml_node spell: spellsList.children())
 	{
-		std::cout << "Spell:";
-
 		for (pugi::xml_attribute attr: spell.attributes())
 		{
-			std::cout << " atr " << attr.name() << "=" << attr.value();
-		}
+			std::string shit = attr.name();
+			unsigned int shitInt = attr.as_int();
 
-		for (pugi::xml_node child: spell.children())
-		{
-			std::cout << ", child " << child.value();
+			if (shit == "level" && shitInt == level)
+			{
+				for (pugi::xml_node child: spell.children())
+				{
+					Spell newSpell;
+					std::wstring str = pugi::as_wide(attr.next_attribute().value());
+					std::wcout << str << std::endl;
+					newSpell.init(spell.name(), str, child.value(), attr.next_attribute().previous_attribute().previous_attribute().as_int());
+					newSpells.push_back(newSpell);
+				}
+			}
 		}
-
-		std::cout << std::endl;
 	}
 
 	return newSpells;

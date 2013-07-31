@@ -26,6 +26,7 @@ public:
 		level = 1;
 	}
 	//Bla-bla-bla
+	unsigned int &getLevel() {return level;};
 	unsigned int &getStrength() {return strength;};
 	unsigned int &getAgility() {return agility;};
 	unsigned int &getIntelligence() {return intelligence;};

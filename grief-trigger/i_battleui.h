@@ -17,6 +17,7 @@
 
 #include "h_config.h"
 #include "d_resourcesmanager.h"
+#include "d_magic.h"
 
 #define SHAPE_WIDTH 180.0
 #define BAR_WIDTH 170.0
@@ -29,6 +30,9 @@
 #define ANIMATIONTIME 1.0
 
 #define NOT_SELECTED -1
+
+#define YELLOW sf::Color(249u,217u,35u,255u)
+#define BLUE sf::Color(1u,250u,254u,255u)
 
 //Similar to DialoguePanel but simpler
 class Logger
@@ -127,7 +131,72 @@ public:
 class SpellMenu
 {
 private:
+	class Item
+	{
+	private:
+		sf::Sprite sprite;
+		sf::Text text;
+		Spell spell;
+
+	public:
+		Item(Spell &newSpell, sf::Font &font)
+		{
+			text.setFont(font);
+			spell = newSpell;
+			sprite.setTexture(TextureManager::instance().getTexture("assets/" + spell.getFileName() + ".png"));
+
+			std::wstring string =  L", очков маны: " + std::to_wstring(spell.getMana());
+			std::wstring string4 = spell.getName() + string;
+			
+			text.setString(string4);
+			text.setColor(sf::Color::White);
+		};
+		void update(bool selected)
+		{
+			if (selected)
+			{
+				text.setColor(sf::Color::Black);
+			}
+			else
+			{
+				text.setColor(sf::Color::White);
+			}
+		};
+		void draw(sf::RenderTarget &tg)
+		{
+			text.setPosition(sprite.getPosition().x + (CHARACTER_SIZE * 3) - 2, sprite.getPosition().y + 10);
+			tg.draw(sprite);
+			tg.draw(text);
+		};
+		void setPosition(sf::Vector2f pos) {sprite.setPosition(pos);};
+		sf::Vector2f getPosition() {return sprite.getPosition();};
+	};
+
+	std::vector<Item>	spells;
+
+	unsigned int		selected;
+
+	bool				working;
+
+	sf::Font			font;
+
+	sf::RectangleShape horizontalPointer;
+	sf::RectangleShape verticalPointer;
+
 public:
+	SpellMenu()
+	{
+		font.loadFromFile(fontPath);
+		working = false;
+		horizontalPointer = sf::RectangleShape(sf::Vector2f(WIDTH, CHARACTER_SIZE));
+		verticalPointer = sf::RectangleShape(sf::Vector2f(CHARACTER_SIZE, HEIGHT));
+	};
+	void setSpells(std::vector<Spell> newSpells);
+	void update(sf::Time time);
+	void draw(sf::RenderTarget &tg);
+	void input(sf::Event &event);
+	bool isWorking(){return working;};
+	void close(){working = false;};
 };
 
 #endif

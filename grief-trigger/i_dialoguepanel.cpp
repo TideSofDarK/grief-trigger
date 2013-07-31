@@ -55,7 +55,7 @@ void DialoguePanel::stop()
 	character = actualString.length();
 }
 
-std::string wordWrap( std::string str, size_t width = 50 ) {
+std::wstring wordWrap( std::wstring str, size_t width = 50 ) {
 	size_t curWidth = width;
 	while( curWidth < str.length() ) {
 		std::string::size_type spacePos = str.rfind( ' ', curWidth );
@@ -75,7 +75,7 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 	selected = 0;
 	isAnswering = false;
 
-	if (ended == false && text.getString().toAnsiString().c_str() != actualString.c_str())
+	if (ended == false && text.getString().toWideString().c_str() != actualString.c_str())
 	{
 		stop();
 	}
@@ -94,10 +94,10 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		if (lastSituation != situation) lastSituation = situation + '/';
 
 		//If next string is
-		if (nextString != "") 
+		if (nextString != L"") 
 		{
 			actualString = nextString;
-			nextString = "";
+			nextString = L"";
 		}
 		else 
 		{
@@ -105,9 +105,9 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		}
 
 		//Replace all newlines
-		while ( actualString.find ("\n") != std::string::npos )
+		while ( actualString.find (L"\n") != std::string::npos )
 		{
-			actualString.replace( actualString.find ("\n"), 1 ," ");
+			actualString.replace( actualString.find (L"\n"), 1 ,L" ");
 		}
 
 		//Wrap words
@@ -162,7 +162,7 @@ bool DialoguePanel::showAnswers()
 		return false;
 	}
 
-	std::vector<std::string> strings = Parser::instance().parseAnswers(lastName, lastSituation);
+	std::vector<std::wstring> strings = Parser::instance().parseAnswers(lastName, lastSituation);
 
 	for (int i = 0; i < strings.size(); i++)
 	{
@@ -185,7 +185,7 @@ void DialoguePanel::hide()
 	visible = false;
 	ended = true;
 	text.setString("");
-	actualString = "";
+	actualString = L"";
 	answers.clear();
 }
 
@@ -266,7 +266,7 @@ void DialoguePanel::input(sf::Event &event)
 				SoundManager::instance().playEnterSound();
 
 				//Leave dialogue if no text
-				if (nextString == "")
+				if (nextString == L"")
 				{
 					if (showAnswers() == false) hide();
 				}	

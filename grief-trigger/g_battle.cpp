@@ -133,7 +133,7 @@ void Battle::init(std::string fileName)
 	pointer.setTexture(TextureManager::instance().getTexture("assets/pointer.png"));
 
 	effectRect = sf::RectangleShape(sf::Vector2f(WIDTH, HEIGHT));
-	effectRect.setFillColor(sf::Color(0,0,0,155));
+	effectRect.setFillColor(sf::Color(0,0,0,205));
 
 	//Some shitty code here
 	//At least it is fast lol
@@ -238,7 +238,11 @@ void Battle::drawUI(sf::RenderTarget &tg)
 
 	menu.draw(tg);
 
-	if (state == SPELL) tg.draw(effectRect);
+	if (state == SPELL) 
+	{
+		tg.draw(effectRect);
+		spellMenu.draw(tg);
+	}
 
 	if (state == PLAYER) tg.draw(pointer);
 }
@@ -394,6 +398,21 @@ void Battle::update(sf::Time time)
 		if (menu.getSelected() == 1)
 		{			
 			state = SPELL;
+			
+			switch (currentAttacking)
+			{
+			case 0:
+				spellMenu.setSpells(Parser::instance().parseSpells("player", GameData::instance().getPlayer().getLevel()));
+				break;
+			case 1:
+				spellMenu.setSpells(Parser::instance().parseSpells("ember", GameData::instance().getEmber().getLevel()));
+				break;
+			case 2:
+				spellMenu.setSpells(Parser::instance().parseSpells("thunder", GameData::instance().getThunder().getLevel()));
+				break;
+			default:
+				break;
+			}	
 		}
 
 		if (menu.getSelected() == 2)
@@ -416,6 +435,12 @@ void Battle::update(sf::Time time)
 		state = ENDED;
 		log.setString(L"Бой окончен!");
 		SoundManager::instance().playWinSound();
+	}
+
+	//Spells
+	if (state == SPELL)
+	{
+		spellMenu.update(time);
 	}
 
 	//Update shader
@@ -555,6 +580,20 @@ void Battle::input(sf::Event &event)
 	if (menu.isWorking() && state == PLAYER)
 	{
 		menu.input(event);
+	}
+
+	//Spells menu input
+	if (state == SPELL)
+	{
+		spellMenu.input(event);
+	}
+
+	//Close spells menu
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape && state == SPELL && spellMenu.isWorking())
+	{
+		state = PLAYER;
+		spellMenu.close();
+		SoundManager::instance().playEnterSound();
 	}
 
 	//End battle

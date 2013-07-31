@@ -64,6 +64,9 @@ void Scene::init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader 
 	loadingText = sf::Text("Loading", font, 15);
 	loadingText.setPosition(HALF_WIDTH - (loadingText.getGlobalBounds().width / 2), HALF_HEIGHT - (loadingText.getGlobalBounds().height / 2));
 
+	days.setTexture(TextureManager::instance().getTexture("assets/day.png"));
+	days.setPosition(WIDTH - days.getTextureRect().width, 0);
+
 	//Start loading
 	loaded = false;
 	loadingThread.launch();
@@ -169,6 +172,7 @@ void Scene::draw(sf::RenderTarget &tg)
 			//pm.draw(finalTexture);
 			//Dialogue UI
 			DialoguePanel::instance().draw(finalTexture);
+			finalTexture.draw(days);
 		}
 		else //Draw battle
 		{

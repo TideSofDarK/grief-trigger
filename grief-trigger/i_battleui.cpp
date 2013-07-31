@@ -330,3 +330,96 @@ void Menu::select()
 	selected = selection;
 	working = false;
 }
+
+void SpellMenu::setSpells(std::vector<Spell> newSpells)
+{
+	const unsigned int startX = WIDTH / 3;
+	const unsigned int startY = HEIGHT / 5;
+
+	for (auto i = newSpells.begin(); i != newSpells.end(); i++)
+	{
+		Spell &spell = *i;
+		Item item(spell, font);
+		item.setPosition(sf::Vector2f(startX, 15 + startY + ((i - newSpells.begin()) * CHARACTER_SIZE * 3)));
+
+		spells.push_back(item);
+
+		std::cout << "tyryhtr\n";
+	}
+
+	verticalPointer.setPosition(startX + (CHARACTER_SIZE / 2), 0);
+	horizontalPointer.setPosition(sf::Vector2f(0, spells[selected].getPosition().y));
+
+	verticalPointer.setFillColor(YELLOW);
+	horizontalPointer.setFillColor(YELLOW);
+
+	working = true;
+}
+
+void SpellMenu::draw(sf::RenderTarget &tg)
+{
+	verticalPointer.setFillColor(BLUE);
+	horizontalPointer.setFillColor(BLUE);
+
+	tg.draw(verticalPointer);
+	tg.draw(horizontalPointer);
+
+	verticalPointer.setFillColor(YELLOW);
+	horizontalPointer.setFillColor(YELLOW);
+
+	verticalPointer.move(3, 0);
+	horizontalPointer.move(0, -3);
+
+	tg.draw(verticalPointer);
+	tg.draw(horizontalPointer);
+
+	verticalPointer.move(-3, 0);
+	horizontalPointer.move(0, 3);
+
+	if (working)
+	{
+		for (auto i = spells.begin(); i != spells.end(); i++)
+		{
+			i->draw(tg);
+		}
+	}
+}
+
+void SpellMenu::input(sf::Event &event)
+{
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::W)
+	{
+		if (selected > 0)
+		{
+			selected--;
+		}
+		else
+		{
+			selected = spells.size() - 1;
+		}
+
+		SoundManager::instance().playSelectSound();
+	}
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S)
+	{
+		if (selected + 1 < spells.size())
+		{
+			selected++;
+		}
+		else
+		{
+			selected = 0;
+		}
+
+		SoundManager::instance().playSelectSound();
+	}
+}
+
+void SpellMenu::update(sf::Time time)
+{
+	horizontalPointer.setPosition(sf::Vector2f(0, spells[selected].getPosition().y + (CHARACTER_SIZE / 2)));
+	for (auto i = spells.begin(); i != spells.end(); i++)
+	{
+		i->update(i - spells.begin() == selected ? true : false);
+	}
+}

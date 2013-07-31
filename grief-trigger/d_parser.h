@@ -32,10 +32,10 @@ private:
 public:
 	BasicStats getMonsterStats(std::string name);
 	std::vector<std::string> parseSquad(std::string squad);
-	std::vector<std::string> parseAnswers(std::string name, std::string situation);
-	std::string parseDialogue(std::string name, std::string situation);
+	std::vector<std::wstring> parseAnswers(std::string name, std::string situation);
+	std::wstring parseDialogue(std::string name, std::string situation);
 	std::vector<std::string> parseResources(std::string block);
-	std::vector<Spell> parseSpells(std::string hero);
+	std::vector<Spell> parseSpells(std::string hero, unsigned int level);
 };
 
 #endif

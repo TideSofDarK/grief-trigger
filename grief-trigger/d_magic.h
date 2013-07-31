@@ -2,7 +2,10 @@
 #define MAGIC_INCLUDE
 
 #include <string>
+#include <iostream>
 #include <vector>
+
+#include <SFML/System.hpp>
 
 #define TOP 1
 #define RIGHT 2
@@ -12,14 +15,19 @@
 class Spell
 {
 private:
-	std::string name;
+	sf::String name;
+	sf::String fileName;
+	unsigned int mana;
 
 	std::vector<int> combo;
 
 public:
-	Spell(std::string newName, std::string newCombo);
-	std::string getName() {return name;};
+	Spell();
+	void init(std::string newFileName, std::wstring newName, std::string newCombo, unsigned int newMana);
+	std::wstring getName() {return name.toWideString();};
+	std::string getFileName(){return fileName.toAnsiString();};
 	std::vector<int> getCombo() {return combo;};
+	unsigned int getMana(){return mana;};
 };
 
 #endif

@@ -79,6 +79,9 @@ private:
 	//Squad to delete
 	Squad squadToDelete;
 	unsigned int toDelete;
+	
+	//Day counter
+	sf::Sprite days;
 
 public:
 	Scene();

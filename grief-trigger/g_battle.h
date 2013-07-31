@@ -132,6 +132,9 @@ private:
 	};
 	BattleResult res;
 
+	//Spell menu
+	SpellMenu spellMenu;
+
 public:
 	Battle();
 	void start(Squad &squad);

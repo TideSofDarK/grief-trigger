@@ -65,10 +65,10 @@ protected:
 	float										nax;
 
 	//Current text
-	std::string									actualString;
+	std::wstring								actualString;
 
 	//Next string
-	std::string									nextString;
+	std::wstring								nextString;
 
 	//Last used name and situation
 	std::string									lastName;
