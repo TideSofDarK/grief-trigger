@@ -238,13 +238,18 @@ void Battle::drawUI(sf::RenderTarget &tg)
 
 	menu.draw(tg);
 
-	if (state == SPELL) 
+	if (state == SPELL || state == QTE)
 	{
 		tg.draw(effectRect);
+	}
+	if (state == SPELL) 
+	{		
 		spellMenu.draw(tg);
 	}
 
 	if (state == PLAYER) tg.draw(pointer);
+
+	if (state == QTE) spellQTE.draw(tg);
 }
 
 void Battle::draw(sf::RenderTarget &tg)
@@ -398,6 +403,8 @@ void Battle::update(sf::Time time)
 		if (menu.getSelected() == 1)
 		{			
 			state = SPELL;
+			menu.clean();
+			menu.disappear();
 			
 			switch (currentAttacking)
 			{
@@ -441,7 +448,18 @@ void Battle::update(sf::Time time)
 	if (state == SPELL)
 	{
 		spellMenu.update(time);
+		if (spellMenu.getSelected() != -1)
+		{
+			state = QTE;
+			menu.clean();
+			menu.disappear();
+
+			spellQTE.start(spellMenu.getSelectedSpell());
+		}
 	}
+
+	//QTE
+	if(state == QTE) spellQTE.update(time);
 
 	//Update shader
 	fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
@@ -582,22 +600,14 @@ void Battle::input(sf::Event &event)
 		menu.input(event);
 	}
 
-	//Spells menu input
-	if (state == SPELL)
+	//Input qtes
+	if (state == QTE)
 	{
-		spellMenu.input(event);
-	}
-
-	//Close spells menu
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape && state == SPELL && spellMenu.isWorking())
-	{
-		state = PLAYER;
-		spellMenu.close();
-		SoundManager::instance().playEnterSound();
+		spellQTE.input(event);
 	}
 
 	//End battle
-	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && state == ENDED && log.isRead())
+	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C && state == ENDED && log.isRead())
 	{
 		//GameData::instance().appendResult(res);
 		GameData::instance().getPlayer().addXP(res.playerXP);
@@ -607,7 +617,7 @@ void Battle::input(sf::Event &event)
 	}
 
 	//Open menu when player's turn
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && state == PLAYER && !menu.isWorking() && log.isRead() && !enemies[selected].isDied())
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C && state == PLAYER && !menu.isWorking() && log.isRead() && !enemies[selected].isDied())
 	{
 		menu.appear(sf::Vector2f(enemies[selected].getPosition().x * 2, enemies[selected].getPosition().y));
 	}
@@ -619,8 +629,21 @@ void Battle::input(sf::Event &event)
 		SoundManager::instance().playSelectSound();
 	}
 
+	//Close spells menu
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape && state == SPELL && spellMenu.isWorking())
+	{
+		state = PLAYER;
+		spellMenu.close();
+		SoundManager::instance().playEnterSound();
+	}
+
+	if (state == SPELL)
+	{
+		spellMenu.input(event);
+	}
+
 	//Stop animation if log is read
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space && !log.isRead() && state == AI)
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C && !log.isRead() && state == AI)
 	{
 		enemies[currentAttacking - 1].stopAnimation();
 	}
@@ -628,7 +651,7 @@ void Battle::input(sf::Event &event)
 	//Update selected
 	if (state == PLAYER && !menu.isWorking())
 	{
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::A && !menu.isWorking())
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Left && !menu.isWorking())
 		{
 			do 
 			{
@@ -646,7 +669,7 @@ void Battle::input(sf::Event &event)
 
 			SoundManager::instance().playSelectSound();
 		}
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D && !menu.isWorking())
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Right && !menu.isWorking())
 		{
 			do 
 			{

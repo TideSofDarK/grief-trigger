@@ -33,22 +33,28 @@ int main()
 
 	RenderWindow window(VideoMode(1280, 720), "Grief Trigger Turbo HD", sf::Style::Default);
 	//window.setFramerateLimit(60);
-	window.setVerticalSyncEnabled(true);
+	//window.setVerticalSyncEnabled(true);
 
 	sf::Clock frameClock;
+	sf::Clock clock;
 
 	tmx::MapLoader ml("assets/");
 
 	SceneManager::instance().setScene("test.tmx", ml);
 
-	float mCurrentFrameTime = 0;
-	float mCurrentRenderTime = 0;
-	float mCurrentRenderFrameTime = 0;
-	float mUpdateT = 0.1667;
-	float mRenderT = 0.16667;
+	const int FRAMES_PER_SECOND = 120;
+	const int SKIP_TICKS = 1000 / FRAMES_PER_SECOND;
+
+	//DWORD next_game_tick = GetTickCount();
+	float next_game_tick = clock.getElapsedTime().asMilliseconds();
+	// GetTickCount() returns the current number of milliseconds
+	// that have elapsed since the system was started
+
+	int sleep_time = 0;
 
 	while (window.isOpen())
 	{
+
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -58,22 +64,17 @@ int main()
 			SceneManager::instance().input(event);
 		}	
 
-		//sf::sleep(sf::milliseconds(10));
+		SceneManager::instance().update(frameClock.restart());
 
-		SceneManager::instance().update(sf::microseconds(mCurrentFrameTime));
+		window.clear();
+		SceneManager::instance().draw(window);
+		window.display();
 
-		if(mCurrentRenderTime >= mRenderT){
-			window.clear();
-			SceneManager::instance().draw(window);
-			window.display();
-			mCurrentRenderTime = 0.0;
+		next_game_tick += SKIP_TICKS;
+		sleep_time = next_game_tick - clock.getElapsedTime().asMilliseconds();
+		if( sleep_time >= 0 ) {
+			sf::sleep( sf::milliseconds(sleep_time) );
 		}
-
-		mCurrentFrameTime = frameClock.restart().asMicroseconds();
-		mCurrentRenderTime += mCurrentFrameTime;
-
-		sf::Time mSleepTime = sf::microseconds(mUpdateT - mCurrentFrameTime);
-		sf::sleep(mSleepTime);
 	}
 
 	return 0;

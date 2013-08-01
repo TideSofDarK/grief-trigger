@@ -1,5 +1,7 @@
 #include "i_battleui.h"
 
+#include <SFML/Window.hpp>
+
 Logger::Logger()
 {
 
@@ -47,7 +49,7 @@ void Logger::update(sf::Time time)
 
 void Logger::input(sf::Event &event)
 {
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) 
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::C)
 	{
 		SoundManager::instance().playEnterSound();
 		if (ended) read = true;
@@ -273,12 +275,12 @@ void Menu::input(sf::Event &event)
 {
 	if (working)
 	{
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::C)
 		{
 			select();
 			disappear();
 		}
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::W)
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up)
 		{
 			if (selection > 0)
 			{
@@ -291,7 +293,7 @@ void Menu::input(sf::Event &event)
 
 			SoundManager::instance().playSelectSound();
 		}
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S)
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down)
 		{
 			if (selection + 1 < items.size())
 			{
@@ -348,78 +350,185 @@ void SpellMenu::setSpells(std::vector<Spell> newSpells)
 	}
 
 	verticalPointer.setPosition(startX + (CHARACTER_SIZE / 2), 0);
-	horizontalPointer.setPosition(sf::Vector2f(0, spells[selected].getPosition().y));
+	horizontalPointer.setPosition(sf::Vector2f(0, spells[selection].getPosition().y));
 
 	verticalPointer.setFillColor(YELLOW);
 	horizontalPointer.setFillColor(YELLOW);
 
-	working = true;
+	selected = -1;
+
+	state = WORKING;
 }
 
 void SpellMenu::draw(sf::RenderTarget &tg)
 {
-	verticalPointer.setFillColor(BLUE);
-	horizontalPointer.setFillColor(BLUE);
-
-	tg.draw(verticalPointer);
-	tg.draw(horizontalPointer);
-
-	verticalPointer.setFillColor(YELLOW);
-	horizontalPointer.setFillColor(YELLOW);
-
-	verticalPointer.move(3, 0);
-	horizontalPointer.move(0, -3);
-
-	tg.draw(verticalPointer);
-	tg.draw(horizontalPointer);
-
-	verticalPointer.move(-3, 0);
-	horizontalPointer.move(0, 3);
-
-	if (working)
+	if (state != IDLE)
 	{
+		verticalPointer.setFillColor(BLUE);
+		horizontalPointer.setFillColor(BLUE);
+
+		tg.draw(verticalPointer);
+		tg.draw(horizontalPointer);
+
+		verticalPointer.setFillColor(YELLOW);
+		horizontalPointer.setFillColor(YELLOW);
+
+		verticalPointer.move(3, 0);
+		horizontalPointer.move(0, -3);
+
+		tg.draw(verticalPointer);
+		tg.draw(horizontalPointer);
+
+		verticalPointer.move(-3, 0);
+		horizontalPointer.move(0, 3);
+
 		for (auto i = spells.begin(); i != spells.end(); i++)
 		{
 			i->draw(tg);
 		}
-	}
+	}	
 }
 
 void SpellMenu::input(sf::Event &event)
 {
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::W)
+	if (state == WORKING)
 	{
-		if (selected > 0)
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up)
 		{
-			selected--;
-		}
-		else
-		{
-			selected = spells.size() - 1;
-		}
+			if (selection > 0)
+			{
+				selection--;
+			}
+			else
+			{
+				selection = spells.size() - 1;
+			}
 
-		SoundManager::instance().playSelectSound();
-	}
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S)
-	{
-		if (selected + 1 < spells.size())
-		{
-			selected++;
+			SoundManager::instance().playSelectSound();
 		}
-		else
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down)
 		{
-			selected = 0;
-		}
+			if (selection + 1 < spells.size())
+			{
+				selection++;
+			}
+			else
+			{
+				selection = 0;
+			}
 
-		SoundManager::instance().playSelectSound();
+			SoundManager::instance().playSelectSound();
+		}
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::C)
+		{
+			select();
+			close();
+
+			SoundManager::instance().playEnterSound();
+		}
 	}
 }
 
 void SpellMenu::update(sf::Time time)
 {
-	horizontalPointer.setPosition(sf::Vector2f(0, spells[selected].getPosition().y + (CHARACTER_SIZE / 2)));
-	for (auto i = spells.begin(); i != spells.end(); i++)
+	if (state != IDLE)
 	{
-		i->update(i - spells.begin() == selected ? true : false);
+		horizontalPointer.setPosition(sf::Vector2f(0, spells[selection].getPosition().y + (CHARACTER_SIZE / 2)));
+
+		if(state == WORKING)
+		{
+			for (auto i = spells.begin(); i != spells.end(); i++)
+			{
+				i->update(i - spells.begin() == selection ? true : false);
+				if (i - spells.begin() == selection)
+				{
+					i->setPosition(sf::Vector2f(WIDTH / 3 + 10, i->getPosition().y));
+				}
+				else
+				{
+					i->setPosition(sf::Vector2f(WIDTH / 3, i->getPosition().y));
+				}
+			}
+		}
+		if (state == TRANSITION)
+		{
+			//spells[selected].setPosition(sf::Vector2f(tempSelectedX, spells[selected].getPosition().y));
+			//oTweener.step(time.asSeconds());
+			//if (tempY == HEIGHT || tempSelectedX == WIDTH + CHARACTER_SIZE) state = IDLE;
+		}
+	}	
+}
+
+void SpellMenu::select()
+{
+	state = IDLE;
+	selected = selection;
+}
+
+SpellQTE::SpellQTE()
+{
+	state = IDLE;
+	line.setTexture(TextureManager::instance().getTexture("assets/line.png"));
+	line.setPosition(startX + 40, startY + 31);
+	line.scale(3, 3);
+	shape.setSize(sf::Vector2f(CHARACTER_SIZE * 3, CHARACTER_SIZE *3));
+	shape.setPosition(line.getPosition());
+}
+
+void SpellQTE::draw(sf::RenderTarget &tg)
+{
+	tg.draw(shape);
+	tg.draw(line);
+	for (auto i = blocks.begin(); i != blocks.end(); i++)
+	{
+		i->draw(tg);
 	}
+}
+
+void SpellQTE::update(sf::Time time)
+{
+	for (auto i = blocks.begin(); i != blocks.end(); i++)
+	{
+		i->sprite.move(-5, 0);
+	}
+}
+
+void SpellQTE::input(sf::Event &event)
+{
+	if (state == WORKING)
+	{
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C)
+		{
+			std::cout << std::to_string(blocks.front().sprite.getPosition().x) + "x" + std::to_string(blocks.front().sprite.getPosition().y) << std::endl;
+			std::cout << std::to_string(shape.getPosition().x) + "x" + std::to_string(shape.getPosition().y) << std::endl;
+			if (shape.getGlobalBounds().intersects(blocks.front().sprite.getGlobalBounds()))
+			{
+				blocks.pop_front();
+			}
+		}
+	}
+}
+
+void SpellQTE::end()
+{
+
+}
+
+void SpellQTE::start(Spell &sp)
+{
+	spell = sp;
+
+	std::vector<int> &v = spell.getCombo();
+
+	for (auto i = v.begin(); i != v.end(); i++)
+	{
+		Block block;
+		block.sprite.setTexture(TextureManager::instance().getTexture("assets/button.png"));
+		block.sprite.setPosition(WIDTH + ((i - v.begin()) * (CHARACTER_SIZE * 5)) + ((i - v.begin()) * OFFSET),startY);
+		block.sprite.scale(5,5);
+		block.b = *i;
+		blocks.push_back(block);
+	}
+
+	state = WORKING;
 }

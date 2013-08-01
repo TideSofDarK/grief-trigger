@@ -48,22 +48,22 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects)
 		/************************************************************************/
 		/* Check for input and movable space									*/
 		/************************************************************************/
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 		{
 			step(DIR_TOP, objects);
 		}
 
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 		{
 			step(DIR_DOWN, objects);
 		}
 
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
 			step(DIR_LEFT, objects);
 		}
 
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 		{
 			step(DIR_RIGHT, objects);
 		}
@@ -227,7 +227,7 @@ bool PlayerObject::step(int dir, std::vector<tmx::MapObject> &objects)
 		for (auto it = squads->begin(); it != squads->end(); ++it)
 		{
 			Squad &squad = *it;
-			if (walking == false && squad.getOnMap().Contains(sf::Vector2f(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y))) 
+			if (walking == false && sf::FloatRect(squad.getOnMap().GetPosition().x, squad.getOnMap().GetPosition().y, CHARACTER_SIZE, CHARACTER_SIZE).intersects(sf::FloatRect(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)))
 			{
 				SceneManager::instance().initBattle(squad);
 			}

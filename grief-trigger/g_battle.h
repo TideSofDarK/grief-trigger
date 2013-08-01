@@ -59,7 +59,7 @@ class Battle
 {
 private:
 	//Current state
-	typedef enum { PLAYER, AI, SPELL, ENDED } BATTLE_STATE;
+	typedef enum { PLAYER, AI, SPELL, QTE, ENDED } BATTLE_STATE;
 	BATTLE_STATE				state;
 	unsigned int turnNumber;
 	unsigned int currentAttacking;
@@ -130,10 +130,13 @@ private:
 		unsigned int emberXP;
 		unsigned int thunderXP;
 	};
-	BattleResult res;
+	BattleResult				res;
 
 	//Spell menu
-	SpellMenu spellMenu;
+	SpellMenu					spellMenu;
+
+	//Spell QTE system
+	SpellQTE					spellQTE;
 
 public:
 	Battle();

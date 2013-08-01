@@ -1,6 +1,7 @@
 #ifndef SCENEMANAGER_INCLUDE
 #define SCENEMANAGER_INCLUDE
 
+#include <thread>
 #include <iostream>
 #include <vector>
 
@@ -19,79 +20,77 @@
 #include "g_battle.h"
 #include "h_config.h"
 
+typedef enum { MAP, BATTLE, TRANSITION, PAUSED, LOADING } SCENE_STATE;
+
 class Scene
 {
 private:
 	//Battle screen
-	Battle battle;
+	Battle				battle;
 
-	//Is battle
-	bool isBattle;
-
-	//Is loaded
-	bool loaded;
+	//State
+	SCENE_STATE			state;
 
 	//Enemy squads
-	std::vector<Squad> squads;
+	std::vector<Squad>	squads;
 
 	//The Doors
-	std::vector<Door> doors;
+	std::vector<Door>	doors;
 
 	//Player object
-	PlayerObject po;
+	PlayerObject		po;
 
 	//Pointer to map loader
-	tmx::MapLoader *map;
+	tmx::MapLoader		*map;
 
 	//Shaders
-	ShaderManager sm;
+	ShaderManager		sm;
 
 	//Particles manager
-	ParticlesManager pm;
+	ParticlesManager	pm;
 
 	//Render all to final texture
-	sf::RenderTexture finalTexture;
+	sf::RenderTexture	finalTexture;
 
-	//Pointers to views
-	sf::View *camera;
-	sf::View *unscalable;
+	//Views
+	sf::View			camera;
+	sf::View			unscalable;
 
-	//Loading thread
-	sf::Thread loadingThread;
+	//Loading text
+	sf::Font			font;
+	unsigned int		counter;
+	sf::Text			loadingText;
+
+	//Transition timer
+	sf::Clock			transitionClock;
+
+	//Squad to delete
+	Squad				squadToDelete;
+	unsigned int		toDelete;
+	
+	//Day counter
+	sf::Sprite			days;
 
 	//Loading resources
 	void loadResources();
 
-	//Loading text
-	sf::Font font;
-	unsigned int counter;
-	sf::Text loadingText;
-	
-	//Is paused
-	bool paused;
-
-	//Is transition
-	bool transition;
-
-	//Transition timer
-	sf::Clock transitionClock;
-
-	//Squad to delete
-	Squad squadToDelete;
-	unsigned int toDelete;
-	
-	//Day counter
-	sf::Sprite days;
-
 public:
-	Scene();
-	void init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml);
+	Scene()
+	{
+		camera = sf::View(sf::FloatRect(sf::FloatRect(0, 0, WIDTH, HEIGHT)));
+		unscalable = sf::View(sf::FloatRect(0, 0, WIDTH, HEIGHT));
+		camera.zoom(1.f/2.f);
+	};
+	void init(std::string name, tmx::MapLoader &ml);
 	void update(sf::Time time);
 	void draw(sf::RenderTarget &tg);
 	void input(sf::Event &event);
 	void startBattle(Squad &squad);
 	void endBattle();
-	void setPaused(bool p) {paused = p;};
+	void setPaused(bool p) 
+	{
+		state = (p == true ? PAUSED : MAP);
+	};
 	void setCurrentEffect(std::string string, sf::Time time);
 };
 
@@ -106,19 +105,17 @@ public:
 
 private:
 	SceneManager() {
-		camera = sf::View(sf::FloatRect(sf::FloatRect(0, 0, WIDTH, HEIGHT)));
-		unscalable = sf::View(sf::FloatRect(0, 0, WIDTH, HEIGHT));
-		camera.zoom(1.f/2.f);
+		
 	};
 
 	SceneManager( const SceneManager& );
 	SceneManager& operator =( const SceneManager& );
 
 	//Current scene pointer
-	Scene current;
+	Scene		current;
 
-	sf::View camera;
-	sf::View unscalable;
+	sf::View	camera;
+	sf::View	unscalable;
 
 public:
 	void draw(sf::RenderTarget &rt);

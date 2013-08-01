@@ -11,6 +11,8 @@
 #define RIGHT 2
 #define DOWN 3
 #define LEFT 4
+#define Z 5
+#define X 6
 
 class Spell
 {

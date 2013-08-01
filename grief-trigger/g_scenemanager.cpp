@@ -14,10 +14,10 @@ void Scene::loadResources()
 		{
 			//Set center of camera to player coords
 			//camera->setCenter(object.GetPosition().x + CHARACTER_SIZE, object.GetPosition().y + (CHARACTER_SIZE / 2));
-			camera->setCenter(0 + (HALF_WIDTH / 2), 0 + (HALF_HEIGHT / 2));
+			camera.setCenter(0 + (HALF_WIDTH / 2), 0 + (HALF_HEIGHT / 2));
 
 			//Init hero object
-			po.init(object.GetPosition().x, object.GetPosition().y, camera->getCenter(), object, doors, squads);
+			po.init(object.GetPosition().x, object.GetPosition().y, camera.getCenter(), object, doors, squads);
 		}
 		else if (object.GetName() == "squad")
 		{
@@ -35,6 +35,9 @@ void Scene::loadResources()
 		}	
 	}
 
+	days.setTexture(TextureManager::instance().getTexture("assets/day.png"));
+	days.setPosition(WIDTH - days.getTextureRect().width, 0);
+
 	sm.init(sf::Vector2f(WIDTH, HEIGHT));
 
 	DialoguePanel::instance().loadResources();
@@ -44,44 +47,30 @@ void Scene::loadResources()
 
 	battle.init();
 
-	loaded = true;
-	isBattle = false;
+	state = MAP;
 }
 
-Scene::Scene() : loadingThread(&Scene::loadResources, this)
-{
-}
-
-void Scene::init(std::string name, sf::View *cam, sf::View *uns, tmx::MapLoader &ml)
+void Scene::init(std::string name, tmx::MapLoader &ml)
 {
 	//Constructor
 	ml.Load(name);
 	map = &ml;
-	camera = cam;
-	unscalable = uns;
 
 	font.loadFromFile("assets/fonts/default.TTF");
 	loadingText = sf::Text("Loading", font, 15);
 	loadingText.setPosition(HALF_WIDTH - (loadingText.getGlobalBounds().width / 2), HALF_HEIGHT - (loadingText.getGlobalBounds().height / 2));
 
-	days.setTexture(TextureManager::instance().getTexture("assets/day.png"));
-	days.setPosition(WIDTH - days.getTextureRect().width, 0);
-
 	//Start loading
-	loaded = false;
-	loadingThread.launch();
-
+	state = LOADING;
+	std::thread loadingThread(&Scene::loadResources, this);
+	loadingThread.join();
+	
 	//Create render texture
 	finalTexture.create(WIDTH, HEIGHT);
-
-	paused = false;
-	transition = false;
 }
 
 void Scene::endBattle()
 {
-	isBattle = false;
-	paused = false;
 	for (auto i = squads.begin(); i != squads.end();)
 	{
 		Squad &squad = *i;
@@ -95,26 +84,27 @@ void Scene::endBattle()
 		}
 	}
 	battle.clean();
+
+	state = MAP;
 }
 
 void Scene::update(sf::Time time)
 {
-	if (loaded)
+	if (state != LOADING)
 	{
-		if (!paused && !transition)
+		if (state == MAP)
 		{
-			if (!isBattle)
+			//pm.update(time);
+			for (auto i = squads.begin(); i != squads.end(); ++i)
 			{
-				//pm.update(time);
-				for (auto i = squads.begin(); i != squads.end(); ++i)
-				{
-					i->update(time, map->GetLayers().back().objects);
-				}	
-				DialoguePanel::instance().update();			
-				po.move(map->GetLayers().back().objects);
-				po.update(time, *camera);
-			}
+				i->update(time, map->GetLayers().back().objects);
+			}	
+			DialoguePanel::instance().update();			
+			po.move(map->GetLayers().back().objects);
+			po.update(time, camera);
 		}
+
+		//Always update shaders
 		if (sm.isWorking()) sm.update();
 	}
 	else
@@ -126,32 +116,29 @@ void Scene::update(sf::Time time)
 		else if (counter >= 20) counter = 0;
 		counter++;
 	}
-	if (isBattle) battle.update(time);
+
+	if (state == BATTLE) battle.update(time);
+
+	if (state == TRANSITION)
+	{
+		if (!sm.isWorking())
+		{
+			state = BATTLE;
+		}
+	}
 }
 
 void Scene::draw(sf::RenderTarget &tg)
 {
-	if (transition)
-	{
-		if (!sm.isWorking())
-		{
-			isBattle = true;
-			transition = false;
-		}
-	}
-
-	if (loaded)
+	if (state != LOADING)
 	{
 		finalTexture.clear(sf::Color(24u, 19u, 27u));
 
 		//Draw map and hero
-		if (!isBattle)
+		if (state != BATTLE)
 		{
-			//Particle effect under game map
-			//pm.drawUnder(finalTexture);
-
 			//Game content
-			finalTexture.setView(*camera);
+			finalTexture.setView(camera);
 			//Map
 			map->Draw(finalTexture);
 			//Enemy squads
@@ -167,9 +154,8 @@ void Scene::draw(sf::RenderTarget &tg)
 			}
 
 			//Unscalable
-			finalTexture.setView(*unscalable);
-			//Particles
-			//pm.draw(finalTexture);
+			finalTexture.setView(unscalable);
+
 			//Dialogue UI
 			DialoguePanel::instance().draw(finalTexture);
 			finalTexture.draw(days);
@@ -177,11 +163,11 @@ void Scene::draw(sf::RenderTarget &tg)
 		else //Draw battle
 		{
 			//Scaled
-			finalTexture.setView(*camera);
+			finalTexture.setView(camera);
 			battle.draw(finalTexture);
 
 			//Unscalable
-			finalTexture.setView(*unscalable);
+			finalTexture.setView(unscalable);
 			battle.drawUI(finalTexture);
 		}
 
@@ -198,7 +184,7 @@ void Scene::draw(sf::RenderTarget &tg)
 void Scene::startBattle(Squad &squad)
 {
 	transitionClock.restart();
-	transition = true;
+	state = TRANSITION;
 
 	battle.start(squad);
 
@@ -207,25 +193,25 @@ void Scene::startBattle(Squad &squad)
 
 void Scene::input(sf::Event &event)
 {
-	if (loaded)
+	if (state != LOADING)
 	{
-		if (!isBattle)
+		if (state != BATTLE)
 		{
 			DialoguePanel::instance().input(event);
 			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) setCurrentEffect("distortion", sf::seconds(1));
 			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) setCurrentEffect("battle", sf::seconds(1));
 			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P) finalTexture.getTexture().copyToImage().saveToFile("screenshot.png");
 
-			if (!paused)
+			if (state != PAUSED)
 			{
-				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::V) paused = true;
+				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::V) state = PAUSED;
 			}
 			else
 			{
-				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::V) paused = false;
+				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::V) state = MAP;
 			}
 		}
-		else if (isBattle)
+		else if (state == BATTLE)
 		{
 			battle.input(event);
 		}
@@ -239,7 +225,7 @@ void Scene::setCurrentEffect(std::string string, sf::Time time)
 
 void SceneManager::setScene(std::string name, tmx::MapLoader &ml)
 {
-	current.init(name, &camera, &unscalable, ml);
+	current.init(name, ml);
 }
 
 void SceneManager::draw(sf::RenderTarget &rt)
@@ -260,7 +246,7 @@ void SceneManager::input(sf::Event &event)
 void SceneManager::initBattle(Squad &squad)
 {
 	current.setPaused(true);
-	current.setCurrentEffect("battle", sf::seconds(1));
+	current.setCurrentEffect("battle", sf::seconds(0.97));
 	current.startBattle(squad);
 }
 

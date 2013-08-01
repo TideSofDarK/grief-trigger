@@ -3,6 +3,7 @@
 
 #include <list>
 #include <iostream>
+#include <deque>
 #include <string>
 
 #include <SFML/Graphics.hpp>
@@ -39,12 +40,12 @@ class Logger
 {
 private:
 	std::wstring		actualString;
-	unsigned int	character;
-	sf::Text		text;
-	sf::Font		font;
-	bool			ended;
-	bool			read;
-	sf::Clock		clock;
+	unsigned int		character;
+	sf::Text			text;
+	sf::Font			font;
+	bool				ended;
+	bool				read;
+	sf::Clock			clock;
 
 public:
 	Logger();
@@ -70,7 +71,7 @@ private:
 	float		dirY;
 
 	//Is active
-	bool active;
+	bool		active;
 
 public:
 	Damage(sf::Vector2f pos, std::string str, sf::Font &font);
@@ -83,13 +84,13 @@ public:
 class Bar
 {
 private:
-	unsigned int *variable;
-	unsigned int maxVariable;
+	unsigned int		*variable;
+	unsigned int		maxVariable;
 
-	sf::RectangleShape shape;
-	sf::RectangleShape bar;
+	sf::RectangleShape	shape;
+	sf::RectangleShape	bar;
 
-	bool vertical;
+	bool				vertical;
 
 public:
 	Bar();
@@ -131,12 +132,14 @@ public:
 class SpellMenu
 {
 private:
+	typedef enum SPELLMENU_STATE { IDLE, WORKING, TRANSITION };
+
 	class Item
 	{
 	private:
-		sf::Sprite sprite;
-		sf::Text text;
-		Spell spell;
+		sf::Sprite		sprite;
+		sf::Text		text;
+		Spell			spell;
 
 	public:
 		Item(Spell &newSpell, sf::Font &font)
@@ -170,24 +173,30 @@ private:
 		};
 		void setPosition(sf::Vector2f pos) {sprite.setPosition(pos);};
 		sf::Vector2f getPosition() {return sprite.getPosition();};
+		void move(sf::Vector2f m) {sprite.move(m);};
+		Spell &getSpell(){return spell;};
 	};
+
+	SPELLMENU_STATE		state;
 
 	std::vector<Item>	spells;
 
+	unsigned int		selection;
 	unsigned int		selected;
-
-	bool				working;
 
 	sf::Font			font;
 
-	sf::RectangleShape horizontalPointer;
-	sf::RectangleShape verticalPointer;
+	sf::RectangleShape	horizontalPointer;
+	sf::RectangleShape	verticalPointer;
+
+	CDBTweener			oTweener;
+	float				tempSelectedX;
 
 public:
 	SpellMenu()
 	{
+		state = IDLE;
 		font.loadFromFile(fontPath);
-		working = false;
 		horizontalPointer = sf::RectangleShape(sf::Vector2f(WIDTH, CHARACTER_SIZE));
 		verticalPointer = sf::RectangleShape(sf::Vector2f(CHARACTER_SIZE, HEIGHT));
 	};
@@ -195,8 +204,55 @@ public:
 	void update(sf::Time time);
 	void draw(sf::RenderTarget &tg);
 	void input(sf::Event &event);
-	bool isWorking(){return working;};
-	void close(){working = false;};
+	int getSelected(){return selected;};
+	Spell &getSelectedSpell() {return spells[selected].getSpell();};
+	bool isWorking()
+	{
+		return (state == WORKING ? true : false);
+	};
+	void close()
+	{
+		state = IDLE;
+	};
+	void select();
+};
+
+class SpellQTE
+{
+private:
+	typedef enum QTE_STATE { IDLE, WORKING, TRANSITION };
+
+	typedef struct Block
+	{
+		void draw(sf::RenderTarget &tg)
+		{
+			tg.draw(sprite);
+		};
+		sf::Sprite sprite;
+		int b;
+	};
+
+	static const unsigned int startX = WIDTH / 3;
+	static const unsigned int startY = HEIGHT / 3;
+	static const unsigned int offset = 10;
+
+	Spell spell;
+
+	QTE_STATE state;
+
+	std::deque<Block> blocks;
+
+	sf::Sprite line;
+
+	sf::RectangleShape shape;
+
+public:
+	SpellQTE();
+	void update(sf::Time time);
+	void draw(sf::RenderTarget &tg);
+	void input(sf::Event &event);
+	void end();
+	void start(Spell &sp);
 };
 
 #endif
