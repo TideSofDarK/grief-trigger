@@ -238,7 +238,7 @@ void Battle::drawUI(sf::RenderTarget &tg)
 
 	menu.draw(tg);
 
-	if (state == SPELL || state == QTE)
+	if (state == SPELL)
 	{
 		tg.draw(effectRect);
 	}
@@ -292,19 +292,19 @@ void Battle::damagePlayer(Monster &monster)
 	{
 	case 0:
 		damageEffects.push_back(Damage(sf::Vector2f(playerSprite.getPosition().x + (playerSprite.getTextureRect().width / 3), 
-			playerSprite.getPosition().y + (playerSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg), font));
+			playerSprite.getPosition().y + (playerSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg)));
 		GameData::instance().getPlayer().setHP(GameData::instance().getPlayer().getHP() - dmg);
 		name = L"Игрок";
 		break;
 	case 1:
 		damageEffects.push_back(Damage(sf::Vector2f(emberSprite.getPosition().x + (emberSprite.getTextureRect().width / 3), 
-			emberSprite.getPosition().y + (emberSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg), font));
+			emberSprite.getPosition().y + (emberSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg)));
 		GameData::instance().getEmber().setHP(GameData::instance().getEmber().getHP() - dmg);
 		name = L"Эмбер";
 		break;
 	case 2:
 		damageEffects.push_back(Damage(sf::Vector2f(thunderSprite.getPosition().x + (thunderSprite.getTextureRect().width / 3), 
-			thunderSprite.getPosition().y + (thunderSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg), font));
+			thunderSprite.getPosition().y + (thunderSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg)));
 		GameData::instance().getThunder().setHP(GameData::instance().getThunder().getHP() - dmg);
 		name = L"Сандер";
 		break;
@@ -549,7 +549,7 @@ void Battle::clean()
 
 void Battle::nextAIStep()
 {
-	//Some shit here, yup, i'm really tired
+	//Some shit here
 	if (state == AI && log.isEnded())
 	{
 		while (currentAttacking < enemies.size() && enemies[currentAttacking].isDied())
@@ -607,7 +607,7 @@ void Battle::input(sf::Event &event)
 	}
 
 	//End battle
-	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C && state == ENDED && log.isRead())
+	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X && state == ENDED && log.isRead())
 	{
 		//GameData::instance().appendResult(res);
 		GameData::instance().getPlayer().addXP(res.playerXP);
@@ -617,7 +617,7 @@ void Battle::input(sf::Event &event)
 	}
 
 	//Open menu when player's turn
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C && state == PLAYER && !menu.isWorking() && log.isRead() && !enemies[selected].isDied())
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X && state == PLAYER && !menu.isWorking() && log.isRead() && !enemies[selected].isDied())
 	{
 		menu.appear(sf::Vector2f(enemies[selected].getPosition().x * 2, enemies[selected].getPosition().y));
 	}
@@ -643,7 +643,7 @@ void Battle::input(sf::Event &event)
 	}
 
 	//Stop animation if log is read
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C && !log.isRead() && state == AI)
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X && !log.isRead() && state == AI)
 	{
 		enemies[currentAttacking - 1].stopAnimation();
 	}

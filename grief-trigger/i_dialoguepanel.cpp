@@ -254,14 +254,14 @@ void DialoguePanel::input(sf::Event &event)
 				{
 					selected--;
 				}
-				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::C) 
+				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X) 
 				{
 					SoundManager::instance().playEnterSound();
 
 					applyAnswer(selected);
 				}
 			}
-			else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::C && ended == true) 
+			else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X && ended == true) 
 			{
 				SoundManager::instance().playEnterSound();
 
@@ -272,7 +272,7 @@ void DialoguePanel::input(sf::Event &event)
 				}	
 				else openDialogue(lastName, lastSituation);
 			}
-			else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::C && ended != true)
+			else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X && ended != true)
 			{
 				SoundManager::instance().playEnterSound();
 

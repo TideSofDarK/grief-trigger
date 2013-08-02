@@ -6,13 +6,14 @@
 #include <vector>
 
 #include <SFML/System.hpp>
+#include <SFML/Window.hpp>
 
-#define TOP 1
-#define RIGHT 2
-#define DOWN 3
-#define LEFT 4
-#define Z 5
-#define X 6
+#define UP sf::Keyboard::Key::Up
+#define RIGHT sf::Keyboard::Key::Right
+#define DOWN sf::Keyboard::Key::Down
+#define LEFT sf::Keyboard::Key::Left
+#define _Z sf::Keyboard::Key::Z
+#define _X sf::Keyboard::Key::X
 
 class Spell
 {

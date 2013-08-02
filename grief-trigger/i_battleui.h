@@ -42,7 +42,6 @@ private:
 	std::wstring		actualString;
 	unsigned int		character;
 	sf::Text			text;
-	sf::Font			font;
 	bool				ended;
 	bool				read;
 	sf::Clock			clock;
@@ -64,8 +63,6 @@ class Damage
 private:
 	sf::Text	text;
 
-	sf::Font	font;
-
 	float		ny;
 	float		na;
 	float		dirY;
@@ -74,7 +71,7 @@ private:
 	bool		active;
 
 public:
-	Damage(sf::Vector2f pos, std::string str, sf::Font &font);
+	Damage(sf::Vector2f pos, std::string str);
 	void draw(sf::RenderTarget &tg);
 	void update(sf::Time time);
 	bool isActive() {return active;};
@@ -111,7 +108,6 @@ private:
 	float						nx;
 	float						counter;
 	sf::Sprite					back;
-	sf::Font					font;
 	int							selected;
 
 public:
@@ -142,9 +138,9 @@ private:
 		Spell			spell;
 
 	public:
-		Item(Spell &newSpell, sf::Font &font)
+		Item(Spell &newSpell)
 		{
-			text.setFont(font);
+			text.setFont(DFont::instance().getFont());
 			spell = newSpell;
 			sprite.setTexture(TextureManager::instance().getTexture("assets/" + spell.getFileName() + ".png"));
 
@@ -220,7 +216,8 @@ public:
 class SpellQTE
 {
 private:
-	typedef enum QTE_STATE { IDLE, WORKING, TRANSITION };
+	typedef enum STATE { IDLE, WORKING, TRANSITION };
+	typedef enum QTE_STATE { GOING, ENDED, SLEEP };
 
 	typedef struct Block
 	{
@@ -230,21 +227,27 @@ private:
 		};
 		sf::Sprite sprite;
 		int b;
+		QTE_STATE state;
 	};
 
-	static const unsigned int startX = WIDTH / 3;
-	static const unsigned int startY = HEIGHT / 3;
-	static const unsigned int offset = 10;
+	static const unsigned int	startX = WIDTH / 3;
+	static const unsigned int	startY = HEIGHT / 3;
+	static const unsigned int	offset = 10;
 
-	Spell spell;
+	Spell						spell;
 
-	QTE_STATE state;
+	STATE						state;
 
-	std::deque<Block> blocks;
+	std::deque<Block>			blocks;
 
-	sf::Sprite line;
+	sf::Sprite					line;
 
-	sf::RectangleShape shape;
+	sf::RectangleShape			shape;
+
+	sf::Sprite					cell;
+
+	sf::Clock					timer;
+	bool						waiting;
 
 public:
 	SpellQTE();

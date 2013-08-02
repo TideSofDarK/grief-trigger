@@ -2,6 +2,34 @@
 
 #include <SFML/Window.hpp>
 
+sf::Vector2f interpolate(
+	const sf::Vector2f& pointA,
+	const sf::Vector2f& pointB,
+	float factor
+	) {
+		if( factor > 1.f ) 
+			factor = 1.f;
+
+		else if( factor < 0.f )
+			factor = 0.f;
+
+		return pointA + (pointB - pointA) * factor;
+}
+
+float interpolateLinear(
+	const float pointA,
+	const float pointB,
+	float factor
+	) {
+		if( factor > 1.f ) 
+			factor = 1.f;
+
+		else if( factor < 0.f )
+			factor = 0.f;
+
+		return pointA + (pointB - pointA) * factor;
+}
+
 Logger::Logger()
 {
 
@@ -9,11 +37,10 @@ Logger::Logger()
 
 void Logger::init(sf::Vector2f pos)
 {
-	font.loadFromFile(fontPath);
 	text = sf::Text();
 	text.setPosition(pos);
 	text.setString("");
-	text.setFont(font);
+	text.setFont(DFont::instance().getFont());
 	text.setCharacterSize(33);
 	text.setColor(sf::Color::Black);
 	ended = true;
@@ -49,7 +76,7 @@ void Logger::update(sf::Time time)
 
 void Logger::input(sf::Event &event)
 {
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::C)
+	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X)
 	{
 		SoundManager::instance().playEnterSound();
 		if (ended) read = true;
@@ -76,9 +103,9 @@ void Logger::setString(std::wstring str)
 	}
 }
 
-Damage::Damage(sf::Vector2f pos, std::string str, sf::Font &font)
+Damage::Damage(sf::Vector2f pos, std::string str)
 {
-	text = sf::Text(str, font, 80);
+	text = sf::Text(str, DFont::instance().getFont(), 80);
 	text.setColor(sf::Color::Red);
 	text.setPosition(pos);
 
@@ -225,14 +252,12 @@ Menu::Menu()
 
 void Menu::init(std::vector<std::wstring> newItems)
 {
-	font.loadFromFile("assets/fonts/default.TTF");
-
 	items.clear();
 	for (auto i = newItems.begin(); i != newItems.end(); i++)
 	{
 		sf::String s(*i);
 
-		sf::Text text(s, font, 20);
+		sf::Text text(s, DFont::instance().getFont(), 20);
 		text.setColor(sf::Color::Black);
 		text.setPosition(0, (i - newItems.begin()) * 20);
 		items.push_back(text);
@@ -275,7 +300,7 @@ void Menu::input(sf::Event &event)
 {
 	if (working)
 	{
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::C)
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X)
 		{
 			select();
 			disappear();
@@ -338,15 +363,14 @@ void SpellMenu::setSpells(std::vector<Spell> newSpells)
 	const unsigned int startX = WIDTH / 3;
 	const unsigned int startY = HEIGHT / 5;
 
+	spells.clear();
 	for (auto i = newSpells.begin(); i != newSpells.end(); i++)
 	{
 		Spell &spell = *i;
-		Item item(spell, font);
+		Item item(spell);
 		item.setPosition(sf::Vector2f(startX, 15 + startY + ((i - newSpells.begin()) * CHARACTER_SIZE * 3)));
 
 		spells.push_back(item);
-
-		std::cout << "tyryhtr\n";
 	}
 
 	verticalPointer.setPosition(startX + (CHARACTER_SIZE / 2), 0);
@@ -419,7 +443,7 @@ void SpellMenu::input(sf::Event &event)
 
 			SoundManager::instance().playSelectSound();
 		}
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::C)
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X)
 		{
 			select();
 			close();
@@ -469,42 +493,133 @@ SpellQTE::SpellQTE()
 {
 	state = IDLE;
 	line.setTexture(TextureManager::instance().getTexture("assets/line.png"));
-	line.setPosition(startX + 40, startY + 31);
-	line.scale(3, 3);
-	shape.setSize(sf::Vector2f(CHARACTER_SIZE * 3, CHARACTER_SIZE *3));
-	shape.setPosition(line.getPosition());
+	line.setPosition(0, startY );
+	cell.setTexture(TextureManager::instance().getTexture("assets/circle.png"));
+	cell.setPosition((WIDTH / 2) - CHARACTER_SIZE * 2 - 12, startY + CHARACTER_SIZE - 14); //Some position fixes
+	shape.setSize(sf::Vector2f(30,10));
+	shape.setPosition(cell.getPosition().x + 10, cell.getPosition().y + 14);
+	shape.setFillColor(sf::Color::Green);
 }
 
 void SpellQTE::draw(sf::RenderTarget &tg)
 {
-	tg.draw(shape);
 	tg.draw(line);
+
+	cell.move(77,0);
+	cell.setTextureRect(sf::IntRect(81,0,155 - 81,156));
+	tg.draw(cell);
+
 	for (auto i = blocks.begin(); i != blocks.end(); i++)
 	{
-		i->draw(tg);
+		if (i->state != SLEEP)
+		{
+			i->draw(tg);
+		}	
 	}
+
+	cell.move(-77,0);
+	cell.setTextureRect(sf::IntRect(0,0,80,156));
+	tg.draw(cell);
+
+	/*sf::Vector2f p = shape.getPosition();
+	tg.draw(shape);
+	shape.setPosition(p);
+	tg.draw(shape);*/
 }
 
 void SpellQTE::update(sf::Time time)
 {
-	for (auto i = blocks.begin(); i != blocks.end(); i++)
+	if (state == TRANSITION)
 	{
-		i->sprite.move(-5, 0);
+		line.setColor(sf::Color(255,255,255,interpolateLinear(line.getColor().a, 0, 0.05)));
+		cell.setColor(sf::Color(255,255,255,interpolateLinear(cell.getColor().a, 0, 0.05)));
+		blocks.back().sprite.setColor(sf::Color(255,255,255,interpolateLinear(blocks.back().sprite.getColor().a, 0, 0.05)));
 	}
+	for (auto i = blocks.begin(); i != blocks.end();)
+	{
+		Block &block = *i;
+		if (i->state == GOING)
+		{
+			if (waiting && timer.getElapsedTime().asSeconds() > 0.7)
+			{
+				waiting = false;
+				timer.restart();
+				block.state = ENDED;
+				if (i - blocks.begin() + 1 < blocks.size())
+				{
+					i++;
+					i->state = GOING;	
+				}		
+				else
+				{
+					state = TRANSITION;
+				}
+				std::cout << "dsfsdfsdf\n";
+				break;
+			}
+			if (block.sprite.getPosition().x <= ((WIDTH / 2) - CHARACTER_SIZE * 2) + 10 && !waiting)
+			{
+				waiting = true;
+				timer.restart();
+
+				//std::cout << "dsfsdfsdf\n";
+			}
+			else
+			{
+				block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f((WIDTH / 2) - CHARACTER_SIZE * 2, block.sprite.getPosition().y), 0.15));
+			}
+			break;
+		}
+		else if (i->state == ENDED)
+		{
+			block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f(-128, block.sprite.getPosition().y), 0.2));
+			if (block.sprite.getPosition().x + 128 == 0)
+			{
+				block.state = SLEEP;
+
+				i = blocks.erase(i);
+			}
+			else
+			{
+				i++;
+			}
+		}
+	}		
 }
 
 void SpellQTE::input(sf::Event &event)
 {
 	if (state == WORKING)
 	{
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C)
+		if(event.type == sf::Event::KeyPressed)
 		{
-			std::cout << std::to_string(blocks.front().sprite.getPosition().x) + "x" + std::to_string(blocks.front().sprite.getPosition().y) << std::endl;
-			std::cout << std::to_string(shape.getPosition().x) + "x" + std::to_string(shape.getPosition().y) << std::endl;
-			if (shape.getGlobalBounds().intersects(blocks.front().sprite.getGlobalBounds()))
+			for (auto i = blocks.begin(); i != blocks.end(); i++)
 			{
-				blocks.pop_front();
-			}
+				if (i->state == GOING)
+				{
+					Block &block = *i;
+					if (shape.getGlobalBounds().intersects(block.sprite.getGlobalBounds()))
+					{
+						if ( event.key.code == block.b)
+						{
+							i->state = ENDED;
+							waiting = false;
+							timer.restart();
+							if (i - blocks.begin() + 1 < blocks.size())
+							{
+								i++;
+								i->state = GOING;	
+							}		
+							else
+							{
+								state = TRANSITION;
+							}
+							break;
+						}	
+					}
+					else break;
+				}
+			}		
 		}
 	}
 }
@@ -523,12 +638,39 @@ void SpellQTE::start(Spell &sp)
 	for (auto i = v.begin(); i != v.end(); i++)
 	{
 		Block block;
-		block.sprite.setTexture(TextureManager::instance().getTexture("assets/button.png"));
-		block.sprite.setPosition(WIDTH + ((i - v.begin()) * (CHARACTER_SIZE * 5)) + ((i - v.begin()) * OFFSET),startY);
-		block.sprite.scale(5,5);
+		std::string name;
+		switch (*i)
+		{
+		case UP:
+			name = "up";
+			break;
+		case RIGHT:
+			name = "right";
+			break;
+		case LEFT:
+			name = "left";
+			break;
+		case DOWN:
+			name = "down";
+			break;
+		case _Z:
+			name = "Z";
+			break;
+		case _X:
+			name = "X";
+			break;
+		default:
+			break;
+		}
+		block.sprite.setTexture(TextureManager::instance().getTexture("assets/" + name + ".png"));
+		block.sprite.setPosition(WIDTH + ((i - v.begin()) * (CHARACTER_SIZE * 5)) + ((i - v.begin()) * OFFSET),startY + CHARACTER_SIZE);
 		block.b = *i;
+		block.state = SLEEP;
 		blocks.push_back(block);
 	}
 
+	blocks.front().state = GOING;
+
 	state = WORKING;
+	waiting = false;
 }

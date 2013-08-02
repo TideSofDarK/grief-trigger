@@ -78,4 +78,27 @@ public:
 	void playWinSound();
 };
 
+class DFont
+{
+public:
+	static DFont& instance()
+	{
+		static DFont theSingleInstance;
+		return theSingleInstance;
+	}
+
+private:
+	DFont()
+	{
+		font.loadFromFile("assets/fonts/default.TTF");
+	};
+	DFont( const SoundManager& );
+	DFont& operator =( const SoundManager& );
+
+	sf::Font font;
+
+public:
+	sf::Font &getFont(){return font;};
+};
+
 #endif

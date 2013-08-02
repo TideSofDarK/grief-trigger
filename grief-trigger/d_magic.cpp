@@ -13,7 +13,29 @@ std::vector<int> parseCombo(std::string newCombo)
 	std::string token;
 	while ((pos = newCombo.find(' ')) != std::string::npos) {
 		token = newCombo.substr(0, pos);
-		combo.push_back(atoi(token.c_str()));
+		switch (atoi(token.c_str()))
+		{
+		case 1:
+			combo.push_back(UP);
+			break;
+		case 2:
+			combo.push_back(RIGHT);
+			break;
+		case 3:
+			combo.push_back(DOWN);
+			break;
+		case 4:
+			combo.push_back(LEFT);
+			break;
+		case 5:
+			combo.push_back(_Z);
+			break;
+		case 6:
+			combo.push_back(_X);
+			break;
+		default:
+			break;
+		}
 		newCombo.erase(0, pos + 1);
 	}
 
