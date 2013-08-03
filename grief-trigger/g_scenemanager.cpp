@@ -17,7 +17,7 @@ void Scene::loadResources()
 			camera.setCenter(0 + (HALF_WIDTH / 2), 0 + (HALF_HEIGHT / 2));
 
 			//Init hero object
-			po.init(object.GetPosition().x, object.GetPosition().y, camera.getCenter(), object, doors, squads);
+			po.init(object.GetPosition().x, object.GetPosition().y, camera.getCenter(), object, squads);
 		}
 		else if (object.GetName() == "squad")
 		{
@@ -45,8 +45,6 @@ void Scene::loadResources()
 
 	pm.init("assets/smoke.png");
 
-	battle.init();
-
 	state = MAP;
 }
 
@@ -56,8 +54,7 @@ void Scene::init(std::string name, tmx::MapLoader &ml)
 	ml.Load(name);
 	map = &ml;
 
-	font.loadFromFile("assets/fonts/default.TTF");
-	loadingText = sf::Text("Loading", font, 15);
+	loadingText = sf::Text("Loading", DFont::instance().getFont(), 15);
 	loadingText.setPosition(HALF_WIDTH - (loadingText.getGlobalBounds().width / 2), HALF_HEIGHT - (loadingText.getGlobalBounds().height / 2));
 
 	//Start loading
@@ -88,6 +85,23 @@ void Scene::endBattle()
 	state = MAP;
 }
 
+void Scene::removeTip(std::string type)
+{
+	for (auto i = tips.begin(); i != tips.end();)
+	{
+		Tip &tip = *i;
+		if (tip.getType() == type)
+		{
+			i = tips.erase(i);
+			break;
+		}
+		else
+		{
+			i++;
+		}
+	}
+}
+
 void Scene::update(sf::Time time)
 {
 	if (state != LOADING)
@@ -97,11 +111,54 @@ void Scene::update(sf::Time time)
 			//pm.update(time);
 			for (auto i = squads.begin(); i != squads.end(); ++i)
 			{
-				i->update(time, map->GetLayers().back().objects);
+				i->update(time);
 			}	
 			DialoguePanel::instance().update();			
-			po.move(map->GetLayers().back().objects);
+			po.move();
 			po.update(time, camera);
+
+			//Do logic
+			if (!po.isWalking())
+			{
+				//Check doors
+				for (auto it = doors.begin(); it != doors.end(); ++it)
+				{
+					Door &door = *it;
+					if (!door.isOpened() && door.getOnMap().GetAABB().intersects(sf::FloatRect(po.getSprite().getPosition().x, po.getSprite().getPosition().y - CHARACTER_SIZE, CHARACTER_SIZE, CHARACTER_SIZE * 2)))
+					{
+						//Some fuking magic with the doors
+						if (tips.size() == 0) tips.push_back(Tip(L"Открыть дверь", _Z, "door"));
+						if (sf::Keyboard::isKeyPressed(_Z))
+						{
+							door.open();
+							
+							removeTip("door");
+						}	
+						break;
+					}		
+					else removeTip("door");
+				}
+
+				//Check Enemies
+				for (auto it = squads.begin(); it != squads.end(); ++it)
+				{
+					Squad &squad = *it;
+					if (squad.getOnMap().GetAABB().intersects(sf::FloatRect(po.getSprite().getPosition().x, po.getSprite().getPosition().y - CHARACTER_SIZE+1, CHARACTER_SIZE, CHARACTER_SIZE * 2))
+						|| squad.getOnMap().GetAABB().intersects(sf::FloatRect(po.getSprite().getPosition().x - CHARACTER_SIZE + 1, po.getSprite().getPosition().y, CHARACTER_SIZE * 2, CHARACTER_SIZE)))
+					{
+						//Some fuking magic with...
+						if (tips.size() == 0) tips.push_back(Tip(L"Атаковать!", _X, "enemy"));
+						if (sf::Keyboard::isKeyPressed(sf::Keyboard::X))
+						{
+							SceneManager::instance().initBattle(squad);
+							
+							removeTip("enemy");
+						}	
+						break;
+					}		
+					else removeTip("enemy");
+				}
+			}	
 		}
 
 		//Always update shaders
@@ -156,6 +213,17 @@ void Scene::draw(sf::RenderTarget &tg)
 			//Unscalable
 			finalTexture.setView(unscalable);
 
+			//Tips, only if hero is not moving
+			if (!po.isWalking())
+			{
+				for (auto i = tips.begin(); i != tips.end(); ++i)
+				{
+					i->draw(finalTexture, sf::Vector2f(970, 640));
+				}
+			}
+			
+			xpbar.draw(finalTexture);
+
 			//Dialogue UI
 			DialoguePanel::instance().draw(finalTexture);
 			finalTexture.draw(days);
@@ -179,6 +247,11 @@ void Scene::draw(sf::RenderTarget &tg)
 	{
 		tg.draw(loadingText);
 	}
+}
+
+std::vector<tmx::MapObject> &Scene::getObjects()
+{
+	return map->GetLayers().back().objects;
 }
 
 void Scene::startBattle(Squad &squad)

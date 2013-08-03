@@ -62,19 +62,9 @@ void Squad::draw(sf::RenderTarget &tg)
 	tg.draw(animatedSprite);
 }
 
-void Squad::update(sf::Time time, std::vector<tmx::MapObject> &objects)
+void Squad::update(sf::Time time)
 {
 	bool isMovable = true;
-
-	//Set player pointer
-	for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
-	{
-		tmx::MapObject &object = *it;
-		if (object.GetName() == "hero")
-		{
-			hero = &object;
-		}
-	}
 
 	if (!walking)
 	{
@@ -92,7 +82,7 @@ void Squad::update(sf::Time time, std::vector<tmx::MapObject> &objects)
 
 		if(direction != DIR_IDLE)
 		{
-			step(direction, objects);
+			step(direction);
 		}
 	}
 
@@ -177,7 +167,7 @@ void Squad::update(sf::Time time, std::vector<tmx::MapObject> &objects)
 	object->SetPosition(animatedSprite.getPosition());
 }
 
-void Squad::step(int dir, std::vector<tmx::MapObject> &objects)
+void Squad::step(int dir)
 {
 	if (!walking)
 	{
@@ -205,7 +195,7 @@ void Squad::step(int dir, std::vector<tmx::MapObject> &objects)
 		if (bounds.contains(sf::Vector2f(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y))) isMovable = true;
 		else isMovable = false;
 
-		for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+		for (std::vector<tmx::MapObject>::iterator it = SceneManager::instance().getScene().getObjects().begin(); it != SceneManager::instance().getScene().getObjects().end(); ++it)
 		{
 			tmx::MapObject &object = *it;
 			if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y))) isMovable = false;

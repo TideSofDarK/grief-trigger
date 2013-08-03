@@ -45,9 +45,6 @@ protected:
 	//Default clock
 	sf::Clock									clock;
 
-	//Default font
-	sf::Font									font;
-
 	//Current drawable text
 	sf::Text									text;
 

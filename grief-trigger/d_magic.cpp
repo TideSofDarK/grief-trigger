@@ -1,5 +1,7 @@
 #include "d_magic.h"
 
+#include "h_config.h"
+
 std::vector<int> parseCombo(std::string newCombo)
 {
 	std::vector<int> combo;

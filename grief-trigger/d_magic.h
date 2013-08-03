@@ -8,13 +8,6 @@
 #include <SFML/System.hpp>
 #include <SFML/Window.hpp>
 
-#define UP sf::Keyboard::Key::Up
-#define RIGHT sf::Keyboard::Key::Right
-#define DOWN sf::Keyboard::Key::Down
-#define LEFT sf::Keyboard::Key::Left
-#define _Z sf::Keyboard::Key::Z
-#define _X sf::Keyboard::Key::X
-
 class Spell
 {
 private:

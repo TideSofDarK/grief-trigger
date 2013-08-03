@@ -50,21 +50,20 @@ private:
 	//Player object on map
 	tmx::MapObject		*object;
 
-	//Pointer to doors
-	std::vector<Door>	*doors;
-
 	//Pointer to sqauds
 	std::vector<Squad>	*squads;
 
 public:
 	PlayerObject();
-	void init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Door> &doorsList, std::vector<Squad> &squadsList);
+	void init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Squad> &squadsList);
 	void update(sf::Time &time, sf::View &camera);
 	void draw(sf::RenderTarget &tg);
-	void move(std::vector<tmx::MapObject> &objects);
+	void move();
 	void play();
 	AnimatedSprite& getSprite();
-	bool step(int dir, std::vector<tmx::MapObject> &object);
+	bool step(int dir);
+	void input(sf::Event &event);
+	bool isWalking(){return walking;};
 };
 
 #endif

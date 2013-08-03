@@ -249,13 +249,20 @@ private:
 	sf::Clock					timer;
 	bool						waiting;
 
+	sf::Clock					appearingTimer;
+
+	bool						damaged;
+
 public:
 	SpellQTE();
 	void update(sf::Time time);
 	void draw(sf::RenderTarget &tg);
 	void input(sf::Event &event);
-	void end();
+	void clean();
 	void start(Spell &sp);
+	bool isDamaged() {return damaged;};
+	bool isEnded(){return (state == IDLE ? true : false);};
+	void next(std::deque<Block>::iterator &it);
 };
 
 #endif

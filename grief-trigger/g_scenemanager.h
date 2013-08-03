@@ -18,6 +18,7 @@
 #include "d_parser.h"
 #include "d_objects.h"
 #include "g_battle.h"
+#include "i_ui.h"
 #include "h_config.h"
 
 typedef enum { MAP, BATTLE, TRANSITION, PAUSED, LOADING } SCENE_STATE;
@@ -57,7 +58,6 @@ private:
 	sf::View			unscalable;
 
 	//Loading text
-	sf::Font			font;
 	unsigned int		counter;
 	sf::Text			loadingText;
 
@@ -71,8 +71,14 @@ private:
 	//Day counter
 	sf::Sprite			days;
 
+	//List of tips
+	std::vector<Tip>	tips;
+
+	//Portrait and xp bar
+	XPBar				xpbar;
+
 	//Loading resources
-	void loadResources();
+	void				loadResources();
 
 public:
 	Scene()
@@ -87,11 +93,10 @@ public:
 	void input(sf::Event &event);
 	void startBattle(Squad &squad);
 	void endBattle();
-	void setPaused(bool p) 
-	{
-		state = (p == true ? PAUSED : MAP);
-	};
+	void setPaused(bool p) {state = (p == true ? PAUSED : MAP);};
 	void setCurrentEffect(std::string string, sf::Time time);
+	void removeTip(std::string type);
+	std::vector<tmx::MapObject> &getObjects();
 };
 
 class SceneManager
@@ -114,14 +119,12 @@ private:
 	//Current scene pointer
 	Scene		current;
 
-	sf::View	camera;
-	sf::View	unscalable;
-
 public:
 	void draw(sf::RenderTarget &rt);
 	void update(sf::Time time);
 	void input(sf::Event &event);
 	void setScene(std::string name, tmx::MapLoader &ml);
+	Scene &getScene(){return current;};
 	void initBattle(Squad &squad);
 	void endBattle();
 };

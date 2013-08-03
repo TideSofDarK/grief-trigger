@@ -8,10 +8,9 @@ PlayerObject::PlayerObject()
 {
 }
 
-void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Door> &doorsList, std::vector<Squad> &squadsList)
+void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Squad> &squadsList)
 {
 	object = &playerObject;
-	doors = &doorsList;
 	squads = &squadsList;
 
 	for (int a = 0; a < 4; a++)
@@ -39,7 +38,7 @@ void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tm
 	ncy = ncx = 0;
 }
 
-void PlayerObject::move(std::vector<tmx::MapObject> &objects)
+void PlayerObject::move()
 {
 	if (DialoguePanel::instance().isHided() == false && !walking)
 	{
@@ -50,22 +49,22 @@ void PlayerObject::move(std::vector<tmx::MapObject> &objects)
 		/************************************************************************/
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 		{
-			step(DIR_TOP, objects);
+			step(DIR_TOP);
 		}
 
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 		{
-			step(DIR_DOWN, objects);
+			step(DIR_DOWN);
 		}
 
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
-			step(DIR_LEFT, objects);
+			step(DIR_LEFT);
 		}
 
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 		{
-			step(DIR_RIGHT, objects);
+			step(DIR_RIGHT);
 		}
 	}
 }
@@ -80,8 +79,45 @@ AnimatedSprite& PlayerObject::getSprite()
 	return animatedSprite;
 }
 
+void PlayerObject::input(sf::Event &event)
+{
+
+}
+
 void PlayerObject::update(sf::Time &time, sf::View &camera)
 {
+	/************************************************************************/
+	/* Scrolling                                                            */
+	/************************************************************************/
+	if (animatedSprite.getPosition().y > camera.getCenter().y + (HALF_HEIGHT / 2) - (CHARACTER_SIZE / 2))
+	{
+		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncy, ncy + HALF_HEIGHT);
+	}
+	if (animatedSprite.getPosition().y < camera.getCenter().y - (HALF_HEIGHT / 2) - (CHARACTER_SIZE / 2))
+	{
+		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncy, ncy - HALF_HEIGHT);
+	}
+	if (animatedSprite.getPosition().x > camera.getCenter().x + (HALF_WIDTH / 2) - (CHARACTER_SIZE / 2))
+	{
+		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx + HALF_WIDTH);
+	}
+	if (animatedSprite.getPosition().x < camera.getCenter().x - (HALF_WIDTH / 2) - (CHARACTER_SIZE / 2))
+	{
+		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx - HALF_WIDTH);
+	}
+
+	if ((int)ncy % HALF_HEIGHT != 0)
+	{
+		camera.setCenter((camera.getCenter().x), (camStart.y + (int)ncy));
+	}
+
+	if ((int)ncx % HALF_WIDTH != 0)
+	{
+		camera.setCenter((camStart.x + (int)ncx), (camera.getCenter().y));
+	}
+
+	oTweener.step(time.asSeconds());
+
 	/************************************************************************/
 	/* Process smooth walking														*/
 	/************************************************************************/
@@ -141,45 +177,13 @@ void PlayerObject::update(sf::Time &time, sf::View &camera)
 		}
 	}
 
-	/************************************************************************/
-	/* Scrolling                                                            */
-	/************************************************************************/
-	if (animatedSprite.getPosition().y > camera.getCenter().y + (HALF_HEIGHT / 2) - (CHARACTER_SIZE / 2))
-	{
-		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncy, ncy + HALF_HEIGHT);
-	}
-	if (animatedSprite.getPosition().y < camera.getCenter().y - (HALF_HEIGHT / 2) - (CHARACTER_SIZE / 2))
-	{
-		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncy, ncy - HALF_HEIGHT);
-	}
-	if (animatedSprite.getPosition().x > camera.getCenter().x + (HALF_WIDTH / 2) - (CHARACTER_SIZE / 2))
-	{
-		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx + HALF_WIDTH);
-	}
-	if (animatedSprite.getPosition().x < camera.getCenter().x - (HALF_WIDTH / 2) - (CHARACTER_SIZE / 2))
-	{
-		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx - HALF_WIDTH);
-	}
-
-	if ((int)ncy % HALF_HEIGHT != 0)
-	{
-		camera.setCenter((camera.getCenter().x), (camStart.y + (int)ncy));
-	}
-
-	if ((int)ncx % HALF_WIDTH != 0)
-	{
-		camera.setCenter((camStart.x + (int)ncx), (camera.getCenter().y));
-	}
-
-	oTweener.step(time.asSeconds());
-
 	//Update animation and position
 	animatedSprite.setPosition(nx, ny);
 	object->SetPosition(sf::Vector2f(nx, ny));
 	animatedSprite.update(time);
 }
 
-bool PlayerObject::step(int dir, std::vector<tmx::MapObject> &objects)
+bool PlayerObject::step(int dir)
 {
 	if (!walking)
 	{
@@ -204,7 +208,7 @@ bool PlayerObject::step(int dir, std::vector<tmx::MapObject> &objects)
 			break;
 		}
 
-		for (std::vector<tmx::MapObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+		for (std::vector<tmx::MapObject>::iterator it = SceneManager::instance().getScene().getObjects().begin(); it != SceneManager::instance().getScene().getObjects().end(); ++it)
 		{
 			tmx::MapObject &object = *it;
 			if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y)) 
@@ -222,34 +226,6 @@ bool PlayerObject::step(int dir, std::vector<tmx::MapObject> &objects)
 			{
 				
 			}	
-		}
-
-		for (auto it = squads->begin(); it != squads->end(); ++it)
-		{
-			Squad &squad = *it;
-			if (walking == false && sf::FloatRect(squad.getOnMap().GetPosition().x, squad.getOnMap().GetPosition().y, CHARACTER_SIZE, CHARACTER_SIZE).intersects(sf::FloatRect(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)))
-			{
-				SceneManager::instance().initBattle(squad);
-			}
-		}
-
-		for (auto it = doors->begin(); it != doors->end(); ++it)
-		{
-			Door &door = *it;
-			if (walking == false && door.getOnMap().Contains(sf::Vector2f(animatedSprite.getPosition().x, animatedSprite.getPosition().y + movement.y))) 
-			{
-				if (!door.isOpened())
-				{
-					door.open();
-					isMovable = false;
-					break;
-				}
-				else
-				{
-					isMovable = true;
-					break;
-				}
-			}
 		}
 
 		if(isMovable == true)

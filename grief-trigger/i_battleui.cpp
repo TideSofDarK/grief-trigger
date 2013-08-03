@@ -380,6 +380,7 @@ void SpellMenu::setSpells(std::vector<Spell> newSpells)
 	horizontalPointer.setFillColor(YELLOW);
 
 	selected = -1;
+	selection = 0;
 
 	state = WORKING;
 }
@@ -534,57 +535,70 @@ void SpellQTE::update(sf::Time time)
 		line.setColor(sf::Color(255,255,255,interpolateLinear(line.getColor().a, 0, 0.05)));
 		cell.setColor(sf::Color(255,255,255,interpolateLinear(cell.getColor().a, 0, 0.05)));
 		blocks.back().sprite.setColor(sf::Color(255,255,255,interpolateLinear(blocks.back().sprite.getColor().a, 0, 0.05)));
-	}
-	for (auto i = blocks.begin(); i != blocks.end();)
-	{
-		Block &block = *i;
-		if (i->state == GOING)
+		if (blocks.back().sprite.getColor().a == 0)
 		{
-			if (waiting && timer.getElapsedTime().asSeconds() > 0.7)
+			state = IDLE;
+		}
+	}
+	if (state != IDLE)
+	{
+		for (auto i = blocks.begin(); i != blocks.end();)
+		{
+			Block &block = *i;
+			if (i->state == GOING)
 			{
-				waiting = false;
-				timer.restart();
-				block.state = ENDED;
-				if (i - blocks.begin() + 1 < blocks.size())
+				//If player skipped it
+				if (waiting && timer.getElapsedTime().asSeconds() > 0.7)
 				{
-					i++;
-					i->state = GOING;	
-				}		
+					waiting = false;
+					timer.restart();
+					block.state = ENDED;
+					next(i);
+					break;
+				}
+				//Start timer
+				if (block.sprite.getPosition().x <= ((WIDTH / 2) - CHARACTER_SIZE * 2) + 10 && !waiting)
+				{
+					waiting = true;
+					timer.restart();
+				}
 				else
 				{
-					state = TRANSITION;
+					//Else move block
+					block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f((WIDTH / 2) - CHARACTER_SIZE * 2, block.sprite.getPosition().y), 0.15));
 				}
-				std::cout << "dsfsdfsdf\n";
 				break;
 			}
-			if (block.sprite.getPosition().x <= ((WIDTH / 2) - CHARACTER_SIZE * 2) + 10 && !waiting)
+			else if (i->state == ENDED)
 			{
-				waiting = true;
-				timer.restart();
+				//Move and destroy
+				block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f(-128, block.sprite.getPosition().y), 0.2));
+				if (block.sprite.getPosition().x + 128 == 0)
+				{
+					block.state = SLEEP;
 
-				//std::cout << "dsfsdfsdf\n";
+					i = blocks.erase(i);
+				}
+				else
+				{
+					i++;
+				}
 			}
-			else
-			{
-				block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f((WIDTH / 2) - CHARACTER_SIZE * 2, block.sprite.getPosition().y), 0.15));
-			}
-			break;
-		}
-		else if (i->state == ENDED)
-		{
-			block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f(-128, block.sprite.getPosition().y), 0.2));
-			if (block.sprite.getPosition().x + 128 == 0)
-			{
-				block.state = SLEEP;
+		}		
+	}
+}
 
-				i = blocks.erase(i);
-			}
-			else
-			{
-				i++;
-			}
-		}
+void SpellQTE::next(std::deque<Block>::iterator &i)
+{
+	if (i - blocks.begin() + 1 < blocks.size())
+	{
+		i++;
+		i->state = GOING;
 	}		
+	else
+	{
+		state = TRANSITION;
+	}
 }
 
 void SpellQTE::input(sf::Event &event)
@@ -605,15 +619,8 @@ void SpellQTE::input(sf::Event &event)
 							i->state = ENDED;
 							waiting = false;
 							timer.restart();
-							if (i - blocks.begin() + 1 < blocks.size())
-							{
-								i++;
-								i->state = GOING;	
-							}		
-							else
-							{
-								state = TRANSITION;
-							}
+							next(i);
+							damaged = true;
 							break;
 						}	
 					}
@@ -624,9 +631,9 @@ void SpellQTE::input(sf::Event &event)
 	}
 }
 
-void SpellQTE::end()
+void SpellQTE::clean()
 {
-
+	damaged = false;
 }
 
 void SpellQTE::start(Spell &sp)
@@ -635,6 +642,9 @@ void SpellQTE::start(Spell &sp)
 
 	std::vector<int> &v = spell.getCombo();
 
+	line.setColor(sf::Color(255,255,255,255));
+	cell.setColor(sf::Color(255,255,255,255));
+	blocks.clear();
 	for (auto i = v.begin(); i != v.end(); i++)
 	{
 		Block block;
@@ -671,6 +681,7 @@ void SpellQTE::start(Spell &sp)
 
 	blocks.front().state = GOING;
 
+	clean();
 	state = WORKING;
 	waiting = false;
 }

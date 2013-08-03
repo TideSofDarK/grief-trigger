@@ -120,21 +120,6 @@ void Enemy::playAnimation()
 
 Battle::Battle()
 {
-}
-
-void Battle::init(std::string fileName)
-{
-	std::cout << std::to_string(GameData::instance().getPlayer().getHP()) << std::endl;
-
-	font.loadFromFile(fontPath);
-
-	log.init(sf::Vector2f(110, 21));
-
-	pointer.setTexture(TextureManager::instance().getTexture("assets/pointer.png"));
-
-	effectRect = sf::RectangleShape(sf::Vector2f(WIDTH, HEIGHT));
-	effectRect.setFillColor(sf::Color(0,0,0,205));
-
 	//Some shitty code here
 	//At least it is fast lol
 	playerSprite.setTexture(TextureManager::instance().getTexture("assets/girl_art.png"));
@@ -166,9 +151,16 @@ void Battle::init(std::string fileName)
 
 	fire.loadFromFile("assets/fire.frag", sf::Shader::Fragment);
 
-	background.create(WIDTH, HEIGHT);
-
 	battleBox.setTexture(TextureManager::instance().getTexture("assets/battlebox.png"));
+
+	effectRect = sf::RectangleShape(sf::Vector2f(WIDTH, HEIGHT));
+	effectRect.setFillColor(sf::Color(0,0,0,205));
+
+	log.init(sf::Vector2f(110, 21));
+
+	pointer.setTexture(TextureManager::instance().getTexture("assets/pointer.png"));
+
+	background.create(WIDTH, HEIGHT);
 
 	std::vector<std::string> resourcesNames = Parser::instance().parseResources("battle");
 	for (int i = 0; i < resourcesNames.size(); i++)
@@ -354,9 +346,6 @@ void Battle::update(sf::Time time)
 		thunderManaBar.update(time);
 		playerManaBar.update(time);
 
-		//Tweener updating
-		//oTweener.step(time.asSeconds());
-
 		//Log on top of the screen
 		log.update(time);
 
@@ -459,12 +448,67 @@ void Battle::update(sf::Time time)
 	}
 
 	//QTE
-	if(state == QTE) spellQTE.update(time);
+	if(state == QTE) 
+	{
+		spellQTE.update(time);
+
+		if (spellQTE.isDamaged())
+		{
+			damageSpell();
+			spellQTE.clean();
+		}
+
+		if (spellQTE.isEnded())
+		{
+			state = PLAYER;
+			if (currentAttacking == 2)
+			{
+				currentAttacking = 0;
+				state = AI;
+			}
+			else
+			{
+				currentAttacking++;
+				for (auto i = enemies.begin(); i != enemies.end(); i++)
+				{
+					if (!i->isDied())
+					{
+						selected = i - enemies.begin();
+						break;
+					}
+				}
+			}
+		}	
+	}
 
 	//Update shader
 	fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
 	fire.setParameter("seconds", seconds);
 	seconds++;
+}
+
+void Battle::damageSpell()
+{
+	unsigned int dmg;
+	switch (currentAttacking)
+	{
+	case 0:
+		dmg = (GameData::instance().getPlayer().getIntelligence() / 4) + (rand() % (int)(2));
+		break;
+	case 1:
+		dmg = (GameData::instance().getEmber().getIntelligence() / 4) + (rand() % (int)(2));
+		break;
+	case 2:
+		dmg = (GameData::instance().getThunder().getIntelligence() / 4) + (rand() % (int)(2));
+		break;
+	default:
+		break;
+	} 
+	
+	enemies[selected].playAnimation();
+	enemies[selected].getMonster().receiveDamage(dmg);
+
+	SoundManager::instance().playHurtSound();
 }
 
 void Battle::damageMonster()
@@ -506,7 +550,7 @@ void Battle::damageMonster()
 			break;
 		} 
 
-		//Select next alive hero
+		//Select next alive enemy
 		for (auto i = enemies.begin(); i != enemies.end(); i++)
 		{
 			if (!i->isDied())

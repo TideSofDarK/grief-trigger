@@ -5,6 +5,13 @@
 
 #include <SFML/System.hpp>
 
+#define UP sf::Keyboard::Key::Up
+#define RIGHT sf::Keyboard::Key::Right
+#define DOWN sf::Keyboard::Key::Down
+#define LEFT sf::Keyboard::Key::Left
+#define _Z sf::Keyboard::Key::Z
+#define _X sf::Keyboard::Key::X
+
 static const sf::Uint32 TILE_SIZE = 32;
 static const sf::Uint32 CHARACTER_SIZE = 32;
 

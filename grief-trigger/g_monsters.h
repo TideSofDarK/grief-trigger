@@ -101,9 +101,9 @@ public:
 	void init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap);
 	std::vector<Monster> &getMonsters() {return monsters;};
 	void draw(sf::RenderTarget &tg);
-	void update(sf::Time time, std::vector<tmx::MapObject> &objects);
+	void update(sf::Time time);
 	bool isWalking() {return walking;};
-	void step(int dir, std::vector<tmx::MapObject> &objects);
+	void step(int dir);
 	tmx::MapObject& getOnMap(){return *object;};
 };
 

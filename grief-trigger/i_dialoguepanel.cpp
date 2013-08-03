@@ -36,8 +36,6 @@ bool DialoguePanel::loadResources(std::string fileName)
 
 void DialoguePanel::init()
 {
-	font.loadFromFile("assets/fonts/default.TTF");
-
 	nby = HEIGHT / 2;
 	background.setTexture(TextureManager::instance().getTexture("assets/dbox.png"));
 	background.setPosition(0, nby);
@@ -81,7 +79,7 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 	}
 	else
 	{
-		text = sf::Text("", font, fontSize);
+		text = sf::Text("", DFont::instance().getFont(), fontSize);
 
 		text.setPosition(320, 455);
 		text.setColor(sf::Color::Black);
@@ -166,7 +164,7 @@ bool DialoguePanel::showAnswers()
 
 	for (int i = 0; i < strings.size(); i++)
 	{
-		sf::Text ans(strings[i], font, fontSize);
+		sf::Text ans(strings[i], DFont::instance().getFont(), fontSize);
 		ans.setPosition(320, (455 + i * fontSize) + i * 4);
 		ans.setColor(sf::Color::Black);
 		answers.push_back(ans);

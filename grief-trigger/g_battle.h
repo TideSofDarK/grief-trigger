@@ -66,9 +66,6 @@ private:
 
 	sf::Clock clock;
 
-	//Font
-	sf::Font					font;
-
 	//Damage effect
 	std::vector<Damage>			damageEffects;
 
@@ -145,11 +142,11 @@ public:
 	void drawUI(sf::RenderTarget &tg);
 	void update(sf::Time time);
 	void input(sf::Event &event);
-	void init(std::string fileName = "assets/resources.xml");
 	void damagePlayer(Monster &monster);
 	void damageMonster();
 	void nextAIStep();
 	void nextPlayerStep();
+	void damageSpell();
 	void clean();
 };
 
