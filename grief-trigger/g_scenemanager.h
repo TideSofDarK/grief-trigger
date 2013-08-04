@@ -38,6 +38,9 @@ private:
 	//The Doors
 	std::vector<Door>	doors;
 
+	//The Doors
+	std::vector<NPC>	npcs;
+
 	//Player object
 	PlayerObject		po;
 

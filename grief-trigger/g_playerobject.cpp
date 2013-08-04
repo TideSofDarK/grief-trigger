@@ -211,21 +211,15 @@ bool PlayerObject::step(int dir)
 		for (std::vector<tmx::MapObject>::iterator it = SceneManager::instance().getScene().getObjects().begin(); it != SceneManager::instance().getScene().getObjects().end(); ++it)
 		{
 			tmx::MapObject &object = *it;
-			if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y)) 
+			if (object.GetAABB().intersects(sf::FloatRect(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)) 
 				&& object.GetName() == "" ) isMovable = false;
-			if (walking == false && object.Contains(sf::Vector2f(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y)) 
+			if (walking == false && object.GetAABB().intersects(sf::FloatRect(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)) 
 				&& object.GetName() != "" 
 				&& object.GetName() != "hero" 
-				&& object.GetName() != "door" 
-				&& object.GetName() != "squad")
+				&& object.GetName() != "door")
 			{
-				DialoguePanel::instance().openDialogue(object.GetName(), "day1");
 				isMovable = false;
 			}
-			else if (object.GetName() == "squad")
-			{
-				
-			}	
 		}
 
 		if(isMovable == true)

@@ -31,9 +31,9 @@ int main()
 	XInitThreads();
 #endif
 
-	RenderWindow window(VideoMode(1280, 720), "Grief Trigger Turbo HD", sf::Style::Default);
-	window.setFramerateLimit(120);
-	//window.setVerticalSyncEnabled(true);
+	RenderWindow window(VideoMode(1280, 720), "Grief Trigger Turbo HD", sf::Style::Titlebar | sf::Style::Close);
+	//window.setFramerateLimit(120);
+	window.setVerticalSyncEnabled(true);
 
 	sf::Clock frameClock;
 
@@ -43,7 +43,6 @@ int main()
 
 	while (window.isOpen())
 	{
-
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -58,8 +57,6 @@ int main()
 		window.clear();
 		SceneManager::instance().draw(window);
 		window.display();
-
-		sf::sleep( sf::milliseconds(3) );
 	}
 
 	return 0;

@@ -121,7 +121,7 @@ void Squad::update(sf::Time time)
 				animatedSprite.stop();
 			}
 		}
-		if(direction == DIR_DOWN)
+		else if(direction == DIR_DOWN)
 		{
 			ny += playerMoveSpeed;
 
@@ -134,7 +134,7 @@ void Squad::update(sf::Time time)
 				animatedSprite.stop();
 			}
 		}
-		if(direction == DIR_LEFT)
+		else if(direction == DIR_LEFT)
 		{
 			nx -= playerMoveSpeed;
 
@@ -147,7 +147,7 @@ void Squad::update(sf::Time time)
 				animatedSprite.stop();
 			}
 		}
-		if(direction == DIR_RIGHT)
+		else if(direction == DIR_RIGHT)
 		{
 			nx += playerMoveSpeed;
 
@@ -198,7 +198,11 @@ void Squad::step(int dir)
 		for (std::vector<tmx::MapObject>::iterator it = SceneManager::instance().getScene().getObjects().begin(); it != SceneManager::instance().getScene().getObjects().end(); ++it)
 		{
 			tmx::MapObject &object = *it;
-			if (object.Contains(sf::Vector2f(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y))) isMovable = false;
+			if (object.GetAABB().intersects(sf::FloatRect(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)))
+			{
+				isMovable = false;
+				break;
+			}
 		}
 
 		if(isMovable == true)

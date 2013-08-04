@@ -37,3 +37,23 @@ tmx::MapObject& Door::getOnMap()
 {
 	return *object;
 }
+
+NPC::NPC()
+{}
+
+void NPC::init(sf::Vector2f pos, tmx::MapObject &obj)
+{
+	object = &obj;
+	sprite.setPosition(pos);
+	sprite.setTexture(TextureManager::instance().getTexture("assets/girl.png"));
+}
+
+void NPC::draw(sf::RenderTarget &tg)
+{
+	tg.draw(sprite);
+}
+
+tmx::MapObject& NPC::getOnMap()
+{
+	return *object;
+}

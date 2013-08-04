@@ -522,110 +522,199 @@ void SpellQTE::draw(sf::RenderTarget &tg)
 	cell.setTextureRect(sf::IntRect(0,0,80,156));
 	tg.draw(cell);
 
-	/*sf::Vector2f p = shape.getPosition();
-	tg.draw(shape);
-	shape.setPosition(p);
-	tg.draw(shape);*/
+	for (auto i = etexts.begin(); i != etexts.end(); i++)
+	{
+		i->draw(tg);
+	}
 }
 
 void SpellQTE::update(sf::Time time)
 {
-	if (state == TRANSITION)
+	for (auto i = etexts.begin(); i != etexts.end(); i++)
 	{
-		line.setColor(sf::Color(255,255,255,interpolateLinear(line.getColor().a, 0, 0.05)));
-		cell.setColor(sf::Color(255,255,255,interpolateLinear(cell.getColor().a, 0, 0.05)));
-		blocks.back().sprite.setColor(sf::Color(255,255,255,interpolateLinear(blocks.back().sprite.getColor().a, 0, 0.05)));
-		if (blocks.back().sprite.getColor().a == 0)
-		{
-			state = IDLE;
-		}
+		i->update(time);
 	}
-	if (state != IDLE)
+	if (type == 0)
 	{
-		for (auto i = blocks.begin(); i != blocks.end();)
+		if (state == TRANSITION)
 		{
-			Block &block = *i;
-			if (i->state == GOING)
+			line.setColor(sf::Color(255,255,255,interpolateLinear(line.getColor().a, 0, 0.05)));
+			cell.setColor(sf::Color(255,255,255,interpolateLinear(cell.getColor().a, 0, 0.05)));
+			blocks.back().sprite.setColor(sf::Color(255,255,255,interpolateLinear(blocks.back().sprite.getColor().a, 0, 0.05)));
+			if (blocks.back().sprite.getColor().a == 0 && !etexts.front().isWorking())
 			{
-				//If player skipped it
-				if (waiting && timer.getElapsedTime().asSeconds() > 0.7)
+				state = IDLE;
+			}
+		}
+		if (state != IDLE)
+		{
+			for (auto i = blocks.begin(); i != blocks.end();)
+			{
+				Block &block = *i;
+				if (i->state == GOING)
 				{
-					waiting = false;
-					timer.restart();
-					block.state = ENDED;
-					next(i);
+					//If player skipped it
+					if (waiting && timer.getElapsedTime().asSeconds() > 0.7)
+					{
+						waiting = false;
+						timer.restart();
+						block.state = ENDED;
+						next(i);
+						break;
+					}
+					//Start timer
+					if (block.sprite.getPosition().x <= ((WIDTH / 2) - CHARACTER_SIZE * 2) + 10 && !waiting)
+					{
+						waiting = true;
+						timer.restart();
+					}
+					else
+					{
+						//Else move block
+						block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f((WIDTH / 2) - CHARACTER_SIZE * 2, block.sprite.getPosition().y), 0.15));
+					}
 					break;
 				}
-				//Start timer
-				if (block.sprite.getPosition().x <= ((WIDTH / 2) - CHARACTER_SIZE * 2) + 10 && !waiting)
+				else if (i->state == ENDED)
 				{
-					waiting = true;
-					timer.restart();
-				}
-				else
-				{
-					//Else move block
-					block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f((WIDTH / 2) - CHARACTER_SIZE * 2, block.sprite.getPosition().y), 0.15));
-				}
-				break;
-			}
-			else if (i->state == ENDED)
-			{
-				//Move and destroy
-				block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f(-128, block.sprite.getPosition().y), 0.2));
-				if (block.sprite.getPosition().x + 128 == 0)
-				{
-					block.state = SLEEP;
+					//Move and destroy
+					block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f(-128, block.sprite.getPosition().y), 0.2));
+					if (block.sprite.getPosition().x + 128 == 0)
+					{
+						block.state = SLEEP;
 
-					i = blocks.erase(i);
+						i = blocks.erase(i);
+					}
+					else
+					{
+						i++;
+					}
 				}
-				else
+			}		
+		}
+	}
+	else
+	{
+		if (state == TRANSITION)
+		{
+			line.setColor(sf::Color(255,255,255,interpolateLinear(line.getColor().a, 0, 0.05)));
+			cell.setColor(sf::Color(255,255,255,interpolateLinear(cell.getColor().a, 0, 0.05)));
+			blocks.back().sprite.setColor(sf::Color(255,255,255,interpolateLinear(blocks.back().sprite.getColor().a, 0, 0.05)));
+			if (blocks.back().sprite.getColor().a == 0)
+			{
+				state = IDLE;
+			}
+		}
+		if (state != IDLE)
+		{
+			for (auto i = blocks.begin(); i != blocks.end(); i++)
+			{
+				Block &block = *i;
+				if (block.state == GOING || block.state == NEXT)
 				{
-					i++;
+					block.sprite.move(-10,0);
+				}
+
+				if (i->sprite.getPosition().x < shape.getPosition().x - 40 && i->state != ENDED)
+				{
+					i->state = ENDED;
+					next(i);
+				}
+
+				if (block.state == ENDED)
+				{
+					//Move and destroy
+					block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f(-128, block.sprite.getPosition().y), 0.08));
 				}
 			}
-		}		
+		}
 	}
 }
 
 void SpellQTE::next(std::deque<Block>::iterator &i)
 {
-	if (i - blocks.begin() + 1 < blocks.size())
+	if (type == 0)
 	{
-		i++;
-		i->state = GOING;
-	}		
+		if (i - blocks.begin() + 1 < blocks.size())
+		{
+			i++;
+			i->state = GOING;
+		}		
+		else
+		{
+			state = TRANSITION;
+		}
+	}
 	else
 	{
-		state = TRANSITION;
+		if (i - blocks.begin() + 1 < blocks.size())
+		{
+			i++;
+			i->state = GOING;
+		}		
+		else
+		{
+			state = TRANSITION;
+		}
 	}
 }
 
 void SpellQTE::input(sf::Event &event)
 {
-	if (state == WORKING)
+	if (type == 0)
 	{
-		if(event.type == sf::Event::KeyPressed)
+		if (state == WORKING)
+		{
+			if(event.type == sf::Event::KeyPressed)
+			{
+				for (auto i = blocks.begin(); i != blocks.end(); i++)
+				{
+					if (i->state != ENDED)
+					{
+						Block &block = *i;
+						if (shape.getGlobalBounds().intersects(block.sprite.getGlobalBounds()))
+						{
+							if ( event.key.code == i->b)
+							{
+								i->state = ENDED;
+								waiting = false;
+								timer.restart();
+								next(i);
+								damaged = true;
+								std::cout << "asdfsdfs\n";
+								break;
+							}	
+						}
+						else break;
+					}
+				}		
+			}
+		}
+	}
+	else
+	{
+		if (state == WORKING)
 		{
 			for (auto i = blocks.begin(); i != blocks.end(); i++)
 			{
+				Block &block = *i;
 				if (i->state == GOING)
 				{
-					Block &block = *i;
 					if (shape.getGlobalBounds().intersects(block.sprite.getGlobalBounds()))
 					{
-						if ( event.key.code == block.b)
+						if(event.type == sf::Event::KeyPressed)
 						{
-							i->state = ENDED;
-							waiting = false;
-							timer.restart();
-							next(i);
-							damaged = true;
-							break;
-						}	
+							if ( event.key.code == block.b)
+							{
+								etexts.push_back(EText("awesome"));
+								i->state = ENDED;
+								next(i);
+								damaged = true;
+								break;
+							}	
+						}
 					}
-					else break;
-				}
+				}			
 			}		
 		}
 	}
@@ -645,6 +734,8 @@ void SpellQTE::start(Spell &sp)
 	line.setColor(sf::Color(255,255,255,255));
 	cell.setColor(sf::Color(255,255,255,255));
 	blocks.clear();
+	etexts.clear();
+
 	for (auto i = v.begin(); i != v.end(); i++)
 	{
 		Block block;
@@ -675,7 +766,20 @@ void SpellQTE::start(Spell &sp)
 		block.sprite.setTexture(TextureManager::instance().getTexture("assets/" + name + ".png"));
 		block.sprite.setPosition(WIDTH + ((i - v.begin()) * (CHARACTER_SIZE * 5)) + ((i - v.begin()) * OFFSET),startY + CHARACTER_SIZE);
 		block.b = *i;
-		block.state = SLEEP;
+
+		if (type == 0)
+		{
+			block.state = SLEEP;
+		}
+		else
+		{
+			block.state = NEXT;
+			if (rand() % 2)
+			{
+				//block.sprite.move(((1) * (CHARACTER_SIZE * 5)) + OFFSET,0);
+			}
+		}
+
 		blocks.push_back(block);
 	}
 

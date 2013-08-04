@@ -33,6 +33,13 @@ void Scene::loadResources()
 			door.init(object.GetPosition(), object);
 			doors.push_back(door);
 		}	
+		else if (object.GetName() != "")
+		{
+			//Add NPC
+			NPC npc;
+			npc.init(object.GetPosition(), object);
+			npcs.push_back(npc);
+		}
 	}
 
 	days.setTexture(TextureManager::instance().getTexture("assets/day.png"));
@@ -113,7 +120,7 @@ void Scene::update(sf::Time time)
 			{
 				i->update(time);
 			}	
-			DialoguePanel::instance().update();			
+				
 			po.move();
 			po.update(time, camera);
 
@@ -158,7 +165,29 @@ void Scene::update(sf::Time time)
 					}		
 					else removeTip("enemy");
 				}
+
+				//Check NPCs
+				for (auto it = npcs.begin(); it != npcs.end(); ++it)
+				{
+					NPC &npc = *it;
+					if (npc.getOnMap().GetAABB().intersects(sf::FloatRect(po.getSprite().getPosition().x, po.getSprite().getPosition().y - CHARACTER_SIZE+1, CHARACTER_SIZE, CHARACTER_SIZE * 2))
+						|| npc.getOnMap().GetAABB().intersects(sf::FloatRect(po.getSprite().getPosition().x - CHARACTER_SIZE + 1, po.getSprite().getPosition().y, CHARACTER_SIZE * 2, CHARACTER_SIZE)))
+					{
+						//...
+						if (tips.size() == 0) tips.push_back(Tip(L"Общение", _X, "npc"));
+						if (sf::Keyboard::isKeyPressed(_X) && !DialoguePanel::instance().isHided())
+						{
+							DialoguePanel::instance().openDialogue(npc.getOnMap().GetName(), "day1");
+
+							removeTip("npc");
+						}	
+						break;
+					}		
+					else removeTip("npc");
+				}
 			}	
+
+			DialoguePanel::instance().update();	
 		}
 
 		//Always update shaders
@@ -206,6 +235,10 @@ void Scene::draw(sf::RenderTarget &tg)
 			//Player object
 			po.draw(finalTexture);
 			for (auto i = doors.begin(); i != doors.end(); ++i)
+			{
+				i->draw(finalTexture);
+			}
+			for (auto i = npcs.begin(); i != npcs.end(); ++i)
 			{
 				i->draw(finalTexture);
 			}

@@ -16,6 +16,22 @@ public:
 	void input(sf::Event &event);
 };
 
+class NPC : Object
+{
+private:
+	//NPC sprite
+	sf::Sprite		sprite;
+
+	//Pointer to object on map
+	tmx::MapObject	*object;
+
+public:
+	NPC();
+	void init(sf::Vector2f pos, tmx::MapObject &object);
+	void draw(sf::RenderTarget &tg);
+	tmx::MapObject& getOnMap();
+};
+
 class Door : Object
 {
 private:

@@ -394,7 +394,7 @@ void Battle::update(sf::Time time)
 			state = SPELL;
 			menu.clean();
 			menu.disappear();
-			
+
 			switch (currentAttacking)
 			{
 			case 0:
@@ -504,9 +504,24 @@ void Battle::damageSpell()
 	default:
 		break;
 	} 
-	
+
 	enemies[selected].playAnimation();
 	enemies[selected].getMonster().receiveDamage(dmg);
+
+	if (enemies[selected].isDied())
+	{
+		res.playerXP += enemies[selected].getMonster().getHP();
+		res.emberXP += enemies[selected].getMonster().getHP();
+		res.thunderXP += enemies[selected].getMonster().getHP();
+		//Select next alive enemy
+		for (auto i = enemies.begin(); i != enemies.end(); i++)
+		{
+			if (!i->isDied())
+			{
+				selected = i - enemies.begin();
+			}
+		}
+	}
 
 	SoundManager::instance().playHurtSound();
 }
@@ -532,24 +547,12 @@ void Battle::damageMonster()
 
 	enemies[selected].playAnimation();
 	enemies[selected].getMonster().receiveDamage(dmg);
+
 	if (enemies[selected].isDied())
 	{
-		//Gain XP
-		switch (currentAttacking)
-		{
-		case 0: //Player
-			res.playerXP += enemies[selected].getMonster().getHP();
-			break;
-		case 1: //Ember
-			res.emberXP += enemies[selected].getMonster().getHP();
-			break;
-		case 2: //Thunder
-			res.thunderXP += enemies[selected].getMonster().getHP();
-			break;
-		default:
-			break;
-		} 
-
+		res.playerXP += enemies[selected].getMonster().getHP();
+		res.emberXP += enemies[selected].getMonster().getHP();
+		res.thunderXP += enemies[selected].getMonster().getHP();
 		//Select next alive enemy
 		for (auto i = enemies.begin(); i != enemies.end(); i++)
 		{
@@ -559,6 +562,7 @@ void Battle::damageMonster()
 			}
 		}
 	}
+
 	SoundManager::instance().playHurtSound();
 }
 

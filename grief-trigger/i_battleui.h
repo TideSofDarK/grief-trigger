@@ -35,6 +35,12 @@
 #define YELLOW sf::Color(249u,217u,35u,255u)
 #define BLUE sf::Color(1u,250u,254u,255u)
 
+float interpolateLinear(
+	const float pointA,
+	const float pointB,
+	float factor
+	);
+
 //Similar to DialoguePanel but simpler
 class Logger
 {
@@ -146,7 +152,7 @@ private:
 
 			std::wstring string =  L", очков маны: " + std::to_wstring(spell.getMana());
 			std::wstring string4 = spell.getName() + string;
-			
+
 			text.setString(string4);
 			text.setColor(sf::Color::White);
 		};
@@ -217,7 +223,7 @@ class SpellQTE
 {
 private:
 	typedef enum STATE { IDLE, WORKING, TRANSITION };
-	typedef enum QTE_STATE { GOING, ENDED, SLEEP };
+	typedef enum QTE_STATE { GOING, ENDED, SLEEP, NEXT };
 
 	typedef struct Block
 	{
@@ -230,9 +236,68 @@ private:
 		QTE_STATE state;
 	};
 
+	class EText
+	{
+	private:
+		sf::Sprite		sprite;
+		unsigned int	counter;
+		bool			appearing;
+		bool			working;
+
+	public:
+		EText(std::string type)
+		{
+			sprite.setTexture(TextureManager::instance().getTexture("assets/"+type+".png"));
+			sprite.setColor(sf::Color(255,255,255,1));
+			appearing = true;
+			working = true;
+			sprite.setPosition(HALF_WIDTH - (sprite.getLocalBounds().width / 2), HEIGHT/6);
+			sprite.move(-15 + (rand() % (int)(30 + 1)), -40 + (rand() % (int)(80 + 1)));
+			//sprite.scale((6 + (rand() % (int)(10 - 6 + 1))) / 10, (6 + (rand() % (int)(10 - 6 + 1))) / 10);
+			sprite.move(100,0);
+		};
+		void draw(sf::RenderTarget &tg)
+		{
+			if (working)
+			{
+				tg.draw(sprite);
+			}	
+		};
+		void update(sf::Time time)
+		{
+			if (working)
+			{
+				if (appearing) 
+				{
+					sprite.setColor(sf::Color(255,255,255,interpolateLinear(sprite.getColor().a, 255, 0.1)));
+					sprite.setPosition(interpolateLinear(sprite.getPosition().x, sprite.getPosition().x - 50, 0.1), sprite.getPosition().y);
+				}
+				else
+				{
+					sprite.setColor(sf::Color(255,255,255,interpolateLinear(sprite.getColor().a, 0, 0.1)));
+					sprite.setPosition(interpolateLinear(sprite.getPosition().x, sprite.getPosition().x - 50, 0.1), sprite.getPosition().y);
+				}
+				std::cout << std::to_string(sprite.getColor().a) + "\n";
+				if (sprite.getColor().a >= 246)
+				{
+					appearing = false;
+				}
+				if (sprite.getColor().a == 0)
+				{
+					working = false;
+					//appearing = true;
+				}
+			}
+		};
+		bool isWorking(){return working;};
+	};
+
 	static const unsigned int	startX = WIDTH / 3;
 	static const unsigned int	startY = HEIGHT / 3;
 	static const unsigned int	offset = 10;
+	static const bool			type = 1;
+
+	std::vector<EText>			etexts;
 
 	Spell						spell;
 
