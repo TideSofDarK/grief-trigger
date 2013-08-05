@@ -10,6 +10,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
+#include "h_config.h"
+
 class TextureManager
 {
 public:
@@ -68,6 +70,9 @@ private:
 	sf::SoundBuffer winBuffer;
 	sf::Sound winSound;
 
+	sf::SoundBuffer failBuffer;
+	sf::Sound failSound;
+
 public:
 	void playDoorSound();
 	void playClickSound();
@@ -76,6 +81,7 @@ public:
 	void playHurtSound();
 	void playDieSound();
 	void playWinSound();
+	void playFailSound();
 };
 
 class DFont
@@ -90,7 +96,7 @@ public:
 private:
 	DFont()
 	{
-		font.loadFromFile("assets/fonts/default.TTF");
+		font.loadFromFile(fontPath);
 	};
 	DFont( const SoundManager& );
 	DFont& operator =( const SoundManager& );

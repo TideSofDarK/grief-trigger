@@ -32,10 +32,15 @@ int main()
 #endif
 
 	RenderWindow window(VideoMode(1280, 720), "Grief Trigger Turbo HD", sf::Style::Titlebar | sf::Style::Close);
-	//window.setFramerateLimit(120);
+	//window.setFramerateLimit(60);
 	window.setVerticalSyncEnabled(true);
+	window.setKeyRepeatEnabled(false);
 
 	sf::Clock frameClock;
+	sf::Clock updateClock;
+	sf::Int32 nextUpdate = updateClock.getElapsedTime().asMilliseconds();
+	float updateRate(1.0f / 15.f);
+	float maxUpdates = 1;
 
 	tmx::MapLoader ml("assets/");
 
@@ -43,6 +48,9 @@ int main()
 
 	while (window.isOpen())
 	{
+		sf::Int32 updateTime = updateClock.getElapsedTime().asMilliseconds();
+		Uint32 updates = 0;
+
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -52,11 +60,19 @@ int main()
 			SceneManager::instance().input(event);
 		}	
 
+		while((updateTime - nextUpdate) >= updateRate && updates++ < maxUpdates)
+		{
+			SceneManager::instance().updateFixed(sf::seconds(updateRate));	
+			nextUpdate += updateRate;
+		} 
+
 		SceneManager::instance().update(frameClock.restart());
 
 		window.clear();
 		SceneManager::instance().draw(window);
 		window.display();
+
+		//sf::sleep(sf::milliseconds(1));
 	}
 
 	return 0;

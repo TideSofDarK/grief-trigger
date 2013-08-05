@@ -4,52 +4,71 @@
 #include "d_objects.h"
 #include "g_scenemanager.h"
 
+void addFrames(thor::FrameAnimation& animation, int x, int yFirst, int yLast, float duration = 1.f)
+{
+	const int step = (yFirst < yLast) ? +1 : -1;
+	yLast += step; // so yLast is excluded in the range
+
+	for (int y = yFirst; y != yLast; y += step)
+		animation.addFrame(duration, sf::IntRect(CHARACTER_SIZE*x, CHARACTER_SIZE*y, CHARACTER_SIZE, CHARACTER_SIZE));
+}
+
 PlayerObject::PlayerObject()
 {
 }
 
-void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Squad> &squadsList)
+void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, tmx::MapObject &playerObject)
 {
 	object = &playerObject;
-	squads = &squadsList;
+
+	sprite.setTexture(TextureManager::instance().getTexture("assets/player.png"));
+	sprite.setPosition(x, y);
 
 	for (int a = 0; a < 4; a++)
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			walkingAnimation[a].setSpriteSheet(TextureManager::instance().getTexture("assets/player.png"));
-			walkingAnimation[a].addFrame(sf::IntRect(i * 32, a * 32, 32, 32));
+			animations[a].addFrame(1.f, sf::IntRect(i * CHARACTER_SIZE, a * CHARACTER_SIZE, CHARACTER_SIZE, CHARACTER_SIZE));
 		}
 	}
 
-	animatedSprite = AnimatedSprite(sf::seconds(0.05));
-	animatedSprite.setAnimation(walkingAnimation[DIR_TOP]);
-	animatedSprite.setPosition(x, y);
-	animatedSprite.stop();
-	animatedSprite.setLooped(true);
+	animator.addAnimation("up", animations[DIR_UP], sf::seconds(0.5f));
+	animator.addAnimation("right", animations[DIR_RIGHT], sf::seconds(0.5f));
+	animator.addAnimation("left", animations[DIR_LEFT], sf::seconds(0.5f));
+	animator.addAnimation("down", animations[DIR_DOWN], sf::seconds(0.5f));
 
-	direction = DIR_TOP;
+	animator.playAnimation("down",true);
+	animator.stopAnimation();
+
+	nx = sprite.getPosition().x;
+	ny = sprite.getPosition().y;
+
+	direction = DIR_UP;
 	walking = false;
-	nx = animatedSprite.getPosition().x;
-	ny = animatedSprite.getPosition().y;
-
-	camStart = cameraStart;
-
-	ncy = ncx = 0;
 }
 
-void PlayerObject::move()
+void PlayerObject::draw(sf::RenderTarget &tg)
+{
+	tg.draw(sprite);
+}
+
+sf::Sprite& PlayerObject::getSprite()
+{
+	return sprite;
+}
+
+void PlayerObject::update(sf::Time &time)
 {
 	if (DialoguePanel::instance().isHided() == false && !walking)
 	{
 		bool isMovable = true;
 
 		/************************************************************************/
-		/* Check for input and movable space									*/
+		/* Check for input														*/
 		/************************************************************************/
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 		{
-			step(DIR_TOP);
+			step(DIR_UP);
 		}
 
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
@@ -67,65 +86,15 @@ void PlayerObject::move()
 			step(DIR_RIGHT);
 		}
 	}
-}
-
-void PlayerObject::draw(sf::RenderTarget &tg)
-{
-	tg.draw(animatedSprite);
-}
-
-AnimatedSprite& PlayerObject::getSprite()
-{
-	return animatedSprite;
-}
-
-void PlayerObject::input(sf::Event &event)
-{
-
-}
-
-void PlayerObject::update(sf::Time &time, sf::View &camera)
-{
-	/************************************************************************/
-	/* Scrolling                                                            */
-	/************************************************************************/
-	if (animatedSprite.getPosition().y > camera.getCenter().y + (HALF_HEIGHT / 2) - (CHARACTER_SIZE / 2))
-	{
-		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncy, ncy + HALF_HEIGHT);
-	}
-	if (animatedSprite.getPosition().y < camera.getCenter().y - (HALF_HEIGHT / 2) - (CHARACTER_SIZE / 2))
-	{
-		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncy, ncy - HALF_HEIGHT);
-	}
-	if (animatedSprite.getPosition().x > camera.getCenter().x + (HALF_WIDTH / 2) - (CHARACTER_SIZE / 2))
-	{
-		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx + HALF_WIDTH);
-	}
-	if (animatedSprite.getPosition().x < camera.getCenter().x - (HALF_WIDTH / 2) - (CHARACTER_SIZE / 2))
-	{
-		oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx - HALF_WIDTH);
-	}
-
-	if ((int)ncy % HALF_HEIGHT != 0)
-	{
-		camera.setCenter((camera.getCenter().x), (camStart.y + (int)ncy));
-	}
-
-	if ((int)ncx % HALF_WIDTH != 0)
-	{
-		camera.setCenter((camStart.x + (int)ncx), (camera.getCenter().y));
-	}
-
-	oTweener.step(time.asSeconds());
 
 	/************************************************************************/
 	/* Process smooth walking														*/
 	/************************************************************************/
 	if(walking == true)
 	{
-		if(direction == DIR_TOP)
+		if(direction == DIR_UP)
 		{
-			ny -= playerMoveSpeed;
+			ny -= playerMoveSpeed * time.asSeconds();
 
 			if(ny <= nextspot)
 			{
@@ -133,12 +102,12 @@ void PlayerObject::update(sf::Time &time, sf::View &camera)
 				walking = false;
 				direction = DIR_IDLE;
 
-				animatedSprite.stop();
+				animator.stopAnimation();
 			}
 		}
 		if(direction == DIR_DOWN)
 		{
-			ny += playerMoveSpeed;
+			ny += playerMoveSpeed * time.asSeconds();
 
 			if(ny >= nextspot)
 			{
@@ -146,12 +115,12 @@ void PlayerObject::update(sf::Time &time, sf::View &camera)
 				walking = false;
 				direction = DIR_IDLE;
 
-				animatedSprite.stop();
+				animator.stopAnimation();
 			}
 		}
 		if(direction == DIR_LEFT)
 		{
-			nx -= playerMoveSpeed;
+			nx -= playerMoveSpeed * time.asSeconds();
 
 			if(nx <= nextspot)
 			{
@@ -159,12 +128,12 @@ void PlayerObject::update(sf::Time &time, sf::View &camera)
 				walking = false;
 				direction = DIR_IDLE;
 
-				animatedSprite.stop();
+				animator.stopAnimation();
 			}
 		}
 		if(direction == DIR_RIGHT)
 		{
-			nx += playerMoveSpeed;
+			nx += playerMoveSpeed * time.asSeconds();
 
 			if(nx >= nextspot)
 			{
@@ -172,15 +141,17 @@ void PlayerObject::update(sf::Time &time, sf::View &camera)
 				walking = false;
 				direction = DIR_IDLE;
 
-				animatedSprite.stop();
+				animator.stopAnimation();
 			}
 		}
 	}
 
 	//Update animation and position
-	animatedSprite.setPosition(nx, ny);
 	object->SetPosition(sf::Vector2f(nx, ny));
-	animatedSprite.update(time);
+	sprite.setPosition(sf::Vector2f(nx, ny));
+
+	animator.update(time);
+	animator.animate(sprite);
 }
 
 bool PlayerObject::step(int dir)
@@ -192,7 +163,7 @@ bool PlayerObject::step(int dir)
 
 		switch (dir)
 		{
-		case DIR_TOP:
+		case DIR_UP:
 			movement.y -= CHARACTER_SIZE;
 			break;
 		case DIR_DOWN:
@@ -211,31 +182,63 @@ bool PlayerObject::step(int dir)
 		for (std::vector<tmx::MapObject>::iterator it = SceneManager::instance().getScene().getObjects().begin(); it != SceneManager::instance().getScene().getObjects().end(); ++it)
 		{
 			tmx::MapObject &object = *it;
-			if (object.GetAABB().intersects(sf::FloatRect(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)) 
+			if (object.GetAABB().intersects(sf::FloatRect(sprite.getPosition().x + movement.x, sprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)) 
 				&& object.GetName() == "" ) isMovable = false;
-			if (walking == false && object.GetAABB().intersects(sf::FloatRect(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)) 
+			if (walking == false && object.GetAABB().intersects(sf::FloatRect(sprite.getPosition().x + movement.x, sprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)) 
 				&& object.GetName() != "" 
 				&& object.GetName() != "hero" 
-				&& object.GetName() != "door")
+				&& object.GetName() != "door"
+				&& object.GetName() != "null")
 			{
 				isMovable = false;
 			}
-		}
+		}		
 
 		if(isMovable == true)
 		{
-			if (dir == DIR_DOWN || dir == DIR_TOP) nextspot = animatedSprite.getPosition().y + movement.y; 
-			else if (dir == DIR_LEFT || dir == DIR_RIGHT) nextspot = animatedSprite.getPosition().x + movement.x; 
+			if (dir == DIR_DOWN || dir == DIR_UP) nextspot = sprite.getPosition().y + movement.y; 
+			else if (dir == DIR_LEFT || dir == DIR_RIGHT) nextspot = sprite.getPosition().x + movement.x; 
 			direction = dir;
 			walking = true;
 
-			animatedSprite.setAnimation(walkingAnimation[direction]);
-			animatedSprite.play();
+			switch (direction)
+			{
+			case DIR_UP:
+				animator.playAnimation("up", true);
+				break;
+			case DIR_DOWN:
+				animator.playAnimation("down", true);
+				break;
+			case DIR_LEFT:
+				animator.playAnimation("left", true);
+				break;
+			case DIR_RIGHT:
+				animator.playAnimation("right", true);
+				break;
+			default:
+				break;
+			}
 		}	
 		else
 		{
-			animatedSprite.setAnimation(walkingAnimation[dir]);
-			animatedSprite.setFrame(0);
+			//animator.stopAnimation();
+			switch (dir)
+			{
+			case DIR_UP:
+				animator.playAnimation("up", false);
+				break;
+			case DIR_DOWN:
+				animator.playAnimation("down", false);
+				break;
+			case DIR_LEFT:
+				animator.playAnimation("left", false);
+				break;
+			case DIR_RIGHT:
+				animator.playAnimation("right", false);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 

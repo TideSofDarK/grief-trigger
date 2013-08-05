@@ -4,6 +4,7 @@
 #include <string>
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
 
 #include "d_resourcesmanager.h"
 
@@ -36,6 +37,7 @@ private:
 public:
 	XPBar();
 	void draw(sf::RenderTarget &tg);
+	void update(sf::Time time);
 };
 
 #endif

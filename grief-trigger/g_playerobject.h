@@ -6,6 +6,8 @@
 
 #include <SFML/Graphics.hpp>
 
+#include <Thor/Animation.hpp>
+
 #include "os_dbtweener.h"
 
 #include "MapLoader.h"
@@ -23,47 +25,37 @@ class PlayerObject
 {
 private:
 	//Player animations
-	Animation			walkingAnimation[4];
+	thor::FrameAnimation	animations[4];
 
 	//Animated player sprite itself
-	AnimatedSprite		animatedSprite;
+	thor::Animator<sf::Sprite, std::string> animator;
+	sf::Sprite sprite;
 
 	//Moving direction
-	int					direction;
+	int						direction;
 
 	//Is walking
-	bool				walking;
+	bool					walking;
 
 	//Next coord
-	int					nextspot; 
-
-	//Start camera variables
-	sf::Vector2f		camStart;
+	float					nextspot; 
 
 	//Temp variables for smooth moving
-	int					nx, ny;
-
-	//Camera tweener
-	CDBTweener			oTweener;
-	float				ncx, ncy;
+	float					nx, ny;
 
 	//Player object on map
-	tmx::MapObject		*object;
-
-	//Pointer to sqauds
-	std::vector<Squad>	*squads;
+	tmx::MapObject			*object;
 
 public:
 	PlayerObject();
-	void init(sf::Uint32 x, sf::Uint32 y, sf::Vector2f cameraStart, tmx::MapObject &playerObject, std::vector<Squad> &squadsList);
-	void update(sf::Time &time, sf::View &camera);
+	void init(sf::Uint32 x, sf::Uint32 y, tmx::MapObject &playerObject);
+	void update(sf::Time &time);
 	void draw(sf::RenderTarget &tg);
-	void move();
 	void play();
-	AnimatedSprite& getSprite();
+	sf::Sprite& getSprite();
 	bool step(int dir);
-	void input(sf::Event &event);
 	bool isWalking(){return walking;};
+	tmx::MapObject &getOnMap(){return *object;};
 };
 
 #endif

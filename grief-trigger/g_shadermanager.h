@@ -26,6 +26,9 @@ private:
 	//Is working
 	bool working;
 
+	//YOBA
+	sf::Shader vingette;
+
 	//Shader list
 	std::map< std::string, sf::Shader > shaders;
 public:

@@ -80,6 +80,14 @@ private:
 	//Portrait and xp bar
 	XPBar				xpbar;
 
+	//YOBA
+	sf::Sprite			vingette;
+
+	//Camera tweener
+	CDBTweener			oTweener;
+	float				ncx, ncy;
+	sf::Vector2f		camStart;
+
 	//Loading resources
 	void				loadResources();
 
@@ -92,6 +100,7 @@ public:
 	};
 	void init(std::string name, tmx::MapLoader &ml);
 	void update(sf::Time time);
+	void updateFixed(sf::Time time);
 	void draw(sf::RenderTarget &tg);
 	void input(sf::Event &event);
 	void startBattle(Squad &squad);
@@ -100,6 +109,8 @@ public:
 	void setCurrentEffect(std::string string, sf::Time time);
 	void removeTip(std::string type);
 	std::vector<tmx::MapObject> &getObjects();
+	PlayerObject &getPlayerObject(){return po;};
+	std::vector<Squad> &getSquadList(){return squads;};
 };
 
 class SceneManager
@@ -125,6 +136,7 @@ private:
 public:
 	void draw(sf::RenderTarget &rt);
 	void update(sf::Time time);
+	void updateFixed(sf::Time time);
 	void input(sf::Event &event);
 	void setScene(std::string name, tmx::MapLoader &ml);
 	Scene &getScene(){return current;};

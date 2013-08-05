@@ -8,8 +8,9 @@
 
 #include <SFML/Graphics.hpp>
 
+#include <Thor/Animation.hpp>
+
 #include "MapLoader.h"
-#include "os_animatedsprite.hpp"
 
 #include "d_basicstats.h"
 #include "d_parser.h"
@@ -61,11 +62,12 @@ public:
 class Squad
 {
 private:
-	//Player animations
-	Animation				walkingAnimation[4];
+	//Squad animations
+	thor::FrameAnimation	animations[4];
 
-	//Animated player sprite itself
-	AnimatedSprite			animatedSprite;
+	//Squad sprite itself
+	thor::Animator<sf::Sprite, std::string> animator;
+	sf::Sprite sprite;
 
 	//List of monsters
 	std::vector<Monster>	monsters;
@@ -77,10 +79,10 @@ private:
 	bool					walking;
 
 	//Next coord
-	int						nextspot; 
+	float					nextspot; 
 
 	//Temp variables for smooth moving
-	int						nx, ny;
+	float					nx, ny;
 
 	//Random movement counter
 	unsigned int			counter;
@@ -89,9 +91,6 @@ private:
 	//Bounds of movement
 	sf::FloatRect			bounds;
 	sf::RectangleShape		sh;
-
-	//Pointer to player object
-	tmx::MapObject			*hero;
 
 	//Pointer to itself on map 
 	tmx::MapObject			*object;

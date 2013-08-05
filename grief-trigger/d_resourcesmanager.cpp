@@ -69,6 +69,9 @@ SoundManager::SoundManager()
 
 	winBuffer.loadFromFile("assets/win.wav");
 	winSound.setBuffer(winBuffer);
+
+	failBuffer.loadFromFile("assets/fail.wav");
+	failSound.setBuffer(failBuffer);
 }
 
 void SoundManager::playDoorSound()
@@ -104,4 +107,9 @@ void SoundManager::playDieSound()
 void SoundManager::playWinSound()
 {
 	winSound.play();
+}
+
+void SoundManager::playFailSound()
+{
+	failSound.play();
 }

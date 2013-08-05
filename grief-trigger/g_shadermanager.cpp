@@ -1,7 +1,11 @@
 #include "g_shadermanager.h"
 
+#include "h_config.h"
+
 ShaderManager::ShaderManager(void)
 {
+	vingette.loadFromFile("assets/v.frag", sf::Shader::Fragment);
+	vingette.setParameter("size", sf::Vector2f(WIDTH,HEIGHT));
 }
 
 void ShaderManager::init(sf::Vector2f resolution)
@@ -53,7 +57,8 @@ void ShaderManager::draw(sf::RenderTexture &rt, sf::RenderTarget &target)
 	}
 	else
 	{
-		target.draw(sprite);
+		//vingette.setParameter("texture", rt.getTexture());
+		target.draw(sprite, &vingette);
 	}
 }
 

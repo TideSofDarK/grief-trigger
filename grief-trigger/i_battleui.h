@@ -35,6 +35,8 @@
 #define YELLOW sf::Color(249u,217u,35u,255u)
 #define BLUE sf::Color(1u,250u,254u,255u)
 
+#define QTE_FACTOR 7.f
+
 float interpolateLinear(
 	const float pointA,
 	const float pointB,
@@ -252,9 +254,16 @@ private:
 			appearing = true;
 			working = true;
 			sprite.setPosition(HALF_WIDTH - (sprite.getLocalBounds().width / 2), HEIGHT/6);
-			sprite.move(-15 + (rand() % (int)(30 + 1)), -40 + (rand() % (int)(80 + 1)));
-			//sprite.scale((6 + (rand() % (int)(10 - 6 + 1))) / 10, (6 + (rand() % (int)(10 - 6 + 1))) / 10);
-			sprite.move(100,0);
+			if (type != "prepare")
+			{
+				sprite.move(-15 + (rand() % (int)(30 + 1)), -40 + (rand() % (int)(80 + 1)));
+				//sprite.scale((6 + (rand() % (int)(10 - 6 + 1))) / 10, (6 + (rand() % (int)(10 - 6 + 1))) / 10);
+				sprite.move(100,0);
+			}		
+			else
+			{
+				sprite.move((sprite.getLocalBounds().width / 3),-45);
+			}
 		};
 		void draw(sf::RenderTarget &tg)
 		{
@@ -277,8 +286,8 @@ private:
 					sprite.setColor(sf::Color(255,255,255,interpolateLinear(sprite.getColor().a, 0, 0.1)));
 					sprite.setPosition(interpolateLinear(sprite.getPosition().x, sprite.getPosition().x - 50, 0.1), sprite.getPosition().y);
 				}
-				std::cout << std::to_string(sprite.getColor().a) + "\n";
-				if (sprite.getColor().a >= 246)
+
+				if (sprite.getColor().a >= 246) //magic number, fuck interpolation
 				{
 					appearing = false;
 				}

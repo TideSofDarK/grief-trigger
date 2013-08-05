@@ -8,7 +8,6 @@ Monster::Monster(std::string name_)
 {
 	name = name_;
 	setStats(Parser::instance().getMonsterStats(name));
-	std::cout << std::to_string(getStrength()) + "x" + std::to_string(getAgility()) + "x" + std::to_string(getIntelligence()) + "x" + std::to_string(getHP()) << std::endl;
 	state = ALIVE;
 }
 
@@ -30,22 +29,28 @@ void Squad::init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap)
 		monsters.push_back(newMonster);
 	}
 
+	sprite.setTexture(TextureManager::instance().getTexture("assets/player.png"));
+	sprite.setPosition(pos);
+
 	for (int a = 0; a < 4; a++)
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			walkingAnimation[a].setSpriteSheet(TextureManager::instance().getTexture("assets/player.png"));
-			walkingAnimation[a].addFrame(sf::IntRect(i * 32, a * 32, 32, 32));
+			animations[a].addFrame(1.f, sf::IntRect(i * CHARACTER_SIZE, a * CHARACTER_SIZE, CHARACTER_SIZE, CHARACTER_SIZE));
 		}
 	}
 
-	animatedSprite = AnimatedSprite(sf::seconds(0.05));
-	animatedSprite.setAnimation(walkingAnimation[DIR_TOP]);
-	animatedSprite.setPosition(pos);
-	animatedSprite.stop();
-	animatedSprite.setLooped(true);
+	animator.addAnimation("up", animations[DIR_UP], sf::seconds(0.5f));
+	animator.addAnimation("right", animations[DIR_RIGHT], sf::seconds(0.5f));
+	animator.addAnimation("left", animations[DIR_LEFT], sf::seconds(0.5f));
+	animator.addAnimation("down", animations[DIR_DOWN], sf::seconds(0.5f));
 
-	direction = DIR_TOP;
+	animator.playAnimation("down");
+
+	nx = sprite.getPosition().x;
+	ny = sprite.getPosition().y;
+
+	direction = DIR_UP;
 	walking = false;
 
 	nx = pos.x;
@@ -54,12 +59,12 @@ void Squad::init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap)
 	counter = 0;
 	maxCounter = 50 + (rand() * (int)(60 - 30) / RAND_MAX);
 
-	bounds = sf::FloatRect(animatedSprite.getPosition().x - (CHARACTER_SIZE * 1), animatedSprite.getPosition().y + (CHARACTER_SIZE * 1), CHARACTER_SIZE * 2, CHARACTER_SIZE * 2);
+	bounds = sf::FloatRect(sprite.getPosition().x - (CHARACTER_SIZE * 1), sprite.getPosition().y + (CHARACTER_SIZE * 1), CHARACTER_SIZE * 2, CHARACTER_SIZE * 2);
 }
 
 void Squad::draw(sf::RenderTarget &tg)
 {
-	tg.draw(animatedSprite);
+	tg.draw(sprite);
 }
 
 void Squad::update(sf::Time time)
@@ -88,29 +93,29 @@ void Squad::update(sf::Time time)
 
 	if ((rand() % (int)(100)) == 50 && !walking)
 	{
-		if (hero->GetPosition().x == animatedSprite.getPosition().x + CHARACTER_SIZE && hero->GetPosition().y == animatedSprite.getPosition().y)
+		/*if (SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().x == sprite.getPosition().x + CHARACTER_SIZE && SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().y == sprite.getPosition().y)
 		{
 			SceneManager::instance().initBattle(*this);
 		}
-		else if (hero->GetPosition().x == animatedSprite.getPosition().x - CHARACTER_SIZE && hero->GetPosition().y == animatedSprite.getPosition().y)
+		else if (SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().x == sprite.getPosition().x - CHARACTER_SIZE && SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().y == sprite.getPosition().y)
 		{
 			SceneManager::instance().initBattle(*this);
 		}
-		else if (hero->GetPosition().x == animatedSprite.getPosition().x && hero->GetPosition().y == animatedSprite.getPosition().y + CHARACTER_SIZE)
+		else if (SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().x == sprite.getPosition().x && SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().y == sprite.getPosition().y + CHARACTER_SIZE)
 		{
 			SceneManager::instance().initBattle(*this);
 		}
-		else if (hero->GetPosition().x == animatedSprite.getPosition().x && hero->GetPosition().y == animatedSprite.getPosition().y - CHARACTER_SIZE)
+		else if (SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().x == sprite.getPosition().x && SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().y == sprite.getPosition().y - CHARACTER_SIZE)
 		{
 			SceneManager::instance().initBattle(*this);	
-		}
+		}*/
 	}
 	
 	if (walking)
 	{
-		if(direction == DIR_TOP)
+		if(direction == DIR_UP)
 		{
-			ny -= playerMoveSpeed;
+			ny -= playerMoveSpeed * time.asSeconds();
 
 			if(ny <= nextspot)
 			{
@@ -118,12 +123,12 @@ void Squad::update(sf::Time time)
 				walking = false;
 				direction = DIR_IDLE;
 
-				animatedSprite.stop();
+				animator.stopAnimation();
 			}
 		}
 		else if(direction == DIR_DOWN)
 		{
-			ny += playerMoveSpeed;
+			ny += playerMoveSpeed * time.asSeconds();
 
 			if(ny >= nextspot)
 			{
@@ -131,12 +136,12 @@ void Squad::update(sf::Time time)
 				walking = false;
 				direction = DIR_IDLE;
 
-				animatedSprite.stop();
+				animator.stopAnimation();
 			}
 		}
 		else if(direction == DIR_LEFT)
 		{
-			nx -= playerMoveSpeed;
+			nx -= playerMoveSpeed * time.asSeconds();
 
 			if(nx <= nextspot)
 			{
@@ -144,12 +149,12 @@ void Squad::update(sf::Time time)
 				walking = false;
 				direction = DIR_IDLE;
 
-				animatedSprite.stop();
+				animator.stopAnimation();
 			}
 		}
 		else if(direction == DIR_RIGHT)
 		{
-			nx += playerMoveSpeed;
+			nx += playerMoveSpeed * time.asSeconds();
 
 			if(nx >= nextspot)
 			{
@@ -157,14 +162,15 @@ void Squad::update(sf::Time time)
 				walking = false;
 				direction = DIR_IDLE;
 
-				animatedSprite.stop();
+				animator.stopAnimation();
 			}
 		}
 	}
 
-	animatedSprite.setPosition(nx, ny);
-	animatedSprite.update(time);
-	object->SetPosition(animatedSprite.getPosition());
+	animator.update(time);
+	animator.animate(sprite);
+	object->SetPosition(sf::Vector2f(nx, ny));
+	sprite.setPosition(nx, ny);
 }
 
 void Squad::step(int dir)
@@ -176,7 +182,7 @@ void Squad::step(int dir)
 
 		switch (dir)
 		{
-		case DIR_TOP:
+		case DIR_UP:
 			movement.y -= CHARACTER_SIZE;
 			break;
 		case DIR_DOWN:
@@ -192,13 +198,13 @@ void Squad::step(int dir)
 			break;
 		}
 
-		if (bounds.contains(sf::Vector2f(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y))) isMovable = true;
+		if (bounds.contains(sf::Vector2f(sprite.getPosition().x + movement.x, sprite.getPosition().y + movement.y))) isMovable = true;
 		else isMovable = false;
 
 		for (std::vector<tmx::MapObject>::iterator it = SceneManager::instance().getScene().getObjects().begin(); it != SceneManager::instance().getScene().getObjects().end(); ++it)
 		{
 			tmx::MapObject &object = *it;
-			if (object.GetAABB().intersects(sf::FloatRect(animatedSprite.getPosition().x + movement.x, animatedSprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)))
+			if (object.GetAABB().intersects(sf::FloatRect(sprite.getPosition().x + movement.x, sprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)))
 			{
 				isMovable = false;
 				break;
@@ -207,18 +213,48 @@ void Squad::step(int dir)
 
 		if(isMovable == true)
 		{
-			if (dir == DIR_DOWN || dir == DIR_TOP) nextspot = animatedSprite.getPosition().y + movement.y; 
-			else if (dir == DIR_LEFT || dir == DIR_RIGHT) nextspot = animatedSprite.getPosition().x + movement.x; 
+			if (dir == DIR_DOWN || dir == DIR_UP) nextspot = sprite.getPosition().y + movement.y; 
+			else if (dir == DIR_LEFT || dir == DIR_RIGHT) nextspot = sprite.getPosition().x + movement.x; 
 			direction = dir;
 			walking = true;
 
-			animatedSprite.setAnimation(walkingAnimation[direction]);
-			animatedSprite.play();
+			switch (direction)
+			{
+			case DIR_UP:
+				animator.playAnimation("up", true);
+				break;
+			case DIR_DOWN:
+				animator.playAnimation("down", true);
+				break;
+			case DIR_LEFT:
+				animator.playAnimation("left", true);
+				break;
+			case DIR_RIGHT:
+				animator.playAnimation("right", true);
+				break;
+			default:
+				break;
+			}
 		}	
 		else
 		{
-			animatedSprite.setAnimation(walkingAnimation[dir]);
-			animatedSprite.setFrame(0);
+			switch (dir)
+			{
+			case DIR_UP:
+				animator.playAnimation("up", false);
+				break;
+			case DIR_DOWN:
+				animator.playAnimation("down", false);
+				break;
+			case DIR_LEFT:
+				animator.playAnimation("left", false);
+				break;
+			case DIR_RIGHT:
+				animator.playAnimation("right", false);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 }

@@ -1,6 +1,7 @@
 #include "i_ui.h"
 
 #include "h_config.h"
+#include "d_gamedata.H"
 
 Tip::Tip(std::wstring string, unsigned int k, std::string newType)
 {
@@ -51,11 +52,23 @@ XPBar::XPBar()
 {
 	portrait.setTexture(TextureManager::instance().getTexture("assets/portrait.png"));
 	xpbar.setTexture(TextureManager::instance().getTexture("assets/xpbar.png"));
-	xpbar.move(110, 0);
+	xpbar.move(263, 0);
 }
 
 void XPBar::draw(sf::RenderTarget &tg)
 {
-	tg.draw(portrait);
+	sf::IntRect rect = xpbar.getTextureRect();
+	xpbar.setTextureRect(sf::IntRect(0,0, 737, 50));
+	xpbar.setColor(sf::Color(255,255,255,100));
 	tg.draw(xpbar);
+	xpbar.setColor(sf::Color(255,255,255,255));
+	xpbar.setTextureRect(rect);
+	tg.draw(xpbar);
+	tg.draw(portrait);
+}
+
+void XPBar::update(sf::Time time)
+{
+	float p = ((float)GameData::instance().getPlayer().getXP() / (float)GameData::instance().getPlayer().getNextLevelXP()) * 100;
+	xpbar.setTextureRect(sf::IntRect(0,0, (737 / 100) * p, 67));
 }

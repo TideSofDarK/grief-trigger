@@ -4,6 +4,8 @@
 
 void Scene::loadResources()
 {
+	vingette.setTexture(TextureManager::instance().getTexture("assets/vingette.png"));
+
 	//Init some managers/etc...
 
 	//Parse map
@@ -17,7 +19,7 @@ void Scene::loadResources()
 			camera.setCenter(0 + (HALF_WIDTH / 2), 0 + (HALF_HEIGHT / 2));
 
 			//Init hero object
-			po.init(object.GetPosition().x, object.GetPosition().y, camera.getCenter(), object, squads);
+			po.init(object.GetPosition().x, object.GetPosition().y, object);
 		}
 		else if (object.GetName() == "squad")
 		{
@@ -68,9 +70,11 @@ void Scene::init(std::string name, tmx::MapLoader &ml)
 	state = LOADING;
 	std::thread loadingThread(&Scene::loadResources, this);
 	loadingThread.join();
-	
+
 	//Create render texture
 	finalTexture.create(WIDTH, HEIGHT);
+
+	camStart = camera.getCenter();
 }
 
 void Scene::endBattle()
@@ -80,6 +84,7 @@ void Scene::endBattle()
 		Squad &squad = *i;
 		if (squadToDelete.getOnMap().GetPosition() == squad.getOnMap().GetPosition())
 		{
+			squadToDelete.getOnMap().SetName("null");
 			i = squads.erase(i);
 		}
 		else
@@ -109,20 +114,78 @@ void Scene::removeTip(std::string type)
 	}
 }
 
+void Scene::updateFixed(sf::Time time)
+{
+	if (state != LOADING)
+	{
+		DialoguePanel::instance().update(); 
+		
+		if (state == BATTLE)
+		{
+			battle.update(time);
+		}
+
+		if (state == TRANSITION)
+		{
+			if (!sm.isWorking())
+			{
+				state = BATTLE;
+			}
+		}
+	}
+	else //loading screen
+	{
+		if (counter == 1) loadingText.setString("Loading");
+		else if (counter % 10 == 0) loadingText.setString("Loading.");
+		else if (counter % 15 == 0) loadingText.setString("Loading..");
+		else if (counter % 20 == 0) loadingText.setString("Loading...");
+		else if (counter >= 20) counter = 0;
+		counter++;
+	}
+}
+
 void Scene::update(sf::Time time)
 {
+	
 	if (state != LOADING)
 	{
 		if (state == MAP)
 		{
-			//pm.update(time);
 			for (auto i = squads.begin(); i != squads.end(); ++i)
 			{
 				i->update(time);
 			}	
-				
-			po.move();
-			po.update(time, camera);
+			
+			po.update(time);
+
+			//Scrolling
+			if (po.getSprite().getPosition().y > camera.getCenter().y + (HALF_HEIGHT / 2) - (CHARACTER_SIZE / 2))
+			{
+				oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncy, ncy + HALF_HEIGHT);
+			}
+			if (po.getSprite().getPosition().y < camera.getCenter().y - (HALF_HEIGHT / 2) - (CHARACTER_SIZE / 2))
+			{
+				oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncy, ncy - HALF_HEIGHT);
+			}
+			if (po.getSprite().getPosition().x > camera.getCenter().x + (HALF_WIDTH / 2) - (CHARACTER_SIZE / 2))
+			{
+				oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx + HALF_WIDTH);
+			}
+			if (po.getSprite().getPosition().x < camera.getCenter().x - (HALF_WIDTH / 2) - (CHARACTER_SIZE / 2))
+			{
+				oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx - HALF_WIDTH);
+			}
+			if ((int)ncy % HALF_HEIGHT != 0)
+			{
+				camera.setCenter(camera.getCenter().x, camStart.y + ncy);
+			}
+			if ((int)ncx % HALF_WIDTH != 0)
+			{
+				camera.setCenter(camStart.x + ncx, camera.getCenter().y);
+			}
+			oTweener.step(time.asSeconds());
+
+			xpbar.update(time);	
 
 			//Do logic
 			if (!po.isWalking())
@@ -138,7 +201,7 @@ void Scene::update(sf::Time time)
 						if (sf::Keyboard::isKeyPressed(_Z))
 						{
 							door.open();
-							
+
 							removeTip("door");
 						}	
 						break;
@@ -158,7 +221,7 @@ void Scene::update(sf::Time time)
 						if (sf::Keyboard::isKeyPressed(sf::Keyboard::X))
 						{
 							SceneManager::instance().initBattle(squad);
-							
+
 							removeTip("enemy");
 						}	
 						break;
@@ -186,32 +249,10 @@ void Scene::update(sf::Time time)
 					else removeTip("npc");
 				}
 			}	
-
-			DialoguePanel::instance().update();	
-		}
-
-		//Always update shaders
-		if (sm.isWorking()) sm.update();
-	}
-	else
-	{
-		if (counter == 1) loadingText.setString("Loading");
-		else if (counter % 10 == 0) loadingText.setString("Loading.");
-		else if (counter % 15 == 0) loadingText.setString("Loading..");
-		else if (counter % 20 == 0) loadingText.setString("Loading...");
-		else if (counter >= 20) counter = 0;
-		counter++;
-	}
-
-	if (state == BATTLE) battle.update(time);
-
-	if (state == TRANSITION)
-	{
-		if (!sm.isWorking())
-		{
-			state = BATTLE;
 		}
 	}
+	//Always update shaders
+	if (sm.isWorking()) sm.update();
 }
 
 void Scene::draw(sf::RenderTarget &tg)
@@ -244,6 +285,7 @@ void Scene::draw(sf::RenderTarget &tg)
 			}
 
 			//Unscalable
+			finalTexture.draw(vingette);
 			finalTexture.setView(unscalable);
 
 			//Tips, only if hero is not moving
@@ -254,7 +296,7 @@ void Scene::draw(sf::RenderTarget &tg)
 					i->draw(finalTexture, sf::Vector2f(970, 640));
 				}
 			}
-			
+
 			xpbar.draw(finalTexture);
 
 			//Dialogue UI
@@ -342,6 +384,11 @@ void SceneManager::draw(sf::RenderTarget &rt)
 void SceneManager::update(sf::Time time)
 {
 	current.update(time);
+}
+
+void SceneManager::updateFixed(sf::Time time)
+{
+	current.updateFixed(time);
 }
 
 void SceneManager::input(sf::Event &event)

@@ -311,6 +311,8 @@ void Battle::damagePlayer(Monster &monster)
 	stringToWString(tmpw, tmp);
 
 	log.setString(tmpw + L" нанес " + std::to_wstring(dmg) + L" урона персонажу " + name + L".");
+
+	SceneManager::instance().getScene().setCurrentEffect("distortion", sf::seconds(0.1));
 }
 
 void Battle::update(sf::Time time)
@@ -450,8 +452,6 @@ void Battle::update(sf::Time time)
 	//QTE
 	if(state == QTE) 
 	{
-		spellQTE.update(time);
-
 		if (spellQTE.isDamaged())
 		{
 			damageSpell();
@@ -478,7 +478,8 @@ void Battle::update(sf::Time time)
 					}
 				}
 			}
-		}	
+		}
+		spellQTE.update(time);
 	}
 
 	//Update shader

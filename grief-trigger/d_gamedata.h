@@ -21,11 +21,13 @@ private:
 public:
 	HeroStats()
 	{
-		xp = 0;
+		xp = 1;
 		nextLevelXP = 100;
 		level = 1;
 	}
 	//Bla-bla-bla
+	unsigned int getNextLevelXP(){return nextLevelXP;};
+	unsigned int getXP(){return xp;};
 	unsigned int &getLevel() {return level;};
 	unsigned int &getStrength() {return strength;};
 	unsigned int &getAgility() {return agility;};
