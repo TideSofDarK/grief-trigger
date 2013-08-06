@@ -445,7 +445,20 @@ void Battle::update(sf::Time time)
 			menu.clean();
 			menu.disappear();
 
-			spellQTE.start(spellMenu.getSelectedSpell());
+			switch (currentAttacking)
+			{
+			case 0:
+				spellQTE.start(spellMenu.getSelectedSpell(), "player");
+				break;
+			case 1:
+				spellQTE.start(spellMenu.getSelectedSpell(), "red");
+				break;
+			case 2:
+				spellQTE.start(spellMenu.getSelectedSpell(), "blue");
+				break;
+			default:
+				break;
+			} 
 		}
 	}
 
@@ -485,7 +498,16 @@ void Battle::update(sf::Time time)
 	//Update shader
 	fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
 	fire.setParameter("seconds", seconds);
-	seconds++;
+	if (state == QTE)
+	{
+		seconds+=5;
+		fire.setParameter("type", 1);
+	}
+	else
+	{
+		seconds++;
+		fire.setParameter("type", 0);
+	}
 }
 
 void Battle::damageSpell()

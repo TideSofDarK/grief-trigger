@@ -494,6 +494,10 @@ void SpellMenu::select()
 
 SpellQTE::SpellQTE()
 {
+	prepare[0].setTexture(TextureManager::instance().getTexture("assets/prepare_player.png"));
+	prepare[1].setTexture(TextureManager::instance().getTexture("assets/prepare_red.png"));
+	prepare[2].setTexture(TextureManager::instance().getTexture("assets/prepare_blue.png"));
+
 	state = IDLE;
 	line.setTexture(TextureManager::instance().getTexture("assets/line.png"));
 	line.setPosition(0, startY );
@@ -506,27 +510,36 @@ SpellQTE::SpellQTE()
 
 void SpellQTE::draw(sf::RenderTarget &tg)
 {
-	tg.draw(line);
-
-	cell.move(77,0);
-	cell.setTextureRect(sf::IntRect(81,0,155 - 81,156));
-	tg.draw(cell);
-
-	for (auto i = blocks.begin(); i != blocks.end(); i++)
+	if (state == PREPARE)
 	{
-		if (i->state != SLEEP)
+		tg.draw(prepare[hero]);
+
+		if ((int)(rand() % 50) == 3) tg.clear(sf::Color::White);
+	}
+	else
+	{
+		tg.draw(line);
+
+		cell.move(77,0);
+		cell.setTextureRect(sf::IntRect(81,0,155 - 81,156));
+		tg.draw(cell);
+
+		for (auto i = blocks.begin(); i != blocks.end(); i++)
+		{
+			if (i->state != SLEEP)
+			{
+				i->draw(tg);
+			}	
+		}
+
+		cell.move(-77,0);
+		cell.setTextureRect(sf::IntRect(0,0,80,156));
+		tg.draw(cell);
+
+		for (auto i = etexts.begin(); i != etexts.end(); i++)
 		{
 			i->draw(tg);
-		}	
-	}
-
-	cell.move(-77,0);
-	cell.setTextureRect(sf::IntRect(0,0,80,156));
-	tg.draw(cell);
-
-	for (auto i = etexts.begin(); i != etexts.end(); i++)
-	{
-		i->draw(tg);
+		}
 	}
 
 	/*sf::Vector2f p = shape.getPosition();
@@ -538,6 +551,16 @@ void SpellQTE::draw(sf::RenderTarget &tg)
 
 void SpellQTE::update(sf::Time time)
 {
+	if (state == PREPARE)
+	{
+		if ((int)(rand() % 50) == 3) SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.1));
+		prepare[hero].setPosition(sf::Vector2f(interpolateLinear(prepare[hero].getPosition().x, -120, 0.1f), prepare[hero].getPosition().y));
+	}
+	if (state == PREPARE && timer.getElapsedTime().asSeconds() > 1.0)
+	{
+		state = WORKING;
+		timer.restart();
+	}
 	for (auto i = etexts.begin(); i != etexts.end(); i++)
 	{
 		i->update(time);
@@ -554,7 +577,7 @@ void SpellQTE::update(sf::Time time)
 				state = IDLE;
 			}
 		}
-		if (state != IDLE)
+		if (state == WORKING || state == TRANSITION)
 		{
 			for (auto i = blocks.begin(); i != blocks.end();)
 			{
@@ -613,7 +636,7 @@ void SpellQTE::update(sf::Time time)
 				state = IDLE;
 			}
 		}
-		if (state != IDLE)
+		if (state == WORKING || state == TRANSITION)
 		{
 			for (auto i = blocks.begin(); i != blocks.end(); i++)
 			{
@@ -657,132 +680,135 @@ void SpellQTE::next(std::deque<Block>::iterator &i)
 
 void SpellQTE::input(sf::Event &event)
 {
-	if (type == 0)
+	if (state == WORKING)
 	{
-		if (state == WORKING)
+		if (type == 0)
 		{
-			if(event.type == sf::Event::KeyPressed)
+			if (state == WORKING)
+			{
+				if(event.type == sf::Event::KeyPressed)
+				{
+					for (auto i = blocks.begin(); i != blocks.end(); i++)
+					{
+						if (i->state != ENDED)
+						{
+							Block &block = *i;
+							if (shape.getGlobalBounds().intersects(block.sprite.getGlobalBounds()))
+							{
+								if ( event.key.code == i->b)
+								{
+									double p;
+									if (shape.getPosition().x < block.sprite.getPosition().x)
+									{
+										p = (shape.getPosition().x / block.sprite.getPosition().x) * 100;
+									}
+									else
+									{
+										p = (block.sprite.getPosition().x / shape.getPosition().x) * 100;
+									}
+
+									std::cout << std::to_string(p)+"\n";
+									//std::cout << std::to_string(shape.getPosition().x)+"x" + std::to_string(block.sprite.getPosition().x) + "\n";
+									if (p >= 0 && p <= 97)
+									{
+										etexts.push_back(EText("safe"));
+									}
+									else if (p >= 97.5 && p < 98)
+									{
+										etexts.push_back(EText("cool"));
+									}
+									else if (p >= 98)
+									{								
+										if (rand() % 2)
+										{
+											etexts.push_back(EText("awesome"));
+										}		
+										else
+										{
+											etexts.push_back(EText("cool"));
+										}
+										if ((int)(rand() % 50) == 3)
+										{
+											SceneManager::instance().getScene().setCurrentEffect("inversion", sf::seconds(1));
+										}
+									}
+									else
+									{
+										etexts.push_back(EText("safe"));
+									}
+									i->state = ENDED;
+									waiting = false;
+									timer.restart();
+									next(i);
+									damaged = true;
+									//std::cout << "asdfsdfs\n";
+									break;
+								}	
+							}
+							else break;
+						}
+					}		
+				}
+			}
+		}
+		else
+		{
+			if (state == WORKING)
 			{
 				for (auto i = blocks.begin(); i != blocks.end(); i++)
 				{
-					if (i->state != ENDED)
+					Block &block = *i;
+					if (i->state == GOING)
 					{
-						Block &block = *i;
 						if (shape.getGlobalBounds().intersects(block.sprite.getGlobalBounds()))
 						{
-							if ( event.key.code == i->b)
+							if(event.type == sf::Event::KeyPressed)
 							{
-								double p;
-								if (shape.getPosition().x < block.sprite.getPosition().x)
+								if ( event.key.code == block.b)
 								{
-									p = (shape.getPosition().x / block.sprite.getPosition().x) * 100;
-								}
-								else
-								{
-									p = (block.sprite.getPosition().x / shape.getPosition().x) * 100;
-								}
-
-								std::cout << std::to_string(p)+"\n";
-								//std::cout << std::to_string(shape.getPosition().x)+"x" + std::to_string(block.sprite.getPosition().x) + "\n";
-								if (p >= 0 && p <= 97)
-								{
-									etexts.push_back(EText("safe"));
-								}
-								else if (p >= 97.5 && p < 98)
-								{
-									etexts.push_back(EText("cool"));
-								}
-								else if (p >= 98)
-								{								
-									if (rand() % 2)
+									double p;
+									if (shape.getPosition().x < block.sprite.getPosition().x)
 									{
+										p = (shape.getPosition().x / block.sprite.getPosition().x) * 100;
+									}
+									else
+									{
+										p = (block.sprite.getPosition().x / shape.getPosition().x) * 100;
+									}
+
+									std::cout << std::to_string(p)+"\n";
+									//std::cout << std::to_string(shape.getPosition().x)+"x" + std::to_string(block.sprite.getPosition().x) + "\n";
+									if (p >= 0 && p <= 96)
+									{
+										etexts.push_back(EText("safe"));
+									}
+									else if (p >= 97 && p < 98.09)
+									{
+										etexts.push_back(EText("cool"));
+									}
+									else if (p >= 98.1)
+									{								
 										etexts.push_back(EText("awesome"));
-									}		
+
+										if ((int)(rand() % 50) == 3)
+										{
+											SceneManager::instance().getScene().setCurrentEffect("inversion", sf::seconds(1));
+										}
+									}	
 									else
 									{
 										etexts.push_back(EText("cool"));
 									}
-									if ((int)(rand() % 50) == 3)
-									{
-										SceneManager::instance().getScene().setCurrentEffect("inversion", sf::seconds(1));
-									}
-								}
-								else
-								{
-									etexts.push_back(EText("safe"));
-								}
-								i->state = ENDED;
-								waiting = false;
-								timer.restart();
-								next(i);
-								damaged = true;
-								//std::cout << "asdfsdfs\n";
-								break;
-							}	
+									i->state = ENDED;
+									next(i);
+									damaged = true;
+									break;
+								}	
+							}
 						}
-						else break;
-					}
+					}			
 				}		
 			}
-		}
-	}
-	else
-	{
-		if (state == WORKING)
-		{
-			for (auto i = blocks.begin(); i != blocks.end(); i++)
-			{
-				Block &block = *i;
-				if (i->state == GOING)
-				{
-					if (shape.getGlobalBounds().intersects(block.sprite.getGlobalBounds()))
-					{
-						if(event.type == sf::Event::KeyPressed)
-						{
-							if ( event.key.code == block.b)
-							{
-								double p;
-								if (shape.getPosition().x < block.sprite.getPosition().x)
-								{
-									p = (shape.getPosition().x / block.sprite.getPosition().x) * 100;
-								}
-								else
-								{
-									p = (block.sprite.getPosition().x / shape.getPosition().x) * 100;
-								}
-
-								std::cout << std::to_string(p)+"\n";
-								//std::cout << std::to_string(shape.getPosition().x)+"x" + std::to_string(block.sprite.getPosition().x) + "\n";
-								if (p >= 0 && p <= 96)
-								{
-									etexts.push_back(EText("safe"));
-								}
-								else if (p >= 97 && p < 98.09)
-								{
-									etexts.push_back(EText("cool"));
-								}
-								else if (p >= 98.1)
-								{								
-									etexts.push_back(EText("awesome"));
-
-									if ((int)(rand() % 50) == 3)
-									{
-										SceneManager::instance().getScene().setCurrentEffect("inversion", sf::seconds(1));
-									}
-								}	
-								else
-								{
-									etexts.push_back(EText("cool"));
-								}
-								i->state = ENDED;
-								next(i);
-								damaged = true;
-								break;
-							}	
-						}
-					}
-				}			
-			}		
 		}
 	}
 }
@@ -792,8 +818,21 @@ void SpellQTE::clean()
 	damaged = false;
 }
 
-void SpellQTE::start(Spell &sp)
+void SpellQTE::start(Spell &sp,  std::string name)
 {
+	if (name == "player")
+	{
+		hero = 0;
+	}
+	if (name == "red")
+	{
+		hero = 1;
+	}
+	if (name == "blue")
+	{
+		hero = 2;
+	}
+
 	spell = sp;
 
 	std::vector<int> &v = spell.getCombo();
@@ -852,9 +891,10 @@ void SpellQTE::start(Spell &sp)
 
 	blocks.front().state = GOING;
 
-	etexts.push_back(EText("prepare"));
+	SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.05));
 
 	clean();
-	state = WORKING;
+	state = PREPARE;
+	timer.restart();
 	waiting = false;
 }

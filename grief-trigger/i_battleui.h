@@ -224,7 +224,7 @@ public:
 class SpellQTE
 {
 private:
-	typedef enum STATE { IDLE, WORKING, TRANSITION };
+	typedef enum STATE { PREPARE, IDLE, WORKING, TRANSITION };
 	typedef enum QTE_STATE { GOING, ENDED, SLEEP, NEXT };
 
 	typedef struct Block
@@ -327,13 +327,16 @@ private:
 
 	bool						damaged;
 
+	sf::Sprite					prepare[3];
+	unsigned int				hero;
+
 public:
 	SpellQTE();
 	void update(sf::Time time);
 	void draw(sf::RenderTarget &tg);
 	void input(sf::Event &event);
 	void clean();
-	void start(Spell &sp);
+	void start(Spell &sp, std::string name);
 	bool isDamaged() {return damaged;};
 	bool isEnded(){return (state == IDLE ? true : false);};
 	void next(std::deque<Block>::iterator &it);

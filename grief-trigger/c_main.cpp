@@ -31,10 +31,10 @@ int main()
 	XInitThreads();
 #endif
 
-	RenderWindow window(VideoMode(1280, 720), "Grief Trigger Turbo HD", sf::Style::Titlebar | sf::Style::Close);
+	RenderWindow window(VideoMode(1280, 800), "Grief Trigger Turbo HD", sf::Style::Titlebar | sf::Style::Close);
 	//window.setFramerateLimit(60);
 	window.setVerticalSyncEnabled(true);
-	window.setKeyRepeatEnabled(false);
+	//window.setKeyRepeatEnabled(false);
 
 	sf::Clock frameClock;
 	sf::Clock updateClock;
@@ -62,11 +62,9 @@ int main()
 
 		while((updateTime - nextUpdate) >= updateRate && updates++ < maxUpdates)
 		{
-			SceneManager::instance().updateFixed(sf::seconds(updateRate));	
+			SceneManager::instance().update(sf::seconds(updateRate));
 			nextUpdate += updateRate;
-		} 
-
-		SceneManager::instance().update(frameClock.restart());
+		} 		
 
 		window.clear();
 		SceneManager::instance().draw(window);

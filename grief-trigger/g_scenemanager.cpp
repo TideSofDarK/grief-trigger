@@ -4,7 +4,7 @@
 
 void Scene::loadResources()
 {
-	vingette.setTexture(TextureManager::instance().getTexture("assets/vingette.png"));
+	//vingette.setTexture(TextureManager::instance().getTexture("assets/vingette.png"));
 
 	//Init some managers/etc...
 
@@ -15,11 +15,13 @@ void Scene::loadResources()
 		if (object.GetName() == "hero")
 		{
 			//Set center of camera to player coords
-			//camera->setCenter(object.GetPosition().x + CHARACTER_SIZE, object.GetPosition().y + (CHARACTER_SIZE / 2));
-			camera.setCenter(0 + (HALF_WIDTH / 2), 0 + (HALF_HEIGHT / 2));
+			camera.setPosition(0, 0);
+			ncx = camera.getPosition().x;
+			ncy = camera.getPosition().y;
+			//camera.setCenter(0 + (HALF_WIDTH / 2), 0 + (HALF_HEIGHT / 2));
 
 			//Init hero object
-			po.init(object.GetPosition().x, object.GetPosition().y, object);
+			po.init(object.GetPosition(), object);
 		}
 		else if (object.GetName() == "squad")
 		{
@@ -68,13 +70,10 @@ void Scene::init(std::string name, tmx::MapLoader &ml)
 
 	//Start loading
 	state = LOADING;
-	std::thread loadingThread(&Scene::loadResources, this);
-	loadingThread.join();
+	thread.launch();
 
 	//Create render texture
 	finalTexture.create(WIDTH, HEIGHT);
-
-	camStart = camera.getCenter();
 }
 
 void Scene::endBattle()
@@ -86,6 +85,7 @@ void Scene::endBattle()
 		{
 			squadToDelete.getOnMap().SetName("null");
 			i = squads.erase(i);
+			break;
 		}
 		else
 		{
@@ -114,12 +114,13 @@ void Scene::removeTip(std::string type)
 	}
 }
 
-void Scene::updateFixed(sf::Time time)
+void Scene::update(sf::Time time)
 {
+	
 	if (state != LOADING)
 	{
 		DialoguePanel::instance().update(); 
-		
+
 		if (state == BATTLE)
 		{
 			battle.update(time);
@@ -132,58 +133,72 @@ void Scene::updateFixed(sf::Time time)
 				state = BATTLE;
 			}
 		}
-	}
-	else //loading screen
-	{
-		if (counter == 1) loadingText.setString("Loading");
-		else if (counter % 10 == 0) loadingText.setString("Loading.");
-		else if (counter % 15 == 0) loadingText.setString("Loading..");
-		else if (counter % 20 == 0) loadingText.setString("Loading...");
-		else if (counter >= 20) counter = 0;
-		counter++;
-	}
-}
 
-void Scene::update(sf::Time time)
-{
-	
-	if (state != LOADING)
-	{
 		if (state == MAP)
 		{
-			for (auto i = squads.begin(); i != squads.end(); ++i)
+			/************************************************************************/
+			/* Scrolling															*/
+			/************************************************************************/
+			if (!moving)
 			{
-				i->update(time);
-			}	
-			
-			po.update(time);
+				//Update objects only if camera is not moving
+				po.update(time);
+				for (auto i = squads.begin(); i != squads.end(); ++i)
+				{
+					i->update(time);
+				}	
+				//Update objects only if camera is not moving
 
-			//Scrolling
-			if (po.getSprite().getPosition().y > camera.getCenter().y + (HALF_HEIGHT / 2) - (CHARACTER_SIZE / 2))
-			{
-				oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncy, ncy + HALF_HEIGHT);
+				if (po.getSprite().getPosition().y > camera.getPosition().y + HALF_HEIGHT)
+				{
+					ncy = camera.getPosition().y;
+					CDBTweener::CTween *pTween = new CDBTweener::CTween();
+					pTween->setEquation(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 1.0f);
+					pTween->addValue(&ncy, ncy + HALF_HEIGHT);
+					pTween->setUserData("Eagle");
+					oTweener.addTween(pTween);
+					oTweener.addListener(&oListener);
+					moving = true;
+				}
+				if(po.getSprite().getPosition().y < camera.getPosition().y)
+				{
+					ncy = camera.getPosition().y;
+					CDBTweener::CTween *pTween = new CDBTweener::CTween();
+					pTween->setEquation(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 1.0f);
+					pTween->addValue(&ncy, ncy - HALF_HEIGHT);
+					pTween->setUserData("Eagle");
+					oTweener.addTween(pTween);
+					oTweener.addListener(&oListener);
+					moving = true;
+				}
+				if (po.getSprite().getPosition().x >= camera.getPosition().x + HALF_WIDTH)
+				{
+					ncx = camera.getPosition().x;
+					CDBTweener::CTween *pTween = new CDBTweener::CTween();
+					pTween->setEquation(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 1.0f);
+					pTween->addValue(&ncx, ncx + HALF_WIDTH);
+					pTween->setUserData("Eagle");
+					oTweener.addTween(pTween);
+					oTweener.addListener(&oListener);
+					moving = true;
+				}
+				if (po.getSprite().getPosition().x < camera.getPosition().x)
+				{
+					ncx = camera.getPosition().x;
+					CDBTweener::CTween *pTween = new CDBTweener::CTween();
+					pTween->setEquation(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 1.0f);
+					pTween->addValue(&ncx, ncx - HALF_WIDTH);
+					pTween->setUserData("Eagle");
+					oTweener.addTween(pTween);
+					oTweener.addListener(&oListener);
+					moving = true;
+				}
 			}
-			if (po.getSprite().getPosition().y < camera.getCenter().y - (HALF_HEIGHT / 2) - (CHARACTER_SIZE / 2))
-			{
-				oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncy, ncy - HALF_HEIGHT);
-			}
-			if (po.getSprite().getPosition().x > camera.getCenter().x + (HALF_WIDTH / 2) - (CHARACTER_SIZE / 2))
-			{
-				oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx + HALF_WIDTH);
-			}
-			if (po.getSprite().getPosition().x < camera.getCenter().x - (HALF_WIDTH / 2) - (CHARACTER_SIZE / 2))
-			{
-				oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_IN, 1.0f, &ncx, ncx - HALF_WIDTH);
-			}
-			if ((int)ncy % HALF_HEIGHT != 0)
-			{
-				camera.setCenter(camera.getCenter().x, camStart.y + ncy);
-			}
-			if ((int)ncx % HALF_WIDTH != 0)
-			{
-				camera.setCenter(camStart.x + ncx, camera.getCenter().y);
-			}
-			oTweener.step(time.asSeconds());
+			oTweener.step((float)time.asMilliseconds() * 0.001f);
+			camera.setPosition(ncx, ncy);
+			/************************************************************************/
+			/* Scrolling															*/
+			/************************************************************************/
 
 			xpbar.update(time);	
 
@@ -251,6 +266,16 @@ void Scene::update(sf::Time time)
 			}	
 		}
 	}
+	else //loading screen
+	{
+		if (counter == 1) loadingText.setString("Loading");
+		else if (counter % 10 == 0) loadingText.setString("Loading.");
+		else if (counter % 15 == 0) loadingText.setString("Loading..");
+		else if (counter % 20 == 0) loadingText.setString("Loading...");
+		else if (counter >= 20) counter = 0;
+		counter++;
+	}
+
 	//Always update shaders
 	if (sm.isWorking()) sm.update();
 }
@@ -265,7 +290,7 @@ void Scene::draw(sf::RenderTarget &tg)
 		if (state != BATTLE)
 		{
 			//Game content
-			finalTexture.setView(camera);
+			finalTexture.setView(camera.getView());
 			//Map
 			map->Draw(finalTexture);
 			//Enemy squads
@@ -306,7 +331,7 @@ void Scene::draw(sf::RenderTarget &tg)
 		else //Draw battle
 		{
 			//Scaled
-			finalTexture.setView(camera);
+			finalTexture.setView(camera.getView());
 			battle.draw(finalTexture);
 
 			//Unscalable
@@ -347,7 +372,7 @@ void Scene::input(sf::Event &event)
 		{
 			DialoguePanel::instance().input(event);
 			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) setCurrentEffect("distortion", sf::seconds(1));
-			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) setCurrentEffect("battle", sf::seconds(1));
+			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) setCurrentEffect("acid", sf::seconds(1));
 			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P) finalTexture.getTexture().copyToImage().saveToFile("screenshot.png");
 
 			if (state != PAUSED)
@@ -384,11 +409,6 @@ void SceneManager::draw(sf::RenderTarget &rt)
 void SceneManager::update(sf::Time time)
 {
 	current.update(time);
-}
-
-void SceneManager::updateFixed(sf::Time time)
-{
-	current.updateFixed(time);
 }
 
 void SceneManager::input(sf::Event &event)

@@ -57,7 +57,7 @@ void ShaderManager::draw(sf::RenderTexture &rt, sf::RenderTarget &target)
 	}
 	else
 	{
-		//vingette.setParameter("texture", rt.getTexture());
+		vingette.setParameter("texture", rt.getTexture());
 		target.draw(sprite, &vingette);
 	}
 }

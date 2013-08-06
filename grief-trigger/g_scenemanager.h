@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <SFML/Graphics.hpp>
+#include <SFML/System.hpp>
 
 #include <MapLoader.h>
 
@@ -26,6 +27,11 @@ typedef enum { MAP, BATTLE, TRANSITION, PAUSED, LOADING } SCENE_STATE;
 class Scene
 {
 private:
+	MapScrollingListener oListener;	
+
+	//Loading thread
+	sf::Thread thread;
+
 	//Battle screen
 	Battle				battle;
 
@@ -57,8 +63,8 @@ private:
 	sf::RenderTexture	finalTexture;
 
 	//Views
-	sf::View			camera;
 	sf::View			unscalable;
+	Camera camera;
 
 	//Loading text
 	unsigned int		counter;
@@ -70,7 +76,7 @@ private:
 	//Squad to delete
 	Squad				squadToDelete;
 	unsigned int		toDelete;
-	
+
 	//Day counter
 	sf::Sprite			days;
 
@@ -87,20 +93,18 @@ private:
 	CDBTweener			oTweener;
 	float				ncx, ncy;
 	sf::Vector2f		camStart;
+	bool				moving;
 
 	//Loading resources
 	void				loadResources();
 
 public:
-	Scene()
+	Scene() : thread(&Scene::loadResources, this), oListener(moving)
 	{
-		camera = sf::View(sf::FloatRect(sf::FloatRect(0, 0, WIDTH, HEIGHT)));
 		unscalable = sf::View(sf::FloatRect(0, 0, WIDTH, HEIGHT));
-		camera.zoom(1.f/2.f);
 	};
 	void init(std::string name, tmx::MapLoader &ml);
 	void update(sf::Time time);
-	void updateFixed(sf::Time time);
 	void draw(sf::RenderTarget &tg);
 	void input(sf::Event &event);
 	void startBattle(Squad &squad);
@@ -124,7 +128,7 @@ public:
 
 private:
 	SceneManager() {
-		
+
 	};
 
 	SceneManager( const SceneManager& );
@@ -136,7 +140,6 @@ private:
 public:
 	void draw(sf::RenderTarget &rt);
 	void update(sf::Time time);
-	void updateFixed(sf::Time time);
 	void input(sf::Event &event);
 	void setScene(std::string name, tmx::MapLoader &ml);
 	Scene &getScene(){return current;};

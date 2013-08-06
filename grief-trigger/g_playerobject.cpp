@@ -17,12 +17,12 @@ PlayerObject::PlayerObject()
 {
 }
 
-void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, tmx::MapObject &playerObject)
+void PlayerObject::init(sf::Vector2f pos, tmx::MapObject &playerObject)
 {
 	object = &playerObject;
 
 	sprite.setTexture(TextureManager::instance().getTexture("assets/player.png"));
-	sprite.setPosition(x, y);
+	sprite.setPosition(pos);
 
 	for (int a = 0; a < 4; a++)
 	{
@@ -37,8 +37,7 @@ void PlayerObject::init(sf::Uint32 x, sf::Uint32 y, tmx::MapObject &playerObject
 	animator.addAnimation("left", animations[DIR_LEFT], sf::seconds(0.5f));
 	animator.addAnimation("down", animations[DIR_DOWN], sf::seconds(0.5f));
 
-	animator.playAnimation("down",true);
-	animator.stopAnimation();
+	animator.playAnimation("down");
 
 	nx = sprite.getPosition().x;
 	ny = sprite.getPosition().y;

@@ -48,7 +48,7 @@ private:
 
 public:
 	PlayerObject();
-	void init(sf::Uint32 x, sf::Uint32 y, tmx::MapObject &playerObject);
+	void init(sf::Vector2f pos, tmx::MapObject &playerObject);
 	void update(sf::Time &time);
 	void draw(sf::RenderTarget &tg);
 	void play();
