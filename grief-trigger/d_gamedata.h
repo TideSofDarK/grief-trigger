@@ -5,6 +5,39 @@
 #include "g_monsters.h"
 #include "g_battle.h"
 
+typedef struct Level
+{
+public:
+	Level()
+	{
+		day = 1;
+		scene = 1;
+	}
+	void nextScene()
+	{
+		std::cout << std::to_string(day) << std::endl;
+		std::cout << std::to_string(scene) << std::endl;
+		bool next = Parser::instance().nextScene(day,scene);
+		if (next == false)
+		{
+			day++;
+			scene=1;
+		}
+		else
+		{
+			scene++;
+		}	
+		std::cout << std::to_string(day) << std::endl;
+		std::cout << std::to_string(scene) << std::endl;
+	}
+	unsigned int getDay(){return day;};
+	unsigned int getScene(){return scene;};
+private:
+	unsigned int day;
+	unsigned int scene;
+};
+static Level globalLevel;
+
 class HeroStats : BasicStats
 {
 private:

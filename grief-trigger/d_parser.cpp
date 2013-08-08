@@ -6,6 +6,7 @@ Parser::Parser()
 	dialoguesDoc.load_file("assets/text.xml");
 	resourcesDoc.load_file("assets/resources.xml");
 	spellsDoc.load_file("assets/spells.xml");
+	scenesDoc.load_file("assets/scenes.xml");
 }
 
 BasicStats Parser::getMonsterStats(std::string name)
@@ -146,7 +147,6 @@ std::vector<Spell> Parser::parseSpells(std::string hero, unsigned int level)
 				{
 					Spell newSpell;
 					std::wstring str = pugi::as_wide(attr.next_attribute().value());
-					std::wcout << str << std::endl;
 					newSpell.init(spell.name(), str, child.value(), attr.next_attribute().previous_attribute().previous_attribute().as_int());
 					newSpells.push_back(newSpell);
 				}
@@ -155,4 +155,81 @@ std::vector<Spell> Parser::parseSpells(std::string hero, unsigned int level)
 	}
 
 	return newSpells;
+}
+
+bool Parser::nextScene(unsigned int day, unsigned int scene)
+{
+	pugi::xml_node sceneNode = scenesDoc.child(("day" + std::to_string(day)).c_str()).child(("scene" + std::to_string(scene)).c_str());
+
+	for (pugi::xml_attribute attr: sceneNode.attributes())
+	{
+		std::string test = " ";
+		//std::cout << attr.name() + test + attr.value() << std::endl;
+	}
+	//std::cout << sceneNode.next_sibling().name() << std::endl;
+	if (sceneNode.next_sibling() != NULL)
+	{
+		//std::cout << "sled" << std::endl;
+		return true;
+	}
+	return false;
+}
+
+SceneInfo Parser::getSceneInfo(unsigned int day, unsigned int scene)
+{
+	pugi::xml_node sceneNode = scenesDoc.child(("day" + std::to_string(day)).c_str()).child(("scene" + std::to_string(scene)).c_str());
+
+	SceneInfo si;
+	si.map = sceneNode.attribute("map").as_string();
+	si.type = sceneNode.attribute("type").as_string();
+	std::cout << si.map << std::endl;
+	std::cout << si.type << std::endl;
+	return si;
+}
+
+std::string Parser::getName(std::string name, std::string situation)
+{
+	pugi::xml_node text = dialoguesDoc.child("text").child(name.c_str());
+
+	std::vector<std::string> situations;
+
+	int pos = 0;
+	std::string token;
+	while ((pos = situation.find('/')) != std::string::npos) {
+		situations.push_back(situation.substr(0, pos));
+		situation.erase(0, pos + 1);
+	}
+
+	std::string str;
+	for (int i = 0; i < situations.size(); i++)
+	{
+		str = text.child_value(situations[i].c_str());
+		text = text.child(situations[i].c_str());
+	}
+
+	return text.attribute("name").as_string();
+}
+
+bool Parser::isLast(std::string name, std::string situation)
+{
+	pugi::xml_node text = dialoguesDoc.child("text").child(name.c_str());
+
+	std::vector<std::string> situations;
+
+	int pos = 0;
+	std::string token;
+	while ((pos = situation.find('/')) != std::string::npos) {
+		situations.push_back(situation.substr(0, pos));
+		situation.erase(0, pos + 1);
+	}
+
+	std::string str;
+	for (int i = 0; i < situations.size(); i++)
+	{
+		str = text.child_value(situations[i].c_str());
+		text = text.child(situations[i].c_str());
+	}
+
+	std::cout << text.attribute("last").as_bool() << std::endl;
+	return text.attribute("last").as_bool();
 }

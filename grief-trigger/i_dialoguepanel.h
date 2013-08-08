@@ -89,6 +89,8 @@ protected:
 	//Tweener itself
 	CDBTweener									oTweener;
 
+	bool										nextScene;
+
 public:
 	void init();
 	void openDialogue(std::string name, std::string situation);

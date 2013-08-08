@@ -58,7 +58,7 @@ XPBar::XPBar()
 void XPBar::draw(sf::RenderTarget &tg)
 {
 	sf::IntRect rect = xpbar.getTextureRect();
-	xpbar.setTextureRect(sf::IntRect(0,0, 737, 50));
+	xpbar.setTextureRect(sf::IntRect(0,0, 737, 67));
 	xpbar.setColor(sf::Color(255,255,255,100));
 	tg.draw(xpbar);
 	xpbar.setColor(sf::Color(255,255,255,255));

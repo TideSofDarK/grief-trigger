@@ -104,6 +104,13 @@ public:
 	bool isWalking() {return walking;};
 	void step(int dir);
 	tmx::MapObject& getOnMap(){return *object;};
+	//Some bydlocode
+	//To delete squad after battle
+	//Anyway different squads can't keep same bounds, ëië
+	bool operator ==(const Squad &a)
+	{
+		return bounds==a.bounds;
+	}
 };
 
 #endif

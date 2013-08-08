@@ -494,14 +494,10 @@ void SpellMenu::select()
 
 SpellQTE::SpellQTE()
 {
-	prepare[0].setTexture(TextureManager::instance().getTexture("assets/prepare_player.png"));
-	prepare[1].setTexture(TextureManager::instance().getTexture("assets/prepare_red.png"));
-	prepare[2].setTexture(TextureManager::instance().getTexture("assets/prepare_blue.png"));
-
 	state = IDLE;
-	line.setTexture(TextureManager::instance().getTexture("assets/line.png"));
+	
 	line.setPosition(0, startY );
-	cell.setTexture(TextureManager::instance().getTexture("assets/circle.png"));
+	
 	cell.setPosition((WIDTH / 2) - CHARACTER_SIZE * 2 - 12, startY + CHARACTER_SIZE - 14); //Some position fixes
 	shape.setSize(sf::Vector2f(30,10));
 	shape.setPosition(cell.getPosition().x + 10, cell.getPosition().y + 14);
@@ -818,6 +814,15 @@ void SpellQTE::clean()
 	damaged = false;
 }
 
+void SpellQTE::loadResources()
+{
+	prepare[0].setTexture(TextureManager::instance().getTexture("assets/prepare_player.png"));
+	prepare[1].setTexture(TextureManager::instance().getTexture("assets/prepare_red.png"));
+	prepare[2].setTexture(TextureManager::instance().getTexture("assets/prepare_blue.png"));
+	line.setTexture(TextureManager::instance().getTexture("assets/line.png"));
+	cell.setTexture(TextureManager::instance().getTexture("assets/circle.png"));
+}
+
 void SpellQTE::start(Spell &sp,  std::string name)
 {
 	if (name == "player")
@@ -897,4 +902,46 @@ void SpellQTE::start(Spell &sp,  std::string name)
 	state = PREPARE;
 	timer.restart();
 	waiting = false;
+}
+
+HitEffect::HitEffect()
+{
+	sprite = AnimatedSprite(sf::seconds(0.1f));
+
+	animation.setSpriteSheet(TextureManager::instance().getTexture("assets/hit.png"));
+
+	for (int a = 0; a < 7; a++)
+	{
+		animation.addFrame(sf::IntRect(0, a * 193, 784, 193));
+	}
+}
+
+void HitEffect::init(sf::Vector2f pos)
+{
+	sprite.setAnimation(animation);
+	sprite.setLooped(false);
+	sprite.play();
+
+	sprite.setOrigin(sprite.getLocalBounds().width / 2, sprite.getLocalBounds().height / 2);
+	sprite.setRotation((rand() % (int)(361)));
+	sprite.setPosition(pos.x + sprite.getLocalBounds().width / 2, pos.y + sprite.getLocalBounds().height / 2);
+
+	working = true;
+}
+
+void HitEffect::draw(sf::RenderTarget &tg)
+{
+	if (working)
+	{
+		tg.draw(sprite);
+	}
+}
+
+void HitEffect::update(sf::Time time)
+{
+	sprite.update(sf::seconds(1.f / 15.f));
+	if (!sprite.isPlaying())
+	{
+		working = false;
+	}
 }

@@ -26,6 +26,7 @@ class PlayerObject
 private:
 	//Player animations
 	thor::FrameAnimation	animations[4];
+	thor::FrameAnimation	idleAnimations[4];
 
 	//Animated player sprite itself
 	thor::Animator<sf::Sprite, std::string> animator;

@@ -72,6 +72,9 @@ SoundManager::SoundManager()
 
 	failBuffer.loadFromFile("assets/fail.wav");
 	failSound.setBuffer(failBuffer);
+
+	transitionBuffer.loadFromFile("assets/trans.wav");
+	transitionSound.setBuffer(transitionBuffer);
 }
 
 void SoundManager::playDoorSound()
@@ -112,4 +115,9 @@ void SoundManager::playWinSound()
 void SoundManager::playFailSound()
 {
 	failSound.play();
+}
+
+void SoundManager::playTransitionSound()
+{
+	transitionSound.play();
 }

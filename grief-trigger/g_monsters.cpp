@@ -40,10 +40,10 @@ void Squad::init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap)
 		}
 	}
 
-	animator.addAnimation("up", animations[DIR_UP], sf::seconds(0.5f));
-	animator.addAnimation("right", animations[DIR_RIGHT], sf::seconds(0.5f));
-	animator.addAnimation("left", animations[DIR_LEFT], sf::seconds(0.5f));
-	animator.addAnimation("down", animations[DIR_DOWN], sf::seconds(0.5f));
+	animator.addAnimation("up", animations[DIR_UP], sf::seconds(0.9f));
+	animator.addAnimation("right", animations[DIR_RIGHT], sf::seconds(0.9f));
+	animator.addAnimation("left", animations[DIR_LEFT], sf::seconds(0.9f));
+	animator.addAnimation("down", animations[DIR_DOWN], sf::seconds(0.9f));
 
 	animator.playAnimation("down");
 
@@ -64,7 +64,9 @@ void Squad::init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap)
 
 void Squad::draw(sf::RenderTarget &tg)
 {
+	sprite.move(0,-11);
 	tg.draw(sprite);
+	sprite.move(0,11);
 }
 
 void Squad::update(sf::Time time)
@@ -115,7 +117,7 @@ void Squad::update(sf::Time time)
 	{
 		if(direction == DIR_UP)
 		{
-			ny -= playerMoveSpeed * time.asSeconds();
+			ny -= playerMoveSpeed;
 
 			if(ny <= nextspot)
 			{
@@ -128,7 +130,7 @@ void Squad::update(sf::Time time)
 		}
 		else if(direction == DIR_DOWN)
 		{
-			ny += playerMoveSpeed * time.asSeconds();
+			ny += playerMoveSpeed;
 
 			if(ny >= nextspot)
 			{
@@ -141,7 +143,7 @@ void Squad::update(sf::Time time)
 		}
 		else if(direction == DIR_LEFT)
 		{
-			nx -= playerMoveSpeed * time.asSeconds();
+			nx -= playerMoveSpeed;
 
 			if(nx <= nextspot)
 			{
@@ -154,7 +156,7 @@ void Squad::update(sf::Time time)
 		}
 		else if(direction == DIR_RIGHT)
 		{
-			nx += playerMoveSpeed * time.asSeconds();
+			nx += playerMoveSpeed;
 
 			if(nx >= nextspot)
 			{
@@ -241,7 +243,7 @@ void Squad::step(int dir)
 			switch (dir)
 			{
 			case DIR_UP:
-				animator.playAnimation("up", false);
+				animator.playAnimation("up", false);			
 				break;
 			case DIR_DOWN:
 				animator.playAnimation("down", false);

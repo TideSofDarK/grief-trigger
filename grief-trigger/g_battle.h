@@ -21,25 +21,25 @@ typedef enum { ATTACKED, NOT_ATTACKED } ENEMY_STATE;
 class Enemy
 {
 private:
-	ENEMY_STATE state;
+	ENEMY_STATE				state;
 
 	//Ref to monster
-	Monster				&monster;
+	Monster					&monster;
 
 	//Sprite
-	sf::Sprite			sprite;
+	sf::Sprite				sprite;
 
 	//Hp bar
-	Bar					hpBar;
+	Bar						hpBar;
 
 	//Animation
-	unsigned int		counter;
-	bool				fading;
-	sf::Clock			clock;
-	bool				animation;
+	unsigned int			counter;
+	bool					fading;
+	sf::Clock				clock;
+	bool					animation;
 
 	//Movement bounds
-	sf::FloatRect		bounds;
+	sf::FloatRect			bounds;
 
 public:
 	Enemy(sf::Vector2f pos, const sf::Texture &texture, Monster &monster);
@@ -53,6 +53,7 @@ public:
 	void stopAnimation() {animation = false;};
 	bool isAnimation() {return animation;};
 	bool isDied(){return monster.isDied();};
+	const sf::Texture *getTexture(){return sprite.getTexture();};
 };
 
 class Battle
@@ -120,6 +121,9 @@ private:
 	//Shadow effect
 	sf::RectangleShape			effectRect;
 
+	//Hit effect list
+	HitEffect					he;
+
 	//Battle result
 	typedef struct BattleResult
 	{
@@ -137,6 +141,7 @@ private:
 
 public:
 	Battle();
+	void loadResources();
 	void start(Squad &squad);
 	void draw(sf::RenderTarget &tg);
 	void drawUI(sf::RenderTarget &tg);

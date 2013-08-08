@@ -149,6 +149,8 @@ Battle::Battle()
 	thunderManaBar.init(false, sf::Vector2f(thunderSprite.getPosition().x + 90, thunderSprite.getPosition().y + (thunderSprite.getTextureRect().height / 2) - (18 * 2) + 2), 
 		GameData::instance().getThunder().getMP(), sf::Color(105, 186, 199));
 
+	TextureManager::instance().getTexture("assets/hit.png");
+
 	fire.loadFromFile("assets/fire.frag", sf::Shader::Fragment);
 
 	battleBox.setTexture(TextureManager::instance().getTexture("assets/battlebox.png"));
@@ -242,6 +244,9 @@ void Battle::drawUI(sf::RenderTarget &tg)
 	if (state == PLAYER) tg.draw(pointer);
 
 	if (state == QTE) spellQTE.draw(tg);
+
+	//Hit effects
+	he.draw(tg);
 }
 
 void Battle::draw(sf::RenderTarget &tg)
@@ -313,6 +318,11 @@ void Battle::damagePlayer(Monster &monster)
 	log.setString(tmpw + L" нанес " + std::to_wstring(dmg) + L" урона персонажу " + name + L".");
 
 	SceneManager::instance().getScene().setCurrentEffect("distortion", sf::seconds(0.1));
+}
+
+void Battle::loadResources()
+{
+	spellQTE.loadResources();
 }
 
 void Battle::update(sf::Time time)
@@ -495,6 +505,9 @@ void Battle::update(sf::Time time)
 		spellQTE.update(time);
 	}
 
+	//Hit effects
+	he.update(time);
+
 	//Update shader
 	fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
 	fire.setParameter("seconds", seconds);
@@ -567,6 +580,8 @@ void Battle::damageMonster()
 	default:
 		break;
 	} 
+
+	he.init(sf::Vector2f((enemies[selected].getPosition().x * 2) + (enemies[selected].getTexture()->getSize().x / 2) -  (784 / 2) + 40, enemies[selected].getPosition().y + (enemies[selected].getTexture()->getSize().y / 2)));
 
 	enemies[selected].playAnimation();
 	enemies[selected].getMonster().receiveDamage(dmg);

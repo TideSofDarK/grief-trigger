@@ -45,7 +45,8 @@ void NPC::init(sf::Vector2f pos, tmx::MapObject &obj)
 {
 	object = &obj;
 	sprite.setPosition(pos);
-	sprite.setTexture(TextureManager::instance().getTexture("assets/girl.png"));
+	sprite.setTexture(TextureManager::instance().getTexture("assets/" + obj.GetName() + ".png"));
+	sprite.move(0, -11);
 }
 
 void NPC::draw(sf::RenderTarget &tg)

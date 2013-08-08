@@ -15,7 +15,7 @@
 static const sf::Uint32 TILE_SIZE = 32;
 static const sf::Uint32 CHARACTER_SIZE = 32;
 
-static const float playerMoveSpeed = 25.0f;
+static const float playerMoveSpeed = 2.f;
 
 static const sf::Uint32 scrollAreaX = 1280 / 3;
 static const sf::Uint32 scrollAreaY = 800 / 3;

@@ -10,6 +10,12 @@
 #include "d_basicstats.h"
 #include "d_magic.h"
 
+typedef struct SceneInfo 
+{
+	std::string map;
+	std::string type;
+};
+
 class Parser
 {
 public:
@@ -24,6 +30,7 @@ private:
 	pugi::xml_document dialoguesDoc;
 	pugi::xml_document resourcesDoc;
 	pugi::xml_document spellsDoc;
+	pugi::xml_document scenesDoc;
 
 	Parser();
 	Parser( const Parser& );
@@ -36,6 +43,10 @@ public:
 	std::wstring parseDialogue(std::string name, std::string situation);
 	std::vector<std::string> parseResources(std::string block);
 	std::vector<Spell> parseSpells(std::string hero, unsigned int level);
+	bool nextScene(unsigned int day, unsigned int scene);
+	SceneInfo getSceneInfo(unsigned int day, unsigned int scene);
+	std::string getName(std::string name, std::string situation);
+	bool isLast(std::string name, std::string situation);
 };
 
 #endif

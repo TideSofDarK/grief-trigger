@@ -4,12 +4,12 @@
 #include "d_objects.h"
 #include "g_scenemanager.h"
 
-void addFrames(thor::FrameAnimation& animation, int x, int yFirst, int yLast, float duration = 1.f)
+void addFrames(thor::FrameAnimation& animation, int y, int xFirst, int xLast, float duration = 1.f)
 {
-	const int step = (yFirst < yLast) ? +1 : -1;
-	yLast += step; // so yLast is excluded in the range
+	const int step = (xFirst < xLast) ? +1 : -1;
+	xLast += step; // so yLast is excluded in the range
 
-	for (int y = yFirst; y != yLast; y += step)
+	for (int x = xFirst; x != xLast; x += step)
 		animation.addFrame(duration, sf::IntRect(CHARACTER_SIZE*x, CHARACTER_SIZE*y, CHARACTER_SIZE, CHARACTER_SIZE));
 }
 
@@ -28,16 +28,26 @@ void PlayerObject::init(sf::Vector2f pos, tmx::MapObject &playerObject)
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			animations[a].addFrame(1.f, sf::IntRect(i * CHARACTER_SIZE, a * CHARACTER_SIZE, CHARACTER_SIZE, CHARACTER_SIZE));
+			animations[a].addFrame(1, sf::IntRect(i * CHARACTER_SIZE, a * CHARACTER_SIZE, CHARACTER_SIZE, CHARACTER_SIZE));
 		}
 	}
 
-	animator.addAnimation("up", animations[DIR_UP], sf::seconds(0.5f));
-	animator.addAnimation("right", animations[DIR_RIGHT], sf::seconds(0.5f));
-	animator.addAnimation("left", animations[DIR_LEFT], sf::seconds(0.5f));
-	animator.addAnimation("down", animations[DIR_DOWN], sf::seconds(0.5f));
+	for (int a = 0; a < 4; a++)
+	{
+		idleAnimations[a].addFrame(1, sf::IntRect(0, a * CHARACTER_SIZE, CHARACTER_SIZE, CHARACTER_SIZE));
+	}
 
-	animator.playAnimation("down");
+	animator.addAnimation("up", animations[DIR_UP], sf::seconds(1.5f));
+	animator.addAnimation("right", animations[DIR_RIGHT], sf::seconds(1.5f));
+	animator.addAnimation("left", animations[DIR_LEFT], sf::seconds(1.5f));
+	animator.addAnimation("down", animations[DIR_DOWN], sf::seconds(1.5f));
+
+	animator.addAnimation("idle_up", idleAnimations[DIR_UP], sf::seconds(1.f));
+	animator.addAnimation("idle_right", idleAnimations[DIR_RIGHT], sf::seconds(1.f));
+	animator.addAnimation("idle_left", idleAnimations[DIR_LEFT], sf::seconds(1.f));
+	animator.addAnimation("idle_down", idleAnimations[DIR_DOWN], sf::seconds(1.f));
+
+	animator.playAnimation("idle_down");
 
 	nx = sprite.getPosition().x;
 	ny = sprite.getPosition().y;
@@ -48,7 +58,9 @@ void PlayerObject::init(sf::Vector2f pos, tmx::MapObject &playerObject)
 
 void PlayerObject::draw(sf::RenderTarget &tg)
 {
+	sprite.move(0,-11);
 	tg.draw(sprite);
+	sprite.move(0,11);
 }
 
 sf::Sprite& PlayerObject::getSprite()
@@ -58,6 +70,9 @@ sf::Sprite& PlayerObject::getSprite()
 
 void PlayerObject::update(sf::Time &time)
 {
+	/************************************************************************/
+	/* Process smooth walking												*/
+	/************************************************************************/
 	if (DialoguePanel::instance().isHided() == false && !walking)
 	{
 		bool isMovable = true;
@@ -84,64 +99,91 @@ void PlayerObject::update(sf::Time &time)
 		{
 			step(DIR_RIGHT);
 		}
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::G))
+		{
+			animator.playAnimation("up", true);
+		}		
 	}
-
-	/************************************************************************/
-	/* Process smooth walking														*/
-	/************************************************************************/
 	if(walking == true)
 	{
 		if(direction == DIR_UP)
 		{
-			ny -= playerMoveSpeed * time.asSeconds();
+			ny -= playerMoveSpeed;
 
 			if(ny <= nextspot)
 			{
 				ny = nextspot; 
 				walking = false;
-				direction = DIR_IDLE;
 
-				animator.stopAnimation();
+				if (animator.isPlayingAnimation() && !sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+				{
+					animator.playAnimation("idle_up",true);
+				}
 			}
 		}
 		if(direction == DIR_DOWN)
 		{
-			ny += playerMoveSpeed * time.asSeconds();
+			ny += playerMoveSpeed;
 
 			if(ny >= nextspot)
 			{
 				ny = nextspot;
 				walking = false;
-				direction = DIR_IDLE;
 
-				animator.stopAnimation();
+				if (animator.isPlayingAnimation() && !sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+				{
+					animator.playAnimation("idle_down",true);
+				}
 			}
 		}
 		if(direction == DIR_LEFT)
 		{
-			nx -= playerMoveSpeed * time.asSeconds();
+			nx -= playerMoveSpeed;
 
 			if(nx <= nextspot)
 			{
 				nx = nextspot;
 				walking = false;
-				direction = DIR_IDLE;
 
-				animator.stopAnimation();
+				if (animator.isPlayingAnimation() && !sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+				{
+					animator.playAnimation("idle_left",true);
+				}
 			}
 		}
 		if(direction == DIR_RIGHT)
 		{
-			nx += playerMoveSpeed * time.asSeconds();
+			nx += playerMoveSpeed;
 
 			if(nx >= nextspot)
 			{
 				nx = nextspot;
 				walking = false;
-				direction = DIR_IDLE;
 
-				animator.stopAnimation();
+				if (animator.isPlayingAnimation() && !sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+				{
+					animator.playAnimation("idle_right",true);
+				}
 			}
+		}
+	}
+	else //vot tut-ta bydlokod vo vse polya
+	{
+		if (animator.isPlayingAnimation() && animator.getPlayingAnimation() == "up" & !sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+		{
+			animator.playAnimation("idle_up",true);
+		}
+		if (animator.isPlayingAnimation() && animator.getPlayingAnimation() == "down" & !sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+		{
+			animator.playAnimation("idle_down",true);
+		}
+		if (animator.isPlayingAnimation() && animator.getPlayingAnimation() == "left" & !sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+		{
+			animator.playAnimation("idle_left",true);
+		}
+		if (animator.isPlayingAnimation() && animator.getPlayingAnimation() == "right" & !sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+		{
+			animator.playAnimation("idle_right",true);
 		}
 	}
 
@@ -203,16 +245,44 @@ bool PlayerObject::step(int dir)
 			switch (direction)
 			{
 			case DIR_UP:
-				animator.playAnimation("up", true);
+				if (animator.isPlayingAnimation() && animator.getPlayingAnimation() != "up")
+				{
+					animator.playAnimation("up", true);
+				}
+				else if (!animator.isPlayingAnimation())
+				{
+					animator.playAnimation("up", true);
+				}
 				break;
 			case DIR_DOWN:
-				animator.playAnimation("down", true);
+				if (animator.isPlayingAnimation() && animator.getPlayingAnimation() != "down")
+				{
+					animator.playAnimation("down", true);
+				}
+				else if (!animator.isPlayingAnimation())
+				{
+					animator.playAnimation("down", true);
+				}
 				break;
 			case DIR_LEFT:
-				animator.playAnimation("left", true);
+				if (animator.isPlayingAnimation() && animator.getPlayingAnimation() != "left")
+				{
+					animator.playAnimation("left", true);
+				}
+				else if (!animator.isPlayingAnimation())
+				{
+					animator.playAnimation("left", true);
+				}
 				break;
 			case DIR_RIGHT:
-				animator.playAnimation("right", true);
+				if (animator.isPlayingAnimation() && animator.getPlayingAnimation() != "right")
+				{
+					animator.playAnimation("right", true);
+				}
+				else if (!animator.isPlayingAnimation())
+				{
+					animator.playAnimation("right", true);
+				}
 				break;
 			default:
 				break;
@@ -224,16 +294,16 @@ bool PlayerObject::step(int dir)
 			switch (dir)
 			{
 			case DIR_UP:
-				animator.playAnimation("up", false);
+				animator.playAnimation("idle_up", true);
 				break;
 			case DIR_DOWN:
-				animator.playAnimation("down", false);
+				animator.playAnimation("idle_down", true);
 				break;
 			case DIR_LEFT:
-				animator.playAnimation("left", false);
+				animator.playAnimation("idle_left", true);
 				break;
 			case DIR_RIGHT:
-				animator.playAnimation("right", false);
+				animator.playAnimation("idle_right", true);
 				break;
 			default:
 				break;

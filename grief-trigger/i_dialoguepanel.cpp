@@ -1,6 +1,8 @@
 #include "i_dialoguepanel.h"
 
 #include "d_parser.h"
+#include "d_gamedata.H"
+#include "g_scenemanager.h"
 
 bool DialoguePanel::loadResources(std::string fileName)
 {
@@ -27,6 +29,8 @@ bool DialoguePanel::loadResources(std::string fileName)
 		resourcesList.erase(0, pos + 1);
 	}
 
+	background.setTexture(TextureManager::instance().getTexture("assets/dbox.png"));
+
 	for (int i = 0; i < s; i++)
 	{
 		TextureManager::instance().getTexture("assets/" + resourcesNames[i]);
@@ -37,13 +41,14 @@ bool DialoguePanel::loadResources(std::string fileName)
 void DialoguePanel::init()
 {
 	nby = HEIGHT / 2;
-	background.setTexture(TextureManager::instance().getTexture("assets/dbox.png"));
 	background.setPosition(0, nby);
 
 	pointer = sf::RectangleShape();
 	pointer.setFillColor(sf::Color::Blue);
 
 	hide();
+
+	nextScene = false;
 }
 
 void DialoguePanel::stop()
@@ -53,7 +58,7 @@ void DialoguePanel::stop()
 	character = actualString.length();
 }
 
-std::wstring wordWrap( std::wstring str, size_t width = 50 ) {
+std::wstring wordWrap( std::wstring str, size_t width = 40 ) {
 	size_t curWidth = width;
 	while( curWidth < str.length() ) {
 		std::string::size_type spacePos = str.rfind( ' ', curWidth );
@@ -81,16 +86,17 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 	{
 		text = sf::Text("", DFont::instance().getFont(), fontSize);
 
-		text.setPosition(320, 455);
+		text.setPosition(370, 535);
 		text.setColor(sf::Color::Black);
 
+		if (lastSituation != situation) lastSituation = situation + '/';
 		//Load new art image
 		if (lastName != name) {
 			lastName = name;
-			art.setTexture(TextureManager::instance().getTexture("assets/" + lastName + "_art.png"));
+			//art.setTexture(TextureManager::instance().getTexture("assets/" + lastName + "_art.png"));
+			art.setTexture(TextureManager::instance().getTexture("assets/" + Parser::instance().getName(name, lastSituation) + ".png"));
 		}
-		if (lastSituation != situation) lastSituation = situation + '/';
-
+		
 		//If next string is
 		if (nextString != L"") 
 		{
@@ -113,7 +119,7 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 
 		//Check height
 		size_t n = std::count(actualString.begin(), actualString.end(), '\n');
-		const int maxLines = 3;
+		const int maxLines = 2;
 		if (n > maxLines)
 		{
 			//Find first space after last line
@@ -129,13 +135,22 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		if (!visible)
 		{
 			nby = HALF_HEIGHT;
-			oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 1.0f, &nby, 0.0f);
+			oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 0.3f, &nby, 0.0f);
 
-			nax = -640 / 2;
-			oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 0.5f, &nax, 0.0f);
+			nax = -400;
+			oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 0.3f, &nax, 0.0f);
 
 			background.setPosition(0, nby);
 			art.setPosition(nax, 0);
+		}
+
+		if (Parser::instance().isLast(name, lastSituation) == true)
+		{
+			nextScene = true;
+		}
+		else
+		{
+			nextScene = false;
 		}
 
 		//Reset variables
@@ -165,7 +180,7 @@ bool DialoguePanel::showAnswers()
 	for (int i = 0; i < strings.size(); i++)
 	{
 		sf::Text ans(strings[i], DFont::instance().getFont(), fontSize);
-		ans.setPosition(320, (455 + i * fontSize) + i * 4);
+		ans.setPosition(370, (535 + i * fontSize) + i * 4);
 		ans.setColor(sf::Color::Black);
 		answers.push_back(ans);
 	}
@@ -178,13 +193,19 @@ bool DialoguePanel::showAnswers()
 
 void DialoguePanel::hide()
 {
+	if (nextScene == true)
+	{
+		globalLevel.nextScene();
+		SceneManager::instance().startTransition(Parser::instance().getSceneInfo(globalLevel.getDay(), globalLevel.getScene()));
+	}
+
 	selected = 0;
 	isAnswering = false;
 	visible = false;
 	ended = true;
 	text.setString("");
 	actualString = L"";
-	answers.clear();
+	answers.clear();	
 }
 
 void DialoguePanel::update()
@@ -218,7 +239,7 @@ void DialoguePanel::update()
 						SoundManager::instance().playEnterSound();
 					}
 					clock.restart();
-					character++;
+					character+=2;
 					text.setString( sf::String(actualString.substr(0, character)));				
 				}
 				else if (character >= actualString.length())

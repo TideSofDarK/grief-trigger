@@ -32,8 +32,8 @@ int main()
 #endif
 
 	RenderWindow window(VideoMode(1280, 800), "Grief Trigger Turbo HD", sf::Style::Titlebar | sf::Style::Close);
-	//window.setFramerateLimit(60);
-	window.setVerticalSyncEnabled(true);
+	window.setFramerateLimit(60);
+	//window.setVerticalSyncEnabled(true);
 	//window.setKeyRepeatEnabled(false);
 
 	sf::Clock frameClock;
@@ -44,7 +44,7 @@ int main()
 
 	tmx::MapLoader ml("assets/");
 
-	SceneManager::instance().setScene("test.tmx", ml);
+	SceneManager::instance().setScene(Parser::instance().getSceneInfo(globalLevel.getDay(), globalLevel.getScene()), ml);
 
 	while (window.isOpen())
 	{

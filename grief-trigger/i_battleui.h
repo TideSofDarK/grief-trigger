@@ -15,6 +15,8 @@
 #include <pugixml/pugixml.hpp>
 
 #include "os_dbtweener.h"
+#include "os_animatedsprite.hpp"
+#include "os_animation.hpp"
 
 #include "h_config.h"
 #include "d_resourcesmanager.h"
@@ -304,7 +306,7 @@ private:
 	static const unsigned int	startX = WIDTH / 3;
 	static const unsigned int	startY = HEIGHT / 3;
 	static const unsigned int	offset = 10;
-	static const bool			type = 1;
+	static const bool			type = 0;
 
 	std::vector<EText>			etexts;
 
@@ -332,6 +334,7 @@ private:
 
 public:
 	SpellQTE();
+	void loadResources();
 	void update(sf::Time time);
 	void draw(sf::RenderTarget &tg);
 	void input(sf::Event &event);
@@ -340,6 +343,20 @@ public:
 	bool isDamaged() {return damaged;};
 	bool isEnded(){return (state == IDLE ? true : false);};
 	void next(std::deque<Block>::iterator &it);
+};
+
+class HitEffect
+{
+private:
+	bool			working;
+	Animation		animation;
+	AnimatedSprite	sprite;
+
+public:
+	HitEffect();
+	void update(sf::Time time);
+	void draw(sf::RenderTarget &tg);
+	void init(sf::Vector2f pos);
 };
 
 #endif

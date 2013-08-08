@@ -73,6 +73,9 @@ private:
 	sf::SoundBuffer failBuffer;
 	sf::Sound failSound;
 
+	sf::SoundBuffer transitionBuffer;
+	sf::Sound transitionSound;
+
 public:
 	void playDoorSound();
 	void playClickSound();
@@ -82,6 +85,7 @@ public:
 	void playDieSound();
 	void playWinSound();
 	void playFailSound();
+	void playTransitionSound();	
 };
 
 class DFont
