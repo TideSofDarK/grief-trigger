@@ -53,9 +53,6 @@ void Squad::init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap)
 	direction = DIR_UP;
 	walking = false;
 
-	nx = pos.x;
-	ny = pos.y;
-
 	counter = 0;
 	maxCounter = 50 + (rand() * (int)(60 - 30) / RAND_MAX);
 

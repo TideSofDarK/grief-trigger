@@ -138,11 +138,14 @@ public:
 		}
 		if (music.getStatus() == sf::Music::Playing && music.getVolume() <= 1 && transition)
 		{
-			music.setVolume(100);
 			music.openFromFile(next);
 			music.play();
 			transition = false;
 		}	
+		if (!transition && music.getVolume() < 100)
+		{
+			music.setVolume(music.getVolume() + 1);
+		}
 	};
 
 private:

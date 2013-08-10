@@ -50,7 +50,7 @@ private:
 	Battle				battle;
 
 	//Enemy squads
-	std::vector<Squad>	squads;
+	std::deque<Squad>	squads;
 
 	//The Doors
 	std::vector<Door>	doors;
@@ -106,6 +106,12 @@ private:
 	//Scene type
 	std::string			type;
 
+	//Attack effect
+	//NEED MORE BOOLEANS
+	Swing				swing;
+	bool				afterSwing;
+	bool				check;
+
 	//Loading resources
 	void				loadResources();
 
@@ -125,7 +131,7 @@ public:
 	void setCurrentEffect(std::string string, sf::Time time);
 	std::vector<tmx::MapObject> &getObjects();
 	PlayerObject &getPlayerObject();
-	std::vector<Squad> &getSquadList();
+	std::deque<Squad> &getSquadList();
 	tmx::MapLoader *getMapLoader(){return map;};
 };
 

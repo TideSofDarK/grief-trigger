@@ -6,6 +6,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
+#include "os_animatedsprite.hpp"
+
 #include <MapLoader.h>
 
 class Object
@@ -53,6 +55,22 @@ public:
 	void open();
 	bool isOpened();
 	tmx::MapObject& getOnMap();
+};
+
+//Simillar to hit effect
+class Swing
+{
+private:
+	bool			working;
+	Animation		animation;
+	AnimatedSprite	sprite;
+
+public:
+	Swing();
+	void update(sf::Time time);
+	void draw(sf::RenderTarget &tg);
+	void init(sf::Vector2f pos);
+	bool isWorking(){return working;};
 };
 
 #endif

@@ -43,7 +43,6 @@ void Scene::init(std::string newType, std::string name, tmx::MapLoader &ml)
 	//Constructor
 	if (name != "") 
 	{
-		std::cout << "sdfsdf" << std::endl;
 		ml.Load(name);
 	}
 	map = &ml;
@@ -107,14 +106,12 @@ void Scene::init(std::string newType, std::string name, tmx::MapLoader &ml)
 	//Create render texture
 	finalTexture.create(WIDTH, HEIGHT);
 
-	//std::cout << Parser::instance().getMusic(Level::instance().getDay(), Level::instance().getScene()) + "\n";
-	std::cout << std::to_string(Level::instance().getScene()) + "fgdgfdgfd\n";
-
 	MusicManager::instance().playMusic(Parser::instance().getMusic(Level::instance().getDay(), Level::instance().getScene()));
 }
 
 void Scene::endBattle()
 {
+	MusicManager::instance().playMusic(Parser::instance().getMusic(Level::instance().getDay(), Level::instance().getScene()));
 	squads[toDelete].getOnMap().SetName("null");
 	squads.erase(squads.begin()+toDelete);
 	//battle.clean();
@@ -145,34 +142,49 @@ void Scene::update(sf::Time time)
 	{
 		if (state != LOADING)
 		{
-			DialoguePanel::instance().update(); 
-
 			if (state == BATTLE)
 			{
 				battle.update(time);
 			}
-
+			else
+			{
+				DialoguePanel::instance().update(); 
+			}
 			if (state == TRANSITION)
 			{
-				if (!sm.isWorking())
-				{
-					state = BATTLE;
-				}
-			}
+				swing.update(time);
 
+				if (!swing.isWorking() && afterSwing == false && check == false)
+				{				
+					afterSwing = true;
+				}			
+				if (!sm.isWorking() && !swing.isWorking() && afterSwing == true && check == false)
+				{				
+					transitionClock.restart();
+					setCurrentEffect("battle", sf::seconds(0.97));
+					afterSwing = false;
+					check = true;
+				}		
+				if (!sm.isWorking() && !swing.isWorking() && afterSwing == false)
+				{				
+					state = BATTLE;
+					check = false;
+				}	
+			}
 			if (state == MAP)
 			{
 				/************************************************************************/
 				/* Scrolling															*/
 				/************************************************************************/
 				if (!moving)
-				{
+				{				
 					//Update objects only if camera is not moving
 					po.update(time);
-					for (auto i = squads.begin(); i != squads.end(); ++i)
+					for (auto i = squads.begin(); i != squads.end(); i++)
 					{
-						i->update(time);
-					}	
+						Squad &s = *i;
+						s.update(time);					
+					}
 					//Update objects only if camera is not moving
 
 					if (po.getSprite().getPosition().y > camera.getPosition().y + HALF_HEIGHT)
@@ -342,6 +354,7 @@ void Scene::draw(sf::RenderTarget &tg)
 				{
 					i->draw(finalTexture);
 				}
+				swing.draw(finalTexture);
 
 				//Unscalable
 				finalTexture.draw(vingette);
@@ -362,7 +375,7 @@ void Scene::draw(sf::RenderTarget &tg)
 				DialoguePanel::instance().draw(finalTexture);
 				finalTexture.draw(days);
 			}
-			else //Draw battle
+			else if (!swing.isWorking() && state == BATTLE) //Draw battle
 			{
 				//Scaled
 				finalTexture.setView(camera.getView());
@@ -412,13 +425,14 @@ std::vector<tmx::MapObject> &Scene::getObjects()
 
 void Scene::startBattle(Squad &squad)
 {
-	transitionClock.restart();
+	MusicManager::instance().playMusic("maintheme");
+	toDelete = std::find(squads.begin(), squads.end(), squad) - squads.begin();
+	swing.init(squad.getOnMap().GetPosition());
 	state = TRANSITION;
 
 	battle.start(squad);
 
-	toDelete = std::find(squads.begin(), squads.end(), squad) - squads.begin();
-	std::cout << std::to_string(toDelete) + "\n";
+	afterSwing = false;
 }
 
 void Scene::input(sf::Event &event)
@@ -533,16 +547,14 @@ void SceneManager::input(sf::Event &event)
 
 void SceneManager::initBattle(Squad &squad)
 {
-	current.setPaused(true);
-	current.setCurrentEffect("battle", sf::seconds(0.97));
+	//current.setPaused(true);
+	//current.setCurrentEffect("battle", sf::seconds(0.97));
 	current.startBattle(squad);
 }
 
 void SceneManager::endBattle()
 {
-	std::cout << "sdfdsfsdfsd\n";
 	current.endBattle();
-	std::cout << "sdfdsfsdfsd\n";
 }
 
 void SceneManager::startTransition(SceneInfo si)

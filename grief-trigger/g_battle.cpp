@@ -548,7 +548,7 @@ void Battle::update(sf::Time time)
 		}
 		else
 		{
-			seconds+0.5;
+			seconds+=0.5;
 			//fire.setParameter("type", 0);
 		}
 	}
