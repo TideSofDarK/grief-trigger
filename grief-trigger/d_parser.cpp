@@ -128,6 +128,27 @@ std::vector<std::string> Parser::parseResources(std::string block)
 	return resourcesNames;
 }
 
+std::string Parser::getBackground(std::string spellName)
+{
+	std::cout << spellName << std::endl;
+	pugi::xml_node spellsList = spellsDoc;
+
+	for (pugi::xml_node hero: spellsList.children())
+	{
+		std::cout << hero.name() << std::endl;
+		for (pugi::xml_node spell: hero.children())
+		{
+			std::cout << spell.name() << std::endl;
+			if (spell.name() == spellName)
+			{
+				std::cout << "sled" << std::endl;
+				return spell.last_attribute().as_string();
+			}
+		}
+	}
+	return "fire";
+}
+
 std::vector<Spell> Parser::parseSpells(std::string hero, unsigned int level)
 {
 	pugi::xml_node spellsList = spellsDoc.child(hero.c_str());
@@ -230,6 +251,13 @@ bool Parser::isLast(std::string name, std::string situation)
 		text = text.child(situations[i].c_str());
 	}
 
-	std::cout << text.attribute("last").as_bool() << std::endl;
+	//std::cout << text.attribute("last").as_bool() << std::endl;
 	return text.attribute("last").as_bool();
+}
+
+std::string Parser::getMusic(unsigned int day, unsigned int scene)
+{
+	pugi::xml_node sceneNode = scenesDoc.child(("day" + std::to_string(day)).c_str()).child(("scene" + std::to_string(scene)).c_str());
+
+	return sceneNode.attribute("music").as_string();
 }

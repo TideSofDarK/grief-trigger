@@ -47,6 +47,8 @@ public:
 	SceneInfo getSceneInfo(unsigned int day, unsigned int scene);
 	std::string getName(std::string name, std::string situation);
 	bool isLast(std::string name, std::string situation);
+	std::string getBackground(std::string spellName);
+	std::string getMusic(unsigned int day, unsigned int scene);
 };
 
 #endif

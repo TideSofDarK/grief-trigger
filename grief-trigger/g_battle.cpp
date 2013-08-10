@@ -122,53 +122,13 @@ Battle::Battle()
 {
 	//Some shitty code here
 	//At least it is fast lol
-	playerSprite.setTexture(TextureManager::instance().getTexture("assets/girl_art.png"));
-	playerSprite.setTextureRect(sf::IntRect(0, 0, playerSprite.getLocalBounds().width, playerSprite.getLocalBounds().height / 1.5));
-	playerSprite.scale(0.5, 0.5);
-	playerSprite.setPosition(0, HEIGHT - (playerSprite.getTextureRect().height / 2));
-	playerHPBar.init(false, sf::Vector2f(playerSprite.getPosition().x + 90, playerSprite.getPosition().y + (playerSprite.getTextureRect().height / 2) - (18 * 3) - 2), 
-		GameData::instance().getPlayer().getHP());
-	playerManaBar.init(false, sf::Vector2f(playerSprite.getPosition().x + 90, playerSprite.getPosition().y + (playerSprite.getTextureRect().height / 2) - (18 * 2) + 2), 
-		GameData::instance().getPlayer().getMP(), sf::Color(105, 186, 199));
-
-	emberSprite.setTexture(TextureManager::instance().getTexture("assets/red_art.png"));
-	emberSprite.setTextureRect(sf::IntRect(0, 0, emberSprite.getLocalBounds().width, emberSprite.getLocalBounds().height / 1.5));
-	emberSprite.scale(0.5, 0.5);
-	emberSprite.setPosition(332, HEIGHT - (emberSprite.getTextureRect().height / 2));
-	emberHPBar.init(false, sf::Vector2f(emberSprite.getPosition().x + 90, emberSprite.getPosition().y + (emberSprite.getTextureRect().height / 2) - (18 * 3) - 2), 
-		GameData::instance().getEmber().getHP());
-	emberManaBar.init(false, sf::Vector2f(emberSprite.getPosition().x + 90, emberSprite.getPosition().y + (emberSprite.getTextureRect().height / 2) - (18 * 2) + 2), 
-		GameData::instance().getEmber().getMP(), sf::Color(105, 186, 199));
-
-	thunderSprite.setTexture(TextureManager::instance().getTexture("assets/blue_art.png"));
-	thunderSprite.setTextureRect(sf::IntRect(0, 0, thunderSprite.getLocalBounds().width, thunderSprite.getLocalBounds().height / 1.5));
-	thunderSprite.scale(0.5, 0.5);
-	thunderSprite.setPosition(332 * 2, HEIGHT - (thunderSprite.getTextureRect().height / 2));
-	thunderHPBar.init(false, sf::Vector2f(thunderSprite.getPosition().x + 90, thunderSprite.getPosition().y + (thunderSprite.getTextureRect().height / 2) - (18 * 3) - 2), 
-		GameData::instance().getThunder().getHP());
-	thunderManaBar.init(false, sf::Vector2f(thunderSprite.getPosition().x + 90, thunderSprite.getPosition().y + (thunderSprite.getTextureRect().height / 2) - (18 * 2) + 2), 
-		GameData::instance().getThunder().getMP(), sf::Color(105, 186, 199));
-
-	TextureManager::instance().getTexture("assets/hit.png");
-
+	space.loadFromFile("assets/space.frag", sf::Shader::Fragment);
 	fire.loadFromFile("assets/fire.frag", sf::Shader::Fragment);
-
-	battleBox.setTexture(TextureManager::instance().getTexture("assets/battlebox.png"));
 
 	effectRect = sf::RectangleShape(sf::Vector2f(WIDTH, HEIGHT));
 	effectRect.setFillColor(sf::Color(0,0,0,205));
 
 	log.init(sf::Vector2f(110, 21));
-
-	pointer.setTexture(TextureManager::instance().getTexture("assets/pointer.png"));
-
-	background.create(WIDTH, HEIGHT);
-
-	std::vector<std::string> resourcesNames = Parser::instance().parseResources("battle");
-	for (int i = 0; i < resourcesNames.size(); i++)
-	{
-		TextureManager::instance().getTexture("assets/" + resourcesNames[i]);
-	}
 
 	std::vector<std::wstring> str;
 	str.push_back(L"Атака");
@@ -251,8 +211,16 @@ void Battle::drawUI(sf::RenderTarget &tg)
 
 void Battle::draw(sf::RenderTarget &tg)
 {
-	sf::Sprite back(background);
-	tg.draw(back, &fire);
+	if (currentBackground == spaceType)
+	{
+		sf::Sprite back(background3);
+		tg.draw(back, &space);
+	}
+	else if (currentBackground == fireType)
+	{
+		sf::Sprite back(background3);
+		tg.draw(back, &fire);
+	}
 
 	for (auto i = enemies.begin(); i != enemies.end(); ++i)
 	{
@@ -322,6 +290,51 @@ void Battle::damagePlayer(Monster &monster)
 
 void Battle::loadResources()
 {
+	std::vector<std::string> resourcesNames = Parser::instance().parseResources("battle");
+	for (int i = 0; i < resourcesNames.size(); i++)
+	{
+		TextureManager::instance().getTexture("assets/" + resourcesNames[i]);
+	}
+
+	playerSprite.setTexture(TextureManager::instance().getTexture("assets/girl_art.png"));
+	emberSprite.setTexture(TextureManager::instance().getTexture("assets/red_art.png"));
+	thunderSprite.setTexture(TextureManager::instance().getTexture("assets/blue_art.png"));
+	TextureManager::instance().getTexture("assets/hit.png");
+	battleBox.setTexture(TextureManager::instance().getTexture("assets/battlebox.png"));
+	pointer.setTexture(TextureManager::instance().getTexture("assets/pointer.png"));
+	playerSprite.setTextureRect(sf::IntRect(0, 0, playerSprite.getLocalBounds().width, playerSprite.getLocalBounds().height / 1.5));
+	playerSprite.scale(0.5, 0.5);
+	playerSprite.setPosition(0, HEIGHT - (playerSprite.getTextureRect().height / 2));
+	playerHPBar.init(false, sf::Vector2f(playerSprite.getPosition().x + 90, playerSprite.getPosition().y + (playerSprite.getTextureRect().height / 2) - (18 * 3) - 2), 
+		GameData::instance().getPlayer().getHP());
+	playerManaBar.init(false, sf::Vector2f(playerSprite.getPosition().x + 90, playerSprite.getPosition().y + (playerSprite.getTextureRect().height / 2) - (18 * 2) + 2), 
+		GameData::instance().getPlayer().getMP(), sf::Color(105, 186, 199));
+
+
+	emberSprite.setTextureRect(sf::IntRect(0, 0, emberSprite.getLocalBounds().width, emberSprite.getLocalBounds().height / 1.5));
+	emberSprite.scale(0.5, 0.5);
+	emberSprite.setPosition(332, HEIGHT - (emberSprite.getTextureRect().height / 2));
+	emberHPBar.init(false, sf::Vector2f(emberSprite.getPosition().x + 90, emberSprite.getPosition().y + (emberSprite.getTextureRect().height / 2) - (18 * 3) - 2), 
+		GameData::instance().getEmber().getHP());
+	emberManaBar.init(false, sf::Vector2f(emberSprite.getPosition().x + 90, emberSprite.getPosition().y + (emberSprite.getTextureRect().height / 2) - (18 * 2) + 2), 
+		GameData::instance().getEmber().getMP(), sf::Color(105, 186, 199));
+
+
+	thunderSprite.setTextureRect(sf::IntRect(0, 0, thunderSprite.getLocalBounds().width, thunderSprite.getLocalBounds().height / 1.5));
+	thunderSprite.scale(0.5, 0.5);
+	thunderSprite.setPosition(332 * 2, HEIGHT - (thunderSprite.getTextureRect().height / 2));
+	thunderHPBar.init(false, sf::Vector2f(thunderSprite.getPosition().x + 90, thunderSprite.getPosition().y + (thunderSprite.getTextureRect().height / 2) - (18 * 3) - 2), 
+		GameData::instance().getThunder().getHP());
+	thunderManaBar.init(false, sf::Vector2f(thunderSprite.getPosition().x + 90, thunderSprite.getPosition().y + (thunderSprite.getTextureRect().height / 2) - (18 * 2) + 2), 
+		GameData::instance().getThunder().getMP(), sf::Color(105, 186, 199));	
+
+
+	background.loadFromFile("assets/space.jpg");
+	background2.loadFromFile("assets/noise.jpg");
+	background3.create(WIDTH, HEIGHT);
+
+	currentBackground = fireType;
+
 	spellQTE.loadResources();
 }
 
@@ -468,7 +481,16 @@ void Battle::update(sf::Time time)
 				break;
 			default:
 				break;
-			} 
+			}
+
+			if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "space")
+			{
+				currentBackground = spaceType;
+			}
+			else
+			{
+				currentBackground = fireType;
+			}
 		}
 	}
 
@@ -504,22 +526,47 @@ void Battle::update(sf::Time time)
 		}
 		spellQTE.update(time);
 	}
+	else
+	{
+		currentBackground = fireType;
+	}
 
 	//Hit effects
 	he.update(time);
 
-	//Update shader
-	fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
-	fire.setParameter("seconds", seconds);
-	if (state == QTE)
+	if (currentBackground == spaceType)
 	{
-		seconds+=5;
-		fire.setParameter("type", 1);
+		//Update shader
+		space.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+		space.setParameter("seconds", seconds / 100.0);
+		space.setParameter("texture1", background);
+		space.setParameter("texture2", background2);
+		if (state == QTE)
+		{
+			seconds+=1;
+			//fire.setParameter("type", 1);		
+		}
+		else
+		{
+			seconds+0.5;
+			//fire.setParameter("type", 0);
+		}
 	}
-	else
+	else if (currentBackground == fireType)
 	{
-		seconds++;
-		fire.setParameter("type", 0);
+		//Update shader
+		fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+		fire.setParameter("seconds", seconds);
+		if (state == QTE)
+		{
+			seconds+=5;
+			fire.setParameter("type", 1);		
+		}
+		else
+		{
+			seconds++;
+			fire.setParameter("type", 0);
+		}
 	}
 }
 

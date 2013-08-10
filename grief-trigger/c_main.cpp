@@ -44,7 +44,7 @@ int main()
 
 	tmx::MapLoader ml("assets/");
 
-	SceneManager::instance().setScene(Parser::instance().getSceneInfo(globalLevel.getDay(), globalLevel.getScene()), ml);
+	SceneManager::instance().setScene(Parser::instance().getSceneInfo(Level::instance().getDay(), Level::instance().getScene()), ml);
 
 	while (window.isOpen())
 	{

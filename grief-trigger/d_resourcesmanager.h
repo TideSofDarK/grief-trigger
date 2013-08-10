@@ -102,13 +102,55 @@ private:
 	{
 		font.loadFromFile(fontPath);
 	};
-	DFont( const SoundManager& );
-	DFont& operator =( const SoundManager& );
+	DFont( const DFont& );
+	DFont& operator =( const DFont& );
 
 	sf::Font font;
 
 public:
 	sf::Font &getFont(){return font;};
+};
+
+class MusicManager
+{
+public:
+	static MusicManager& instance()
+	{
+		static MusicManager theSingleInstance;
+		return theSingleInstance;
+	}
+
+	std::string next;
+	bool transition;
+
+	void playMusic( const std::string& filename );
+	void update(sf::Time time)
+	{
+		if (music.getStatus() != sf::Music::Playing)
+		{
+			music.openFromFile(next);
+			music.play();
+			transition = false;
+		}
+		if (music.getStatus() == sf::Music::Playing && music.getVolume() > 1 && transition)
+		{
+			music.setVolume(music.getVolume() - 1);
+		}
+		if (music.getStatus() == sf::Music::Playing && music.getVolume() <= 1 && transition)
+		{
+			music.setVolume(100);
+			music.openFromFile(next);
+			music.play();
+			transition = false;
+		}	
+	};
+
+private:
+	MusicManager(){};
+	MusicManager( const MusicManager& );
+	MusicManager& operator =( const MusicManager& );
+
+	sf::Music music;
 };
 
 #endif

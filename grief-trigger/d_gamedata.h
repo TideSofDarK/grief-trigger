@@ -5,14 +5,25 @@
 #include "g_monsters.h"
 #include "g_battle.h"
 
-typedef struct Level
+class Level
 {
 public:
+	static Level& instance()
+	{
+		static Level theSingleInstance;
+		return theSingleInstance;
+	}
+
+private:
 	Level()
 	{
 		day = 1;
 		scene = 1;
 	}
+	Level( const Level& );
+	Level& operator =( const Level& );
+public:
+	
 	void nextScene()
 	{
 		std::cout << std::to_string(day) << std::endl;
@@ -36,7 +47,6 @@ private:
 	unsigned int day;
 	unsigned int scene;
 };
-static Level globalLevel;
 
 class HeroStats : BasicStats
 {

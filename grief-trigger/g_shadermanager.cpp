@@ -42,6 +42,7 @@ void ShaderManager::setCurrentEffect(std::string name, sf::Time time)
 		shader.setParameter("size", size);
 		working = true;
 		duration = time;
+		counter = 0;
 		clock.restart();
 	}
 }

@@ -121,3 +121,10 @@ void SoundManager::playTransitionSound()
 {
 	transitionSound.play();
 }
+
+void MusicManager::playMusic( const std::string& filename )
+{
+	next = "assets/" + filename + ".ogg";
+	music.setLoop(true);
+	transition = true;
+}

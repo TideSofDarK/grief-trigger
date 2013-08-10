@@ -131,6 +131,13 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 			actualString.erase(a, actualString.length());
 		}
 
+		// | delim
+		int p = std::find(actualString.begin(), actualString.end(), '|') - actualString.begin();
+		actualString.erase(p, 1);
+		std::wstring tstr = actualString.substr(p, actualString.size());
+		actualString.erase(p, actualString.size());
+		nextString = tstr + nextString;
+
 		//Reset tweener
 		if (!visible)
 		{
@@ -195,8 +202,9 @@ void DialoguePanel::hide()
 {
 	if (nextScene == true)
 	{
-		globalLevel.nextScene();
-		SceneManager::instance().startTransition(Parser::instance().getSceneInfo(globalLevel.getDay(), globalLevel.getScene()));
+		Level::instance().nextScene();
+		SceneManager::instance().startTransition(Parser::instance().getSceneInfo(Level::instance().getDay(), Level::instance().getScene()));
+		std::cout << std::to_string(Level::instance().getScene()) + "fgdgfdgfd\n";
 	}
 
 	selected = 0;
@@ -229,11 +237,11 @@ void DialoguePanel::update()
 				if (elapsed > 60 && character < actualString.length())
 				{
 					//Play sound if it is not a space
-					if (text.getString().toAnsiString().c_str()[text.getString().getSize()] != ' ')
+					if (text.getString().toAnsiString().c_str()[text.getString().getSize()] != ' ' && character % 2 == 0)
 					{
 						SoundManager::instance().playClickSound();
 					}
-					if (text.getString().getSize() + 1 == actualString.size())
+					if (text.getString().getSize() + 1 >= actualString.size())
 					{
 						//If last - play enter sound
 						SoundManager::instance().playEnterSound();

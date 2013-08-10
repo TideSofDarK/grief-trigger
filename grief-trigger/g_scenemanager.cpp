@@ -32,7 +32,7 @@ void Scene::loadResources()
 	//Start speech if cutscene
 	if (type == SCENE_TYPE_CUTSCENE)
 	{
-		DialoguePanel::instance().openDialogue("cutscene", "day" + std::to_string(globalLevel.getDay()) + "/scene" + std::to_string(globalLevel.getScene()));
+		DialoguePanel::instance().openDialogue("cutscene", "day" + std::to_string(Level::instance().getDay()) + "/scene" + std::to_string(Level::instance().getScene()));
 	}
 
 	resourcesLoaded = true;
@@ -106,26 +106,18 @@ void Scene::init(std::string newType, std::string name, tmx::MapLoader &ml)
 
 	//Create render texture
 	finalTexture.create(WIDTH, HEIGHT);
+
+	//std::cout << Parser::instance().getMusic(Level::instance().getDay(), Level::instance().getScene()) + "\n";
+	std::cout << std::to_string(Level::instance().getScene()) + "fgdgfdgfd\n";
+
+	MusicManager::instance().playMusic(Parser::instance().getMusic(Level::instance().getDay(), Level::instance().getScene()));
 }
 
 void Scene::endBattle()
 {
-	for (auto i = squads.begin(); i != squads.end();)
-	{
-		Squad &squad = *i;
-		int pos = i - squads.begin();
-		if (pos == toDelete)
-		{
-			squad.getOnMap().SetName("null");
-			i = squads.erase(i);
-			break;
-		}
-		else
-		{
-			i++;
-		}
-	}
-	battle.clean();
+	squads[toDelete].getOnMap().SetName("null");
+	squads.erase(squads.begin()+toDelete);
+	//battle.clean();
 
 	state = MAP;
 }
@@ -289,7 +281,7 @@ void Scene::update(sf::Time time)
 							if (tips.size() == 0) tips.push_back(Tip(L"Общение", _X, "npc"));
 							if (sf::Keyboard::isKeyPressed(_X) && !DialoguePanel::instance().isHided())
 							{
-								DialoguePanel::instance().openDialogue(npc.getOnMap().GetName(), "day1");
+								DialoguePanel::instance().openDialogue(npc.getOnMap().GetName(), "day" + std::to_string(Level::instance().getDay()) + "/scene" + std::to_string(Level::instance().getScene()));
 
 								removeTip("npc");
 							}	
@@ -493,19 +485,19 @@ void SceneManager::draw(sf::RenderTarget &rt)
 		tShader.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));	//
 		tShader.setParameter("texture1", t1.getTexture());			// ne hvataet tolko peremennih na translite
 		tShader.setParameter("texture2", t2.getTexture());			// hotya eto uzhe blizko
-		tShader.setParameter("seconds", counter / 2);					// 
+		tShader.setParameter("seconds", counter / 2);				// 
 		sf::Texture t;												//
 		t.create(WIDTH, HEIGHT);									// *\ _______________________________/*
 		sf::Sprite spr;												//   | | | | | | | | | | | | | | | ||
 		spr.setTexture(t);											//   || | | | | | | | | | | | | | | |
 		sf::RenderTexture t3;										//   | | | | | | | | | | | | | | | ||
 		t3.create(WIDTH, HEIGHT);									//   || | | | | | | | | | | | | | | |
-		t3.draw(spr, &tShader);			
-		spr.setTexture(t1.getTexture());
+		t3.draw(spr, &tShader);										//   | | | | | | | | | | | | | | | ||
+		spr.setTexture(t1.getTexture());							//   || | | | | | | | | | | | | | | |
 		t3.draw(spr, &tShader);										//   | | | | | | | | | | | | | | | ||
 		tShader2.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));	//   || | | | | | | | | | | | | | | |
 		tShader2.setParameter("texture", t3.getTexture());			//   | | | | | | | | | | | | | | | ||
-		tShader2.setParameter("seconds", counter);				//   \______________________________/
+		tShader2.setParameter("seconds", counter);					//   \______________________________/
 		spr.setTexture(t3.getTexture());							//
 		rt.draw(spr, &tShader2);									// nahuy ya eto sdelal?
 	}
@@ -525,11 +517,13 @@ void SceneManager::update(sf::Time time)
 	{
 		current.update(time);
 	}
-	if (transition && timer.getElapsedTime() >= sf::seconds(1.5f))
+	if (transition && timer.getElapsedTime() >= sf::seconds(1.8f))
 	{
 		transition = false;
 		loaded = true;
 	}
+
+	MusicManager::instance().update(time);
 }
 
 void SceneManager::input(sf::Event &event)
@@ -546,19 +540,20 @@ void SceneManager::initBattle(Squad &squad)
 
 void SceneManager::endBattle()
 {
+	std::cout << "sdfdsfsdfsd\n";
 	current.endBattle();
+	std::cout << "sdfdsfsdfsd\n";
 }
 
 void SceneManager::startTransition(SceneInfo si)
 {
-	SoundManager::instance().playTransitionSound();
-
 	t1.create(WIDTH, HEIGHT);
 	t2.create(WIDTH, HEIGHT);
 
 	current.draw(t1);
 
 	current.init(si.type, si.map, *current.getMapLoader());
+	SoundManager::instance().playTransitionSound();
 
 	timer.restart();
 

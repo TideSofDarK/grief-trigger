@@ -92,9 +92,15 @@ private:
 	sf::Sprite					playerSprite;
 
 	//Spizhenniy background
+	static const int fireType = 0;
+	static const int spaceType = 1;
+	unsigned int				currentBackground;
 	sf::Shader					fire;
+	sf::Shader					space;
 	unsigned int				seconds;
 	sf::Texture					background;
+	sf::Texture					background2;
+	sf::Texture					background3;
 
 	//HP Bars
 	Bar							emberHPBar;

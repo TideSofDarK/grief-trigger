@@ -581,8 +581,9 @@ void SpellQTE::update(sf::Time time)
 				if (i->state == GOING)
 				{
 					//If player skipped it
-					if (waiting && timer.getElapsedTime().asSeconds() > 0.7)
+					if (waiting && timer.getElapsedTime().asSeconds() > 0.3)
 					{
+						SoundManager::instance().playFailSound();
 						waiting = false;
 						timer.restart();
 						block.state = ENDED;
@@ -739,7 +740,16 @@ void SpellQTE::input(sf::Event &event)
 									damaged = true;
 									//std::cout << "asdfsdfs\n";
 									break;
-								}	
+								}
+								else
+								{
+									SoundManager::instance().playFailSound();
+									waiting = false;
+									timer.restart();
+									block.state = ENDED;
+									next(i);
+									break;
+								}
 							}
 							else break;
 						}
