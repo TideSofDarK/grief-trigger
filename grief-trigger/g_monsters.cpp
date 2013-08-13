@@ -8,6 +8,7 @@ Monster::Monster(std::string name_)
 {
 	name = name_;
 	setStats(Parser::instance().getMonsterStats(name));
+	maxHP = getHP();
 	state = ALIVE;
 }
 

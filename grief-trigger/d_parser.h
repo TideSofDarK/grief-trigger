@@ -49,6 +49,8 @@ public:
 	bool isLast(std::string name, std::string situation);
 	std::string getBackground(std::string spellName);
 	std::string getMusic(unsigned int day, unsigned int scene);
+	std::string goNext(std::string name, std::string situation);
+	std::string getPortrait(std::string name, std::string situation);
 };
 
 #endif

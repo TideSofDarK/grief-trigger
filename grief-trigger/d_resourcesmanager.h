@@ -101,14 +101,17 @@ private:
 	DFont()
 	{
 		font.loadFromFile(fontPath);
+		gothicFont.loadFromFile("assets/fonts/gothic.ttf");
 	};
 	DFont( const DFont& );
 	DFont& operator =( const DFont& );
 
 	sf::Font font;
+	sf::Font gothicFont;
 
 public:
 	sf::Font &getFont(){return font;};
+	sf::Font &getGothicFont(){return gothicFont;};
 };
 
 class MusicManager

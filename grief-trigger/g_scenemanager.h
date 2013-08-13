@@ -25,7 +25,7 @@
 #define SCENE_TYPE_MAP "map"
 #define SCENE_TYPE_CUTSCENE "cutscene"
 
-typedef enum { MAP, BATTLE, TRANSITION, PAUSED, LOADING } SCENE_STATE;
+typedef enum { MAP, BATTLE, TRANSITION, PAUSED, LOADING, RESULT } SCENE_STATE;
 
 static bool resourcesLoaded = false;
 
@@ -112,6 +112,10 @@ private:
 	bool				afterSwing;
 	bool				check;
 
+	//Result screen
+	Result				resScreen;
+	bool				startResults;
+
 	//Loading resources
 	void				loadResources();
 
@@ -123,6 +127,7 @@ public:
 	void init(std::string newType, std::string name, tmx::MapLoader &ml);
 	void startBattle(Squad &squad);
 	void endBattle();
+	void setMapState(){state = MAP;};
 	void removeTip(std::string type);
 	void setPaused(bool p) {state = (p == true ? PAUSED : MAP);};
 	void update(sf::Time time);
@@ -133,6 +138,7 @@ public:
 	PlayerObject &getPlayerObject();
 	std::deque<Squad> &getSquadList();
 	tmx::MapLoader *getMapLoader(){return map;};
+	Camera &getCamera(){return camera;};
 };
 
 class SceneManager

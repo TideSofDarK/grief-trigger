@@ -362,6 +362,8 @@ void Menu::select()
 
 void SpellMenu::setSpells(std::vector<Spell> newSpells)
 {
+	std::cout << "start" << std::endl;
+
 	const unsigned int startX = WIDTH / 3;
 	const unsigned int startY = HEIGHT / 5;
 
@@ -385,6 +387,8 @@ void SpellMenu::setSpells(std::vector<Spell> newSpells)
 	selection = 0;
 
 	state = WORKING;
+
+	std::cout << "work" << std::endl;
 }
 
 void SpellMenu::draw(sf::RenderTarget &tg)
@@ -953,5 +957,105 @@ void HitEffect::update(sf::Time time)
 	if (!sprite.isPlaying())
 	{
 		working = false;
+	}
+}
+
+Result::Result()
+{
+	for (int i = 0; i < 5; i++)
+	{
+		stats[i].setFont(DFont::instance().getGothicFont());
+		stats[i].setPosition(164, 100 + (120*i));
+		stats[i].setCharacterSize(41);
+		stats[i].setColor(sf::Color(249, 217, 36));
+	}
+	current = 0;
+}
+
+void Result::loadResources()
+{
+	TextureManager::instance().getTexture("assets/girl_screen.jpg");
+	TextureManager::instance().getTexture("assets/blue_screen.jpg");
+	TextureManager::instance().getTexture("assets/red_screen.jpg");
+}
+
+void Result::show()
+{
+	if (current == 0)
+	{
+		back.setTexture(TextureManager::instance().getTexture("assets/girl_screen.jpg"));
+	}
+	else if (current == 1)
+	{
+		back.setTexture(TextureManager::instance().getTexture("assets/red_screen.jpg"));
+	}
+	else if (current == 2)
+	{
+		back.setTexture(TextureManager::instance().getTexture("assets/blue_screen.jpg"));
+	}
+	switch (current)
+	{
+	case 0:
+		stats[0].setString(std::to_string(GameData::instance().getPlayer().getHP()));
+		stats[1].setString(std::to_string(GameData::instance().getPlayer().getMP()));
+		stats[2].setString(std::to_string(GameData::instance().getPlayer().getStrength()));
+		stats[3].setString(std::to_string(GameData::instance().getPlayer().getAgility()));
+		stats[4].setString(std::to_string(GameData::instance().getPlayer().getIntelligence()));
+		break;
+	case 1:
+		stats[0].setString(std::to_string(GameData::instance().getEmber().getHP()));
+		stats[1].setString(std::to_string(GameData::instance().getEmber().getMP()));
+		stats[2].setString(std::to_string(GameData::instance().getEmber().getStrength()));
+		stats[3].setString(std::to_string(GameData::instance().getEmber().getAgility()));
+		stats[4].setString(std::to_string(GameData::instance().getEmber().getIntelligence()));
+		break;
+	case 2:
+		stats[0].setString(std::to_string(GameData::instance().getThunder().getHP()));
+		stats[1].setString(std::to_string(GameData::instance().getThunder().getMP()));
+		stats[2].setString(std::to_string(GameData::instance().getThunder().getStrength()));
+		stats[3].setString(std::to_string(GameData::instance().getThunder().getAgility()));
+		stats[4].setString(std::to_string(GameData::instance().getThunder().getIntelligence()));
+		break;
+	default:	
+		break;
+	}
+
+	if (GameData::instance().getPlayer().getLevelOffset() == 0)
+	{
+		SceneManager::instance().getScene().setMapState();
+	}
+}
+
+void Result::update(sf::Time time)
+{
+	
+}
+
+void Result::draw(sf::RenderTarget &tg)
+{
+	tg.draw(back);
+	for (int i = 0; i < 5; i++)
+	{
+		tg.draw(stats[i]);
+	}
+}
+
+void Result::input(sf::Event &event)
+{
+	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X)
+	{
+		SoundManager::instance().playSelectSound();
+		SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.1));
+		next();
+	}
+}
+
+void Result::next()
+{
+	current++;
+	show();
+	if (current > 2)
+	{
+		SceneManager::instance().getScene().setMapState();
 	}
 }

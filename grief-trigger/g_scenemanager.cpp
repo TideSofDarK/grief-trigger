@@ -29,11 +29,7 @@ void Scene::loadResources()
 
 	state = MAP;
 
-	//Start speech if cutscene
-	if (type == SCENE_TYPE_CUTSCENE)
-	{
-		DialoguePanel::instance().openDialogue("cutscene", "day" + std::to_string(Level::instance().getDay()) + "/scene" + std::to_string(Level::instance().getScene()));
-	}
+	resScreen.loadResources();
 
 	resourcesLoaded = true;
 }
@@ -107,6 +103,12 @@ void Scene::init(std::string newType, std::string name, tmx::MapLoader &ml)
 	finalTexture.create(WIDTH, HEIGHT);
 
 	MusicManager::instance().playMusic(Parser::instance().getMusic(Level::instance().getDay(), Level::instance().getScene()));
+
+	//Start speech if cutscene
+	if (type == SCENE_TYPE_CUTSCENE)
+	{
+		DialoguePanel::instance().openDialogue("cutscene", "day" + std::to_string(Level::instance().getDay()) + "/scene" + std::to_string(Level::instance().getScene()));
+	}
 }
 
 void Scene::endBattle()
@@ -114,9 +116,11 @@ void Scene::endBattle()
 	MusicManager::instance().playMusic(Parser::instance().getMusic(Level::instance().getDay(), Level::instance().getScene()));
 	squads[toDelete].getOnMap().SetName("null");
 	squads.erase(squads.begin()+toDelete);
-	//battle.clean();
-
-	state = MAP;
+	battle.clean();
+	state = RESULT;
+	resScreen.reset();
+	resScreen.show();
+	startResults = true;
 }
 
 void Scene::removeTip(std::string type)
@@ -269,16 +273,22 @@ void Scene::update(sf::Time time)
 						if (squad.getOnMap().GetAABB().intersects(sf::FloatRect(po.getSprite().getPosition().x, po.getSprite().getPosition().y - CHARACTER_SIZE+1, CHARACTER_SIZE, CHARACTER_SIZE * 2))
 							|| squad.getOnMap().GetAABB().intersects(sf::FloatRect(po.getSprite().getPosition().x - CHARACTER_SIZE + 1, po.getSprite().getPosition().y, CHARACTER_SIZE * 2, CHARACTER_SIZE)))
 						{
-							//Some fuking magic with...
-							if (tips.size() == 0) tips.push_back(Tip(L"Атаковать!", _X, "enemy"));
-							if (sf::Keyboard::isKeyPressed(sf::Keyboard::X))
+							if ((po.getSprite().getPosition().y > squad.getOnMap().GetPosition().y && po.getDirection() == DIR_UP)
+								|| (po.getSprite().getPosition().y < squad.getOnMap().GetPosition().y && po.getDirection() == DIR_DOWN)
+								|| (po.getSprite().getPosition().x < squad.getOnMap().GetPosition().x && po.getDirection() == DIR_RIGHT)
+								|| (po.getSprite().getPosition().x > squad.getOnMap().GetPosition().x && po.getDirection() == DIR_LEFT))
 							{
-								SceneManager::instance().initBattle(squad);
+								//Some fuking magic with...
+								if (tips.size() == 0) tips.push_back(Tip(L"Атаковать!", _X, "enemy"));
+								if (sf::Keyboard::isKeyPressed(sf::Keyboard::X))
+								{
+									SceneManager::instance().initBattle(squad);
 
-								removeTip("enemy");
-							}	
-							break;
-						}		
+									removeTip("enemy");
+								}	
+								break;
+							}						
+						}	
 						else removeTip("enemy");
 					}
 
@@ -320,6 +330,11 @@ void Scene::update(sf::Time time)
 		else if (counter % 20 == 0) loadingText.setString("Loading...");
 		else if (counter >= 20) counter = 0;
 		counter++;
+	}
+
+	if (startResults)
+	{
+		startResults = false;
 	}
 }
 
@@ -373,12 +388,18 @@ void Scene::draw(sf::RenderTarget &tg)
 
 				//Dialogue UI
 				DialoguePanel::instance().draw(finalTexture);
+
+				if (state == RESULT)
+				{
+					resScreen.draw(finalTexture);
+				}
+
 				finalTexture.draw(days);
 			}
 			else if (!swing.isWorking() && state == BATTLE) //Draw battle
 			{
 				//Scaled
-				finalTexture.setView(camera.getView());
+				finalTexture.setView(sf::View(sf::FloatRect(0,0,HALF_WIDTH, HALF_HEIGHT)));
 				battle.draw(finalTexture);
 
 				//Unscalable
@@ -389,6 +410,10 @@ void Scene::draw(sf::RenderTarget &tg)
 			finalTexture.display();
 
 			sm.draw(finalTexture, tg);
+		}
+		else
+		{
+			tg.draw(loadingText);
 		}
 	}
 	else if (type == SCENE_TYPE_CUTSCENE)
@@ -460,6 +485,10 @@ void Scene::input(sf::Event &event)
 			else if (state == BATTLE)
 			{
 				battle.input(event);
+			}
+			if (state == RESULT && !startResults)
+			{
+				resScreen.input(event);
 			}
 		}
 	}

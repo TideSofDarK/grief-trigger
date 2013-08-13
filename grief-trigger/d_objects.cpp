@@ -70,11 +70,11 @@ Swing::Swing()
 		animation.addFrame(sf::IntRect(a * 17, 0, 17, 14));
 	}
 
-	animation.addFrame(sf::IntRect(5 * 17, 0, 17, 14));
-	animation.addFrame(sf::IntRect(5 * 17, 0, 17, 14));
-	animation.addFrame(sf::IntRect(5 * 17, 0, 17, 14));
-	animation.addFrame(sf::IntRect(5 * 17, 0, 17, 14));
-	animation.addFrame(sf::IntRect(5 * 17, 0, 17, 14));
+	animation.addFrame(sf::IntRect(5 * 17, 0, 1, 1));
+	animation.addFrame(sf::IntRect(5 * 17, 0, 1, 1));
+	animation.addFrame(sf::IntRect(5 * 17, 0, 1, 1));
+	animation.addFrame(sf::IntRect(5 * 17, 0, 1, 1));
+	animation.addFrame(sf::IntRect(5 * 17, 0, 1, 1));
 }
 
 void Swing::init(sf::Vector2f pos)
@@ -88,6 +88,7 @@ void Swing::init(sf::Vector2f pos)
 	sprite.setScale(2,2);
 
 	working = true;
+	played = false;
 }
 
 void Swing::draw(sf::RenderTarget &tg)
@@ -100,6 +101,11 @@ void Swing::draw(sf::RenderTarget &tg)
 
 void Swing::update(sf::Time time)
 {
+	if (working && sprite.getCurrentFrameNumber() == 6 && !played)
+	{
+		SoundManager::instance().playHurtSound();
+		played = true;
+	}
 	sprite.update(sf::seconds(1.f / 15.f));
 	if (!sprite.isPlaying())
 	{

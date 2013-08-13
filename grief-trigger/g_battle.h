@@ -62,8 +62,8 @@ private:
 	//Current state
 	typedef enum { PLAYER, AI, SPELL, QTE, ENDED } BATTLE_STATE;
 	BATTLE_STATE				state;
-	unsigned int turnNumber;
-	unsigned int currentAttacking;
+	unsigned int				turnNumber;
+	int							currentAttacking;
 
 	sf::Clock clock;
 

@@ -306,7 +306,7 @@ private:
 	static const unsigned int	startX = WIDTH / 3;
 	static const unsigned int	startY = HEIGHT / 3;
 	static const unsigned int	offset = 10;
-	static const bool			type = 0;
+	static const bool			type = 1;
 
 	std::vector<EText>			etexts;
 
@@ -357,6 +357,24 @@ public:
 	void update(sf::Time time);
 	void draw(sf::RenderTarget &tg);
 	void init(sf::Vector2f pos);
+};
+
+class Result
+{
+private:
+	sf::Sprite		back;
+	sf::Text		stats[5];
+	int				current;
+
+public:
+	Result();
+	void loadResources();
+	void show();
+	void update(sf::Time time);
+	void draw(sf::RenderTarget &tg);
+	void input(sf::Event &event);
+	void next();
+	void reset(){current = 0;};
 };
 
 #endif

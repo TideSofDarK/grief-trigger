@@ -57,6 +57,7 @@ public:
 	bool step(int dir);
 	bool isWalking(){return walking;};
 	tmx::MapObject &getOnMap(){return *object;};
+	int getDirection(){return direction;};
 };
 
 #endif

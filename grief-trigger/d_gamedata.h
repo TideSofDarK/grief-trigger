@@ -59,13 +59,21 @@ private:
 	unsigned int mp;
 	unsigned int level;
 	unsigned int xp;
+	unsigned int maxHP;
 	unsigned int nextLevelXP;
+
+	unsigned int hpOffset;
+	unsigned int mpOffset;
+	unsigned int strOffset;
+	unsigned int intOffset;
+	unsigned int agiOffset;
+	unsigned int levelOffset;
 
 public:
 	HeroStats()
 	{
 		xp = 1;
-		nextLevelXP = 100;
+		nextLevelXP = 50;
 		level = 1;
 	}
 	//Bla-bla-bla
@@ -77,15 +85,30 @@ public:
 	unsigned int &getIntelligence() {return intelligence;};
 	unsigned int &getHP() {return hp;};
 	unsigned int &getMP() {return mp;};
+	unsigned int &getMaxHP() {return maxHP;};
 	unsigned int &getSocial() {return social;};
-	void setStrength(unsigned int newStrength) {if (newStrength >= 0) strength = newStrength;};
-	void setAgility(unsigned int newAgility) {if (newAgility >= 0) agility = newAgility;};
-	void setIntelligence(unsigned int newIntelligence) {if (newIntelligence >= 0) intelligence = newIntelligence;};
-	void setHP(unsigned int newHP) {if (newHP >= 0) hp = newHP;};
+	void setStrength(unsigned int newStrength) { strength = newStrength;};
+	void setAgility(unsigned int newAgility) { agility = newAgility;};
+	void setIntelligence(unsigned int newIntelligence) { intelligence = newIntelligence;};
+	void setHP(int newHP) { hp = newHP; if (newHP < 0) hp = 0;};
 	void setMP(unsigned int newMP) {if (newMP >= 0) mp = newMP;};
-	void setSocial(unsigned int newSocial) {if (newSocial >= 0) social = newSocial;};
+	void setSocial(unsigned int newSocial) { social = newSocial;};
+	unsigned int &getStrengthOffset() {return strOffset;};
+	unsigned int &getAgilityOffset() {return agiOffset;};
+	unsigned int &getIntelligenceOffset() {return intOffset;};
+	unsigned int &getHPOffset() {return hpOffset;};
+	unsigned int &getMPOffset() {return mpOffset;};
+	unsigned int &getLevelOffset() {return levelOffset;};
+
 	void levelUp() 
 	{
+		hpOffset = hp;
+		mpOffset = mp;
+		strOffset = strength;
+		intOffset = intelligence;
+		agiOffset = agility;
+		levelOffset = level;
+
 		//Some crappy magic with social
 		level++;
 		if (strength > intelligence && strength > agility)
@@ -115,9 +138,17 @@ public:
 				strength += 2;
 			}
 		}
+
+		hpOffset = hp - hpOffset;
+		mpOffset = mp - mpOffset;
+		strOffset = strength - strOffset;
+		intOffset = intelligence - intOffset;
+		agiOffset = agility - agiOffset;
+		levelOffset = level - levelOffset;
 	};
 	void addXP(unsigned int newXP) 
 	{
+		std::cout << "new xp = " + std::to_string(newXP) << std::endl;
 		xp += newXP;
 		if (xp >= nextLevelXP)
 		{

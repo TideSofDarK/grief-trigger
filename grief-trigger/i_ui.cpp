@@ -52,7 +52,7 @@ XPBar::XPBar()
 {
 	portrait.setTexture(TextureManager::instance().getTexture("assets/portrait.png"));
 	xpbar.setTexture(TextureManager::instance().getTexture("assets/xpbar.png"));
-	xpbar.move(263, 0);
+	xpbar.move(253, 0);
 }
 
 void XPBar::draw(sf::RenderTarget &tg)
@@ -69,6 +69,6 @@ void XPBar::draw(sf::RenderTarget &tg)
 
 void XPBar::update(sf::Time time)
 {
-	float p = ((float)GameData::instance().getPlayer().getXP() / (float)GameData::instance().getPlayer().getNextLevelXP()) * 100;
+	float p = ((float)GameData::instance().getPlayer().getXP() / (float)GameData::instance().getPlayer().getNextLevelXP()) * 100.0;
 	xpbar.setTextureRect(sf::IntRect(0,0, (737 / 100) * p, 67));
 }

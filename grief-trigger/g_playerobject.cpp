@@ -302,12 +302,13 @@ bool PlayerObject::step(int dir)
 			case DIR_LEFT:
 				animator.playAnimation("idle_left", true);
 				break;
-			case DIR_RIGHT:
+			case DIR_RIGHT:			
 				animator.playAnimation("idle_right", true);
 				break;
 			default:
 				break;
 			}
+			direction = dir;
 		}
 	}
 

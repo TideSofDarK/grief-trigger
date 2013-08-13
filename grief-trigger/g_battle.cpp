@@ -10,7 +10,7 @@ Enemy::Enemy(sf::Vector2f pos, const sf::Texture &texture, Monster &monsterRef) 
 {
 	sprite.setPosition(pos);
 	sprite.setTexture(texture);
-	hpBar.init(true, sf::Vector2f(sprite.getPosition().x * 2, sprite.getPosition().y), 
+	hpBar.init(true, sf::Vector2f(sprite.getPosition().x * 2, sprite.getPosition().y / 2), 
 		monster.getHP());
 	counter = 0;
 	fading = false;
@@ -149,7 +149,8 @@ void Battle::start(Squad &squad_)
 	for (auto i = list.begin(); i != list.end(); i++)
 	{
 		Monster &m = *i;
-		Enemy newEnemy(sf::Vector2f(HALF_WIDTH - ((67 * 2) * (list.size())) + ((67 * 2) * (i - list.begin())), bounds.top + ((((i - list.begin()) % 2)) ? 10 : -10)), TextureManager::instance().getTexture("assets/" + i->getName() + ".png"), m);
+		Enemy newEnemy(sf::Vector2f(HALF_WIDTH - ((67 * 2) * (list.size())) + ((67 * 2) * (i - list.begin())), 
+			bounds.top + ((((i - list.begin()) % 2)) ? 10 : -10)), TextureManager::instance().getTexture("assets/" + i->getName() + ".png"), m);
 		enemies.push_back(newEnemy);
 	}
 
@@ -247,7 +248,24 @@ int stringToWString(std::wstring &ws, const std::string &s)
 void Battle::damagePlayer(Monster &monster)
 {
 	//GameData::instance().getEmber()
-	int hero = (rand() % (int)(3));
+	int hero;
+	bool stop;
+	do
+	{
+		hero = (rand() % (int)(3));
+		if (hero == 0 && GameData::instance().getPlayer().getHP() == 0 
+			|| hero == 1 && GameData::instance().getEmber().getHP() == 0 
+			|| hero == 2 && GameData::instance().getThunder().getHP() == 0)
+		{
+			stop = false;
+		}
+		else
+		{
+			stop = true;
+			break;
+		}
+	}
+	while (!stop);
 
 	//Random formula
 	int dmg = (monster.getStrength() / 2 + monster.getAgility() / 3 + monster.getIntelligence() / 4) + (rand() % (int)(2));
@@ -419,7 +437,6 @@ void Battle::update(sf::Time time)
 			state = SPELL;
 			menu.clean();
 			menu.disappear();
-
 			switch (currentAttacking)
 			{
 			case 0:
@@ -467,7 +484,7 @@ void Battle::update(sf::Time time)
 			state = QTE;
 			menu.clean();
 			menu.disappear();
-
+			std::cout << std::to_string(currentAttacking) << std::endl;
 			switch (currentAttacking)
 			{
 			case 0:
@@ -482,14 +499,14 @@ void Battle::update(sf::Time time)
 			default:
 				break;
 			}
-
+	
 			if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "space")
 			{
-				currentBackground = spaceType;
+				currentBackground = spaceType; SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.1));
 			}
 			else
 			{
-				currentBackground = fireType;
+				currentBackground = fireType; SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.1));
 			}
 		}
 	}
@@ -506,14 +523,27 @@ void Battle::update(sf::Time time)
 		if (spellQTE.isEnded())
 		{
 			state = PLAYER;
-			if (currentAttacking == 2)
+			bool stop;
+			do
+			{
+				currentAttacking++;
+				if (currentAttacking == 1 && GameData::instance().getEmber().getHP() == 0 || currentAttacking == 2 && GameData::instance().getThunder().getHP() == 0)
+				{
+					stop = false;
+				}
+				else
+				{
+					stop = true;
+				}
+			}
+			while (!stop);
+			if (currentAttacking >= 3)
 			{
 				currentAttacking = 0;
 				state = AI;
 			}
 			else
 			{
-				currentAttacking++;
 				for (auto i = enemies.begin(); i != enemies.end(); i++)
 				{
 					if (!i->isDied())
@@ -528,7 +558,7 @@ void Battle::update(sf::Time time)
 	}
 	else
 	{
-		currentBackground = fireType;
+		currentBackground = fireType; 
 	}
 
 	//Hit effects
@@ -568,6 +598,31 @@ void Battle::update(sf::Time time)
 			fire.setParameter("type", 0);
 		}
 	}
+
+	if (GameData::instance().getPlayer().getHP() == 0)
+	{
+		playerSprite.setColor(sf::Color(100,100,100,255));
+	}
+	else
+	{
+		playerSprite.setColor(sf::Color(255,255,255,255));
+	}
+	if (GameData::instance().getEmber().getHP() == 0)
+	{
+		emberSprite.setColor(sf::Color(100,100,100,255));
+	}
+	else
+	{
+		emberSprite.setColor(sf::Color(255,255,255,255));
+	}
+	if (GameData::instance().getThunder().getHP() == 0)
+	{
+		thunderSprite.setColor(sf::Color(100,100,100,255));
+	}
+	else
+	{
+		thunderSprite.setColor(sf::Color(255,255,255,255));
+	}
 }
 
 void Battle::damageSpell()
@@ -593,9 +648,9 @@ void Battle::damageSpell()
 
 	if (enemies[selected].isDied())
 	{
-		res.playerXP += enemies[selected].getMonster().getHP();
-		res.emberXP += enemies[selected].getMonster().getHP();
-		res.thunderXP += enemies[selected].getMonster().getHP();
+		res.playerXP += enemies[selected].getMonster().getMaxHP();
+		res.emberXP += enemies[selected].getMonster().getMaxHP();
+		res.thunderXP += enemies[selected].getMonster().getMaxHP();
 		//Select next alive enemy
 		for (auto i = enemies.begin(); i != enemies.end(); i++)
 		{
@@ -635,9 +690,9 @@ void Battle::damageMonster()
 
 	if (enemies[selected].isDied())
 	{
-		res.playerXP += enemies[selected].getMonster().getHP();
-		res.emberXP += enemies[selected].getMonster().getHP();
-		res.thunderXP += enemies[selected].getMonster().getHP();
+		res.playerXP += enemies[selected].getMonster().getMaxHP();
+		res.emberXP += enemies[selected].getMonster().getMaxHP();
+		res.thunderXP += enemies[selected].getMonster().getMaxHP();
 		//Select next alive enemy
 		for (auto i = enemies.begin(); i != enemies.end(); i++)
 		{
@@ -657,15 +712,25 @@ void Battle::nextPlayerStep()
 	{
 		SoundManager::instance().playHurtSound();
 		damageMonster();
-
-		if (currentAttacking == 2)
+	
+		bool stop;
+		do
+		{
+			currentAttacking++;
+			if (currentAttacking == 1 && GameData::instance().getEmber().getHP() == 0 || currentAttacking == 2 && GameData::instance().getThunder().getHP() == 0)
+			{
+				stop = false;
+			}
+			else
+			{
+				stop = true;
+			}
+		}
+		while (!stop);
+		if (currentAttacking >= 3)
 		{
 			currentAttacking = 0;
 			state = AI;
-		}
-		else
-		{
-			currentAttacking++;
 		}
 	}
 }
@@ -693,7 +758,24 @@ void Battle::nextAIStep()
 		if (currentAttacking + 1 > enemies.size())
 		{
 			turnNumber++;
-			currentAttacking = 0;
+			currentAttacking = -1;
+			bool stop;
+			do
+			{
+				currentAttacking++;
+				if (currentAttacking == 0 && GameData::instance().getPlayer().getHP() == 0 
+					|| currentAttacking == 1 && GameData::instance().getEmber().getHP() == 0 
+					|| currentAttacking == 2 && GameData::instance().getThunder().getHP() == 0)
+				{
+					stop = false;
+				}
+				else
+				{
+					stop = true;
+					break;
+				}
+			}
+			while (!stop);
 			for (auto i = enemies.begin(); i != enemies.end(); i++)
 			{
 				i->setState(NOT_ATTACKED);
@@ -744,8 +826,8 @@ void Battle::input(sf::Event &event)
 	{
 		//GameData::instance().appendResult(res);
 		GameData::instance().getPlayer().addXP(res.playerXP);
-		GameData::instance().getPlayer().addXP(res.emberXP);
-		GameData::instance().getPlayer().addXP(res.thunderXP);
+		GameData::instance().getEmber().addXP(res.emberXP);
+		GameData::instance().getThunder().addXP(res.thunderXP);
 		SceneManager::instance().endBattle();
 	}
 
@@ -798,7 +880,6 @@ void Battle::input(sf::Event &event)
 				}
 			} while (enemies[selected].isDied());
 
-			std::cout << std::to_string(selected) << std::endl;
 
 			SoundManager::instance().playSelectSound();
 		}
@@ -815,8 +896,6 @@ void Battle::input(sf::Event &event)
 					selected = 0;
 				}
 			} while (enemies[selected].isDied());	
-
-			std::cout << std::to_string(selected) << std::endl;
 
 			SoundManager::instance().playSelectSound();
 		}

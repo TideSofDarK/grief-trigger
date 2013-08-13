@@ -40,6 +40,9 @@ std::vector<std::string> Parser::parseSquad(std::string squad)
 
 std::vector<std::wstring> Parser::parseAnswers(std::string name, std::string situation)
 {
+	std::cout << situation;
+	std::cout << "\n";
+
 	pugi::xml_node text = dialoguesDoc.child("text").child(name.c_str());
 
 	std::vector<std::string> situations;
@@ -57,7 +60,13 @@ std::vector<std::wstring> Parser::parseAnswers(std::string name, std::string sit
 		text = text.child(situations[i].c_str());
 	}
 
+	//std::cout << "\n";
+	//std::wcout << text.child_value("answers");
+	//std::cout << "\n";
+
 	std::wstring newAnswers = pugi::as_wide(text.child_value("answers"));
+	std::cout << text.child_value("answers");
+	std::cout << "\n";
 
 	if (newAnswers != L"")
 	{
@@ -130,18 +139,18 @@ std::vector<std::string> Parser::parseResources(std::string block)
 
 std::string Parser::getBackground(std::string spellName)
 {
-	std::cout << spellName << std::endl;
+	//std::cout << spellName << std::endl;
 	pugi::xml_node spellsList = spellsDoc;
 
 	for (pugi::xml_node hero: spellsList.children())
 	{
-		std::cout << hero.name() << std::endl;
+		//std::cout << hero.name() << std::endl;
 		for (pugi::xml_node spell: hero.children())
 		{
-			std::cout << spell.name() << std::endl;
+			//std::cout << spell.name() << std::endl;
 			if (spell.name() == spellName)
 			{
-				std::cout << "sled" << std::endl;
+				//std::cout << "sled" << std::endl;
 				return spell.last_attribute().as_string();
 			}
 		}
@@ -162,7 +171,7 @@ std::vector<Spell> Parser::parseSpells(std::string hero, unsigned int level)
 			std::string shit = attr.name();
 			unsigned int shitInt = attr.as_int();
 
-			if (shit == "level" && shitInt == level)
+			if (shit == "level" && shitInt <= level)
 			{
 				for (pugi::xml_node child: spell.children())
 				{
@@ -203,8 +212,6 @@ SceneInfo Parser::getSceneInfo(unsigned int day, unsigned int scene)
 	SceneInfo si;
 	si.map = sceneNode.attribute("map").as_string();
 	si.type = sceneNode.attribute("type").as_string();
-	std::cout << si.map << std::endl;
-	std::cout << si.type << std::endl;
 	return si;
 }
 
@@ -260,4 +267,63 @@ std::string Parser::getMusic(unsigned int day, unsigned int scene)
 	pugi::xml_node sceneNode = scenesDoc.child(("day" + std::to_string(day)).c_str()).child(("scene" + std::to_string(scene)).c_str());
 
 	return sceneNode.attribute("music").as_string();
+}
+
+std::string Parser::goNext(std::string name, std::string situation)
+{
+	std::string realSit = situation;
+	pugi::xml_node text = dialoguesDoc.child("text").child(name.c_str());
+
+	std::vector<std::string> situations;
+
+	int pos = 0;
+	std::string token;
+	while ((pos = situation.find('/')) != std::string::npos) {
+		situations.push_back(situation.substr(0, pos));
+		situation.erase(0, pos + 1);
+	}
+
+	std::string str;
+	for (int i = 0; i < situations.size(); i++)
+	{
+		str = text.child_value(situations[i].c_str());	
+		if (i < situations.size())
+		{
+			text = text.child(situations[i].c_str());
+		}		
+	}
+
+	if (text.child_value(text.name()) != "" && text.child_value(text.name()) != "answers")
+	{
+		realSit += text.name();
+		return realSit;
+	}
+	else return "";	
+}
+
+std::string Parser::getPortrait(std::string name, std::string situation)
+{
+	std::string realSit = situation;
+	pugi::xml_node text = dialoguesDoc.child("text").child(name.c_str());
+
+	std::vector<std::string> situations;
+
+	int pos = 0;
+	std::string token;
+	while ((pos = situation.find('/')) != std::string::npos) {
+		situations.push_back(situation.substr(0, pos));
+		situation.erase(0, pos + 1);
+	}
+
+	std::string str;
+	for (int i = 0; i < situations.size(); i++)
+	{
+		str = text.child_value(situations[i].c_str());	
+		if (i < situations.size())
+		{
+			text = text.child(situations[i].c_str());
+		}		
+	}
+
+	return text.attribute("name").as_string();
 }

@@ -27,6 +27,8 @@ private:
 
 	MONSTER_STATE state;
 
+	unsigned int maxHP;
+
 public:
 	Monster(std::string name);
 	void receiveDamage(unsigned int damage) 
@@ -52,6 +54,7 @@ public:
 	unsigned int &getAgility() {return agility;};
 	unsigned int &getIntelligence() {return intelligence;};
 	unsigned int &getHP() {return hp;};
+	unsigned int &getMaxHP(){return maxHP;};
 	void setStrength(unsigned int newStrength) {strength = newStrength;};
 	void setAgility(unsigned int newAgility) {agility = newAgility;};
 	void setIntelligence(unsigned int newIntelligence) {intelligence = newIntelligence;};

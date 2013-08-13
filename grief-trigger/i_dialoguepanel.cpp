@@ -44,7 +44,7 @@ void DialoguePanel::init()
 	background.setPosition(0, nby);
 
 	pointer = sf::RectangleShape();
-	pointer.setFillColor(sf::Color::Blue);
+	pointer.setFillColor(sf::Color::Red);
 
 	hide();
 
@@ -94,9 +94,11 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		if (lastName != name) {
 			lastName = name;
 			//art.setTexture(TextureManager::instance().getTexture("assets/" + lastName + "_art.png"));
-			art.setTexture(TextureManager::instance().getTexture("assets/" + Parser::instance().getName(name, lastSituation) + ".png"));
+			art.setTexture(TextureManager::instance().getTexture("assets/" + Parser::instance().getPortrait(name, lastSituation) + ".png"));
 		}
-		
+
+		art.setTexture(TextureManager::instance().getTexture("assets/" + Parser::instance().getPortrait(name, lastSituation) + ".png"));
+
 		//If next string is
 		if (nextString != L"") 
 		{
@@ -204,7 +206,6 @@ void DialoguePanel::hide()
 	{
 		Level::instance().nextScene();
 		SceneManager::instance().startTransition(Parser::instance().getSceneInfo(Level::instance().getDay(), Level::instance().getScene()));
-		std::cout << std::to_string(Level::instance().getScene()) + "fgdgfdgfd\n";
 	}
 
 	selected = 0;
@@ -295,7 +296,17 @@ void DialoguePanel::input(sf::Event &event)
 				//Leave dialogue if no text
 				if (nextString == L"")
 				{
-					if (showAnswers() == false) hide();
+					//std::cout << lastSituation + "\n";
+					
+					hide();
+						
+					if (showAnswers() == false) 
+					{
+						if (Parser::instance().goNext(lastName, lastSituation) != "")
+							{
+							openDialogue(lastName, Parser::instance().goNext(lastName, lastSituation));
+						}
+					}										
 				}	
 				else openDialogue(lastName, lastSituation);
 			}

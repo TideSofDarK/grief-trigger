@@ -62,6 +62,7 @@ class Swing
 {
 private:
 	bool			working;
+	bool			played;
 	Animation		animation;
 	AnimatedSprite	sprite;
 
