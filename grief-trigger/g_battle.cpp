@@ -123,7 +123,11 @@ Battle::Battle()
 	//Some shitty code here
 	//At least it is fast lol
 	space.loadFromFile("assets/space.frag", sf::Shader::Fragment);
+	sback.loadFromFile("assets/sback.frag", sf::Shader::Fragment);
 	fire.loadFromFile("assets/fire.frag", sf::Shader::Fragment);
+	light.loadFromFile("assets/light.frag", sf::Shader::Fragment);
+	creo.loadFromFile("assets/creo.frag", sf::Shader::Fragment);
+	shards.loadFromFile("assets/shards.frag", sf::Shader::Fragment);
 
 	effectRect = sf::RectangleShape(sf::Vector2f(WIDTH, HEIGHT));
 	effectRect.setFillColor(sf::Color(0,0,0,205));
@@ -202,7 +206,7 @@ void Battle::drawUI(sf::RenderTarget &tg)
 		spellMenu.draw(tg);
 	}
 
-	if (state == PLAYER) tg.draw(pointer);
+	if (state == PLAYER || state == HEROSELECT) tg.draw(pointer);
 
 	if (state == QTE) spellQTE.draw(tg);
 
@@ -221,6 +225,26 @@ void Battle::draw(sf::RenderTarget &tg)
 	{
 		sf::Sprite back(background3);
 		tg.draw(back, &fire);
+	}
+	else if (currentBackground == sbackType)
+	{
+		sf::Sprite back(background3);
+		tg.draw(back, &sback);
+	}
+	else if (currentBackground == lightType)
+	{
+		sf::Sprite back(background3);
+		tg.draw(back, &light);
+	}
+	else if (currentBackground == creoType)
+	{
+		sf::Sprite back(background3);
+		tg.draw(back, &creo);
+	}
+	else if (currentBackground == shardsType)
+	{
+		sf::Sprite back(background3);
+		tg.draw(back, &shards);
 	}
 
 	for (auto i = enemies.begin(); i != enemies.end(); ++i)
@@ -247,7 +271,6 @@ int stringToWString(std::wstring &ws, const std::string &s)
 
 void Battle::damagePlayer(Monster &monster)
 {
-	//GameData::instance().getEmber()
 	int hero;
 	bool stop;
 	do
@@ -417,14 +440,32 @@ void Battle::update(sf::Time time)
 				break;
 			}		
 		}
+		else if (state == HEROSELECT)
+		{
+			switch (selectedHero)
+			{
+			case 0:
+				pointer.setPosition(playerSprite.getPosition().x + 150, playerSprite.getPosition().y + 100);
+				break;
+			case 1:
+				pointer.setPosition(emberSprite.getPosition().x + 190, emberSprite.getPosition().y + 100);
+				break;
+			case 2:
+				pointer.setPosition(thunderSprite.getPosition().x + 170, thunderSprite.getPosition().y + 100);
+				break;
+			default:
+				break;
+			}
+		}
 
 		//Menu, opens by ENTER
 		menu.update(time);
 	}
 
 	//Using menu, 0 is attack, 1 is spell, 2 is item
-	if (state == PLAYER && menu.getSelected() != NOT_SELECTED) 
+	if (state == PLAYER && menu.getSelected() != NOT_SELECTED && log.isRead()) 
 	{
+		log.stop();
 		if (menu.getSelected() == 0)
 		{			
 			nextPlayerStep();
@@ -446,7 +487,7 @@ void Battle::update(sf::Time time)
 				spellMenu.setSpells(Parser::instance().parseSpells("ember", GameData::instance().getEmber().getLevel()));
 				break;
 			case 2:
-				spellMenu.setSpells(Parser::instance().parseSpells("thunder", GameData::instance().getThunder().getLevel()));
+				spellMenu.setSpells(Parser::instance().parseSpells("thunder", GameData::instance().getThunder().getLevel()));std::cout << "sdfsdfsd: " + std::to_string(currentAttacking) << std::endl;
 				break;
 			default:
 				break;
@@ -470,6 +511,7 @@ void Battle::update(sf::Time time)
 	}
 	if(allDead && state != ENDED)
 	{
+		SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.2));
 		state = ENDED;
 		log.setString(L"Бой окончен!");
 		SoundManager::instance().playWinSound();
@@ -481,33 +523,32 @@ void Battle::update(sf::Time time)
 		spellMenu.update(time);
 		if (spellMenu.getSelected() != -1)
 		{
-			state = QTE;
 			menu.clean();
 			menu.disappear();
-			std::cout << std::to_string(currentAttacking) << std::endl;
-			switch (currentAttacking)
+			if (spellMenu.getSelectedSpell().getFileName() == "heal")
 			{
-			case 0:
-				spellQTE.start(spellMenu.getSelectedSpell(), "player");
-				break;
-			case 1:
-				spellQTE.start(spellMenu.getSelectedSpell(), "red");
-				break;
-			case 2:
-				spellQTE.start(spellMenu.getSelectedSpell(), "blue");
-				break;
-			default:
-				break;
-			}
-	
-			if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "space")
-			{
-				currentBackground = spaceType; SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.1));
+				state = HEROSELECT;
+				log.setString(L"Выберите героя.");
 			}
 			else
 			{
-				currentBackground = fireType; SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.1));
-			}
+				state = QTE;
+
+				switch (currentAttacking)
+				{
+				case 0:
+					spellQTE.start(spellMenu.getSelectedSpell(), "player");
+					break;
+				case 1:
+					spellQTE.start(spellMenu.getSelectedSpell(), "red");
+					break;
+				case 2:
+					spellQTE.start(spellMenu.getSelectedSpell(), "blue");
+					break;
+				default:
+					break;
+				}
+			}		
 		}
 	}
 
@@ -522,6 +563,7 @@ void Battle::update(sf::Time time)
 
 		if (spellQTE.isEnded())
 		{
+			SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.2));
 			state = PLAYER;
 			bool stop;
 			do
@@ -555,10 +597,42 @@ void Battle::update(sf::Time time)
 			}
 		}
 		spellQTE.update(time);
+
+		if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "space")
+		{
+			currentBackground = spaceType;
+		}
+		else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "fire")
+		{
+			currentBackground = fireType;
+		}
+		else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "light")
+		{
+			currentBackground = lightType;
+		}
+		else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "sback")
+		{
+			currentBackground = sbackType;
+		}
+		else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "creo")
+		{
+			currentBackground = creoType;
+		}
+		else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "shards")
+		{
+			currentBackground = shardsType;
+		}
 	}
 	else
 	{
-		currentBackground = fireType; 
+		if (Level::instance().getDay() == 1)
+		{
+			currentBackground = sbackType;
+		}
+		else
+		{
+			currentBackground = fireType;
+		}
 	}
 
 	//Hit effects
@@ -568,19 +642,10 @@ void Battle::update(sf::Time time)
 	{
 		//Update shader
 		space.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
-		space.setParameter("seconds", seconds / 100.0);
+		space.setParameter("seconds", seconds / 50.0);
 		space.setParameter("texture1", background);
 		space.setParameter("texture2", background2);
-		if (state == QTE)
-		{
-			seconds+=1;
-			//fire.setParameter("type", 1);		
-		}
-		else
-		{
-			seconds+=0.5;
-			//fire.setParameter("type", 0);
-		}
+		seconds+=1;
 	}
 	else if (currentBackground == fireType)
 	{
@@ -597,6 +662,35 @@ void Battle::update(sf::Time time)
 			seconds++;
 			fire.setParameter("type", 0);
 		}
+	}
+	else if (currentBackground == sbackType)
+	{
+		//Update shader
+		sback.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+		sback.setParameter("seconds", seconds);
+		seconds++;
+	}
+	else if (currentBackground == lightType)
+	{
+		//Update shader
+		light.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+		light.setParameter("seconds", seconds);
+		light.setParameter("pts", 10.f);
+		seconds++;
+	}
+	else if (currentBackground == creoType)
+	{
+		//Update shader
+		creo.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+		creo.setParameter("seconds", seconds);
+		seconds++;
+	}
+	else if (currentBackground == shardsType)
+	{
+		//Update shader
+		shards.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+		shards.setParameter("seconds", seconds/100.f);
+		seconds++;
 	}
 
 	if (GameData::instance().getPlayer().getHP() == 0)
@@ -628,56 +722,119 @@ void Battle::update(sf::Time time)
 void Battle::damageSpell()
 {
 	unsigned int dmg;
+	if (spellMenu.getSelectedSpell().getFileName() != "heal")
+	{
+		switch (currentAttacking)
+		{
+		case 0:
+			dmg = (GameData::instance().getPlayer().getIntelligence() / 4) + (rand() % (int)(2));
+			break;
+		case 1:
+			dmg = (GameData::instance().getEmber().getIntelligence() / 4) + (rand() % (int)(2));
+			break;
+		case 2:
+			dmg = (GameData::instance().getThunder().getIntelligence() / 4) + (rand() % (int)(2));
+			break;
+		default:
+			break;
+		} 
+
+		enemies[selected].playAnimation();
+		enemies[selected].getMonster().receiveDamage(dmg);
+
+		if (enemies[selected].isDied())
+		{
+			res.playerXP += enemies[selected].getMonster().getMaxHP();
+			res.emberXP += enemies[selected].getMonster().getMaxHP();
+			res.thunderXP += enemies[selected].getMonster().getMaxHP();
+			//Select next alive enemy
+			for (auto i = enemies.begin(); i != enemies.end(); i++)
+			{
+				if (!i->isDied())
+				{
+					selected = i - enemies.begin();
+				}
+			}
+		}
+
+		SoundManager::instance().playHurtSound();
+	}
+	else
+	{
+		switch (currentAttacking)
+		{
+		case 0:
+			dmg = (GameData::instance().getPlayer().getIntelligence() / 4) + (rand() % (int)(2));
+			break;
+		case 1:
+			dmg = (GameData::instance().getEmber().getIntelligence() / 4) + (rand() % (int)(2));
+			break;
+		case 2:
+			dmg = (GameData::instance().getThunder().getIntelligence() / 4) + (rand() % (int)(2));
+			break;
+		default:
+			break;
+		}
+
+		std::cout << std::to_string(selectedHero) + " wdfsdfdsfsdfsdf" << std::endl;
+
+		switch (selectedHero)
+		{
+		case 0:
+			GameData::instance().getPlayer().addHP(dmg);
+			break;
+		case 1:
+			GameData::instance().getEmber().addHP(dmg);
+			break;
+		case 2:
+			GameData::instance().getThunder().addHP(dmg);
+			break;
+		default:
+			break;
+		} 
+
+		SoundManager::instance().playHurtSound();
+	}
+}
+
+void Battle::selectHero()
+{
+	state = QTE;
+
 	switch (currentAttacking)
 	{
 	case 0:
-		dmg = (GameData::instance().getPlayer().getIntelligence() / 4) + (rand() % (int)(2));
+		spellQTE.start(spellMenu.getSelectedSpell(), "player");
 		break;
 	case 1:
-		dmg = (GameData::instance().getEmber().getIntelligence() / 4) + (rand() % (int)(2));
+		spellQTE.start(spellMenu.getSelectedSpell(), "red");
 		break;
 	case 2:
-		dmg = (GameData::instance().getThunder().getIntelligence() / 4) + (rand() % (int)(2));
+		spellQTE.start(spellMenu.getSelectedSpell(), "blue");
 		break;
 	default:
 		break;
-	} 
-
-	enemies[selected].playAnimation();
-	enemies[selected].getMonster().receiveDamage(dmg);
-
-	if (enemies[selected].isDied())
-	{
-		res.playerXP += enemies[selected].getMonster().getMaxHP();
-		res.emberXP += enemies[selected].getMonster().getMaxHP();
-		res.thunderXP += enemies[selected].getMonster().getMaxHP();
-		//Select next alive enemy
-		for (auto i = enemies.begin(); i != enemies.end(); i++)
-		{
-			if (!i->isDied())
-			{
-				selected = i - enemies.begin();
-			}
-		}
 	}
-
-	SoundManager::instance().playHurtSound();
 }
 
 void Battle::damageMonster()
 {
 	int dmg;
+	sf::String tmpw;
 	//Count damage
 	switch (currentAttacking)
 	{
 	case 0:
 		dmg = (GameData::instance().getPlayer().getStrength() / 4 + GameData::instance().getPlayer().getAgility() / 5 + GameData::instance().getPlayer().getIntelligence() / 6) + (rand() % (int)(2));
+		tmpw = L"Игрок";
 		break;
 	case 1:
 		dmg = (GameData::instance().getEmber().getStrength() / 4 + GameData::instance().getEmber().getAgility() / 5 + GameData::instance().getEmber().getIntelligence() / 6) + (rand() % (int)(2));
+		tmpw = L"Эмбер";
 		break;
 	case 2:
 		dmg = (GameData::instance().getThunder().getStrength() / 4 + GameData::instance().getThunder().getAgility() / 5 + GameData::instance().getThunder().getIntelligence() / 6) + (rand() % (int)(2));
+		tmpw = L"Сандер";
 		break;
 	default:
 		break;
@@ -687,6 +844,9 @@ void Battle::damageMonster()
 
 	enemies[selected].playAnimation();
 	enemies[selected].getMonster().receiveDamage(dmg);
+
+	log.stop();
+	log.setString(tmpw.toWideString() + L" наносит " + std::to_wstring(dmg) + L" урона. Отличный удар!");
 
 	if (enemies[selected].isDied())
 	{
@@ -727,11 +887,6 @@ void Battle::nextPlayerStep()
 			}
 		}
 		while (!stop);
-		if (currentAttacking >= 3)
-		{
-			currentAttacking = 0;
-			state = AI;
-		}
 	}
 }
 
@@ -815,6 +970,35 @@ void Battle::input(sf::Event &event)
 		menu.input(event);
 	}
 
+	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X)
+	{
+		if (currentAttacking >= 3 && state == PLAYER && log.isRead())
+		{
+			currentAttacking = 0;
+			state = AI;
+		}
+	}
+
+	//Select fucking hero
+	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X && state == HEROSELECT)
+	{
+		switch (selectedHero)
+		{
+		case 0:
+			if (GameData::instance().getPlayer().getHP() > 0) selectHero();
+			break;
+		case 1:
+			if (GameData::instance().getEmber().getHP() > 0) selectHero();
+			break;
+		case 2:
+			if (GameData::instance().getThunder().getHP() > 0) selectHero();
+			break;
+		default:
+			break;
+		} 
+		log.stop();
+	}
+
 	//Input qtes
 	if (state == QTE)
 	{
@@ -894,6 +1078,44 @@ void Battle::input(sf::Event &event)
 				else
 				{
 					selected = 0;
+				}
+			} while (enemies[selected].isDied());	
+
+			SoundManager::instance().playSelectSound();
+		}
+	}
+
+	//Update selected hero FUCK IT FFS
+	if (state == HEROSELECT)
+	{
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Left && !menu.isWorking())
+		{
+			do 
+			{
+				if (selectedHero > 0)
+				{
+					selectedHero--;
+				}
+				else
+				{
+					selectedHero = 2;
+				}
+			} while (enemies[selected].isDied());
+
+
+			SoundManager::instance().playSelectSound();
+		}
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Right && !menu.isWorking())
+		{
+			do 
+			{
+				if (selectedHero < 2)
+				{
+					selectedHero++;
+				}
+				else
+				{
+					selectedHero = 0;
 				}
 			} while (enemies[selected].isDied());	
 

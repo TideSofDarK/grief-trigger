@@ -30,7 +30,7 @@ void Squad::init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap)
 		monsters.push_back(newMonster);
 	}
 
-	sprite.setTexture(TextureManager::instance().getTexture("assets/player.png"));
+	sprite.setTexture(TextureManager::instance().getTexture("assets/slug.png"));
 	sprite.setPosition(pos);
 
 	for (int a = 0; a < 4; a++)
@@ -41,12 +41,12 @@ void Squad::init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap)
 		}
 	}
 
-	animator.addAnimation("up", animations[DIR_UP], sf::seconds(0.9f));
-	animator.addAnimation("right", animations[DIR_RIGHT], sf::seconds(0.9f));
-	animator.addAnimation("left", animations[DIR_LEFT], sf::seconds(0.9f));
-	animator.addAnimation("down", animations[DIR_DOWN], sf::seconds(0.9f));
+	animator.addAnimation("up", animations[DIR_UP], sf::seconds(1.3f));
+	animator.addAnimation("right", animations[DIR_RIGHT], sf::seconds(1.3f));
+	animator.addAnimation("left", animations[DIR_LEFT], sf::seconds(1.3f));
+	animator.addAnimation("down", animations[DIR_DOWN], sf::seconds(1.3f));
 
-	animator.playAnimation("down");
+	animator.playAnimation("down", true);
 
 	nx = sprite.getPosition().x;
 	ny = sprite.getPosition().y;
@@ -95,22 +95,22 @@ void Squad::update(sf::Time time)
 	{
 		/*if (SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().x == sprite.getPosition().x + CHARACTER_SIZE && SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().y == sprite.getPosition().y)
 		{
-			SceneManager::instance().initBattle(*this);
+		SceneManager::instance().initBattle(*this);
 		}
 		else if (SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().x == sprite.getPosition().x - CHARACTER_SIZE && SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().y == sprite.getPosition().y)
 		{
-			SceneManager::instance().initBattle(*this);
+		SceneManager::instance().initBattle(*this);
 		}
 		else if (SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().x == sprite.getPosition().x && SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().y == sprite.getPosition().y + CHARACTER_SIZE)
 		{
-			SceneManager::instance().initBattle(*this);
+		SceneManager::instance().initBattle(*this);
 		}
 		else if (SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().x == sprite.getPosition().x && SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().y == sprite.getPosition().y - CHARACTER_SIZE)
 		{
-			SceneManager::instance().initBattle(*this);	
+		SceneManager::instance().initBattle(*this);	
 		}*/
 	}
-	
+
 	if (walking)
 	{
 		if(direction == DIR_UP)
@@ -123,7 +123,7 @@ void Squad::update(sf::Time time)
 				walking = false;
 				direction = DIR_IDLE;
 
-				animator.stopAnimation();
+				if (Level::instance().getDay() != 1) animator.stopAnimation();
 			}
 		}
 		else if(direction == DIR_DOWN)
@@ -136,7 +136,7 @@ void Squad::update(sf::Time time)
 				walking = false;
 				direction = DIR_IDLE;
 
-				animator.stopAnimation();
+				if (Level::instance().getDay() != 1) animator.stopAnimation();
 			}
 		}
 		else if(direction == DIR_LEFT)
@@ -149,7 +149,7 @@ void Squad::update(sf::Time time)
 				walking = false;
 				direction = DIR_IDLE;
 
-				animator.stopAnimation();
+				if (Level::instance().getDay() != 1) animator.stopAnimation();
 			}
 		}
 		else if(direction == DIR_RIGHT)
@@ -162,7 +162,7 @@ void Squad::update(sf::Time time)
 				walking = false;
 				direction = DIR_IDLE;
 
-				animator.stopAnimation();
+				if (Level::instance().getDay() != 1) animator.stopAnimation();
 			}
 		}
 	}
@@ -241,16 +241,16 @@ void Squad::step(int dir)
 			switch (dir)
 			{
 			case DIR_UP:
-				animator.playAnimation("up", false);			
+				animator.playAnimation("up", Level::instance().getDay() != 1 ? true : false);			
 				break;
 			case DIR_DOWN:
-				animator.playAnimation("down", false);
+				animator.playAnimation("down", Level::instance().getDay() != 1 ? true : false);
 				break;
 			case DIR_LEFT:
-				animator.playAnimation("left", false);
+				animator.playAnimation("left", Level::instance().getDay() != 1 ? true : false);
 				break;
 			case DIR_RIGHT:
-				animator.playAnimation("right", false);
+				animator.playAnimation("right", Level::instance().getDay() != 1 ? true : false);
 				break;
 			default:
 				break;

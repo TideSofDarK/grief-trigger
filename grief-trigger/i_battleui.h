@@ -140,6 +140,8 @@ class SpellMenu
 private:
 	typedef enum SPELLMENU_STATE { IDLE, WORKING, TRANSITION };
 
+	sf::Text		descr;
+
 	class Item
 	{
 	private:
@@ -148,18 +150,7 @@ private:
 		Spell			spell;
 
 	public:
-		Item(Spell &newSpell)
-		{
-			text.setFont(DFont::instance().getFont());
-			spell = newSpell;
-			sprite.setTexture(TextureManager::instance().getTexture("assets/" + spell.getFileName() + ".png"));
-
-			std::wstring string =  L", очков маны: " + std::to_wstring(spell.getMana());
-			std::wstring string4 = spell.getName() + string;
-
-			text.setString(string4);
-			text.setColor(sf::Color::White);
-		};
+		Item(Spell &newSpell);
 		void update(bool selected)
 		{
 			if (selected)
@@ -181,6 +172,8 @@ private:
 		sf::Vector2f getPosition() {return sprite.getPosition();};
 		void move(sf::Vector2f m) {sprite.move(m);};
 		Spell &getSpell(){return spell;};
+		sf::Sprite &getSprite(){return sprite;};
+		void setColor(sf::Color c){sprite.setColor(c);};
 	};
 
 	SPELLMENU_STATE		state;
@@ -189,8 +182,6 @@ private:
 
 	unsigned int		selection;
 	unsigned int		selected;
-
-	sf::Font			font;
 
 	sf::RectangleShape	horizontalPointer;
 	sf::RectangleShape	verticalPointer;
@@ -201,8 +192,9 @@ private:
 public:
 	SpellMenu()
 	{
+		descr.setFont(DFont::instance().getFont());
+		descr.setColor(sf::Color::White);
 		state = IDLE;
-		font.loadFromFile(fontPath);
 		horizontalPointer = sf::RectangleShape(sf::Vector2f(WIDTH, CHARACTER_SIZE));
 		verticalPointer = sf::RectangleShape(sf::Vector2f(CHARACTER_SIZE, HEIGHT));
 	};

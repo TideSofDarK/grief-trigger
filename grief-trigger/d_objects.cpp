@@ -2,6 +2,7 @@
 
 #include "d_resourcesmanager.h"
 #include "h_config.h"
+#include "d_gamedata.H"
 
 Door::Door()
 {}
@@ -9,8 +10,14 @@ Door::Door()
 void Door::init(sf::Vector2f pos, tmx::MapObject &obj)
 {
 	object = &obj;
-	sprite.setPosition(pos);
-	sprite.setTexture(TextureManager::instance().getTexture("assets/tileset.png"));
+	sprite.setPosition(pos);	
+	switch (Level::instance().getDay())
+	{
+	case 1:
+		sprite.setTexture(TextureManager::instance().getTexture("assets/castle.png"));
+	default:
+		break;
+	}
 	sprite.setTextureRect(sf::IntRect(192, 96, CHARACTER_SIZE, CHARACTER_SIZE));
 
 	opened = false;
@@ -111,4 +118,34 @@ void Swing::update(sf::Time time)
 	{
 		working = false;
 	}
+}
+
+Column::Column()
+{}
+
+void Column::init(sf::Vector2f pos, tmx::MapObject &obj)
+{
+	object = &obj;
+	spriteUpper.setPosition(pos.x, pos.y- CHARACTER_SIZE);	
+	spriteUpper.setTexture(TextureManager::instance().getTexture("assets/castle.png"));
+	spriteUpper.setTextureRect(sf::IntRect(96, 192, CHARACTER_SIZE, CHARACTER_SIZE));
+
+	sprite.setPosition(pos);	
+	sprite.setTexture(TextureManager::instance().getTexture("assets/castle.png"));
+	sprite.setTextureRect(sf::IntRect(96, 192 + CHARACTER_SIZE, CHARACTER_SIZE, CHARACTER_SIZE));
+}
+
+void Column::draw(sf::RenderTarget &tg)
+{
+	tg.draw(sprite);
+}
+
+void Column::drawUpper(sf::RenderTarget &tg)
+{
+	tg.draw(spriteUpper);
+}
+
+tmx::MapObject& Column::getOnMap()
+{
+	return *object;
 }

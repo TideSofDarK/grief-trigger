@@ -17,6 +17,7 @@
 
 #include "h_config.h"
 #include "d_resourcesmanager.h"
+#include "i_ui.h"
 
 class DialoguePanel
 {
@@ -28,11 +29,6 @@ public:
 	}
 
 private:
-	DialoguePanel() {};
-	DialoguePanel( const DialoguePanel& );
-	DialoguePanel& operator =( const DialoguePanel& );
-
-protected:
 	//Font size
 	static const unsigned int fontSize =		40;
 
@@ -41,6 +37,8 @@ protected:
 
 	//Simple shape pointer
 	sf::RectangleShape							pointer;
+
+	Tip											tip;
 
 	//Default clock
 	sf::Clock									clock;
@@ -89,10 +87,22 @@ protected:
 	//Tweener itself
 	CDBTweener									oTweener;
 
-	bool										nextScene;
+	bool										nextS;
+
+private:
+	DialoguePanel() : tip(L"Продолжить", _X, "black") {};
+	DialoguePanel( const DialoguePanel& );
+	DialoguePanel& operator =( const DialoguePanel& );
 
 public:
 	void init();
+	void clean()
+	{
+		lastName ="";
+		lastSituation = "";
+		sf::Texture t;
+		art.setTexture(t);
+	};
 	void openDialogue(std::string name, std::string situation);
 	void update();
 	void input(sf::Event &event);

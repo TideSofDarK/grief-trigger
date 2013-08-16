@@ -8,6 +8,8 @@
 
 #include <SFML/Graphics.hpp>
 
+#include <THOR/Particles.hpp>
+
 #include <pugixml/pugixml.hpp>
 
 #include "os_dbtweener.h"
@@ -60,7 +62,7 @@ class Battle
 {
 private:
 	//Current state
-	typedef enum { PLAYER, AI, SPELL, QTE, ENDED } BATTLE_STATE;
+	typedef enum { PLAYER, AI, SPELL, QTE, ENDED, HEROSELECT } BATTLE_STATE;
 	BATTLE_STATE				state;
 	unsigned int				turnNumber;
 	int							currentAttacking;
@@ -94,13 +96,23 @@ private:
 	//Spizhenniy background
 	static const int fireType = 0;
 	static const int spaceType = 1;
+	static const int sbackType = 2;
+	static const int lightType = 3;
+	static const int creoType = 4;
+	static const int shardsType = 5;
 	unsigned int				currentBackground;
 	sf::Shader					fire;
 	sf::Shader					space;
+	sf::Shader					sback;
+	sf::Shader					light;
+	sf::Shader					creo;
+	sf::Shader					shards;
 	unsigned int				seconds;
 	sf::Texture					background;
 	sf::Texture					background2;
 	sf::Texture					background3;
+
+	unsigned int				selectedHero;
 
 	//HP Bars
 	Bar							emberHPBar;
@@ -159,6 +171,7 @@ public:
 	void nextPlayerStep();
 	void damageSpell();
 	void clean();
+	void selectHero();
 };
 
 #endif

@@ -51,6 +51,9 @@ public:
 	std::string getMusic(unsigned int day, unsigned int scene);
 	std::string goNext(std::string name, std::string situation);
 	std::string getPortrait(std::string name, std::string situation);
+	std::string getSpellType(std::string spell);
+	std::wstring getDescr(std::string spell);
+	unsigned int getSpellLevel(std::string spell);
 };
 
 #endif

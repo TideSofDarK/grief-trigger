@@ -143,6 +143,7 @@ public:
 		{
 			music.openFromFile(next);
 			music.play();
+			
 			transition = false;
 		}	
 		if (!transition && music.getVolume() < 100)

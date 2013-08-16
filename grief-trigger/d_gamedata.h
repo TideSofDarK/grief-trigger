@@ -60,6 +60,7 @@ private:
 	unsigned int level;
 	unsigned int xp;
 	unsigned int maxHP;
+	unsigned int maxMP;
 	unsigned int nextLevelXP;
 
 	unsigned int hpOffset;
@@ -73,7 +74,7 @@ public:
 	HeroStats()
 	{
 		xp = 1;
-		nextLevelXP = 50;
+		nextLevelXP = 100;
 		level = 1;
 	}
 	//Bla-bla-bla
@@ -85,12 +86,32 @@ public:
 	unsigned int &getIntelligence() {return intelligence;};
 	unsigned int &getHP() {return hp;};
 	unsigned int &getMP() {return mp;};
+	unsigned int &getMaxMP() {return maxMP;};
 	unsigned int &getMaxHP() {return maxHP;};
 	unsigned int &getSocial() {return social;};
 	void setStrength(unsigned int newStrength) { strength = newStrength;};
 	void setAgility(unsigned int newAgility) { agility = newAgility;};
 	void setIntelligence(unsigned int newIntelligence) { intelligence = newIntelligence;};
-	void setHP(int newHP) { hp = newHP; if (newHP < 0) hp = 0;};
+	void setHP(int newHP)
+	{ 
+		hp = newHP; 
+		if (newHP < 0) 
+		{hp = 0; }
+		if (hp > maxHP && maxHP > 0) {hp = maxHP;}
+	};
+	void addHP(unsigned int newHP)
+	{
+		hp+=newHP;
+		if (hp > maxHP) {hp = maxHP;}
+	}
+	void setMaxHP(unsigned int newMaxHP)
+	{ 
+		maxHP = newMaxHP;
+	};
+	void setMaxMP(unsigned int newMaxMP)
+	{ 
+		maxMP = newMaxMP;
+	};
 	void setMP(unsigned int newMP) {if (newMP >= 0) mp = newMP;};
 	void setSocial(unsigned int newSocial) { social = newSocial;};
 	unsigned int &getStrengthOffset() {return strOffset;};
@@ -169,12 +190,10 @@ public:
 			SoundManager::instance().playDieSound();
 			hp = 0;
 			state = DIED;
-			std::cout << "null" << std::endl;
 		}
 		else
 		{
 			hp -= damage;
-			std::cout << "minus" << std::endl;
 		}
 	};
 
@@ -186,6 +205,8 @@ public:
 		setHP(stats.getHP() >= 0 ? stats.getHP() : 0);
 		setSocial(stats.getSocial() >= 0 ? stats.getSocial() : 0);
 		setMP(stats.getMP() >= 0 ? stats.getMP() : 0);
+		setMaxHP(stats.maxHP);
+		setMaxMP(stats.maxMP);
 	}
 };
 
@@ -213,6 +234,21 @@ public:
 	HeroStats &getPlayer() {return player;};
 	HeroStats &getEmber() {return ember;};
 	HeroStats &getThunder() {return thunder;};
+
+	std::wstring wordWrap3( std::wstring str, size_t width = 20 ) {
+		size_t curWidth = width;
+		while( curWidth < str.length() ) {
+			std::string::size_type spacePos = str.rfind( ' ', curWidth );
+			if( spacePos == std::string::npos )
+				spacePos = str.find( ' ', curWidth );
+			if( spacePos != std::string::npos ) {
+				str[ spacePos ] = '\n';
+				curWidth = spacePos + width + 1;
+			}
+		}
+
+		return str;
+	}
 };
 
 #endif

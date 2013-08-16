@@ -48,7 +48,7 @@ void DialoguePanel::init()
 
 	hide();
 
-	nextScene = false;
+	nextS = false;
 }
 
 void DialoguePanel::stop()
@@ -75,6 +75,8 @@ std::wstring wordWrap( std::wstring str, size_t width = 40 ) {
 
 void DialoguePanel::openDialogue(std::string name, std::string situation)
 {
+	std::cout << "dsfsdfsdfsdfsdfsd\n";
+
 	selected = 0;
 	isAnswering = false;
 
@@ -93,11 +95,19 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		//Load new art image
 		if (lastName != name) {
 			lastName = name;
-			//art.setTexture(TextureManager::instance().getTexture("assets/" + lastName + "_art.png"));
-			art.setTexture(TextureManager::instance().getTexture("assets/" + Parser::instance().getPortrait(name, lastSituation) + ".png"));
 		}
 
-		art.setTexture(TextureManager::instance().getTexture("assets/" + Parser::instance().getPortrait(name, lastSituation) + ".png"));
+		if (Parser::instance().getPortrait(name, lastSituation) == "")
+		{
+			sf::Texture t;
+			art.setTexture(t);
+		}
+		else
+		{
+			art.setTexture(TextureManager::instance().getTexture("assets/" + Parser::instance().getPortrait(name, lastSituation) + ".png"));
+		}
+		
+		art.setTextureRect(sf::IntRect(0,0,400, 800));
 
 		//If next string is
 		if (nextString != L"") 
@@ -155,11 +165,11 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 
 		if (Parser::instance().isLast(name, lastSituation) == true)
 		{
-			nextScene = true;
+			nextS = true;
 		}
 		else
 		{
-			nextScene = false;
+			nextS = false;
 		}
 
 		//Reset variables
@@ -202,7 +212,7 @@ bool DialoguePanel::showAnswers()
 
 void DialoguePanel::hide()
 {
-	if (nextScene == true)
+	if (nextS == true)
 	{
 		Level::instance().nextScene();
 		SceneManager::instance().startTransition(Parser::instance().getSceneInfo(Level::instance().getDay(), Level::instance().getScene()));
@@ -230,11 +240,14 @@ void DialoguePanel::update()
 			background.setPosition(0, nby);
 			art.setPosition(nax, 0);
 			clock.restart();
+			tip.setString(L"");
 		}
 		else
 		{
+			tip.setString(L"Продолжить");
 			if (ended == false)
 			{
+				tip.setString(L"Остановить");
 				if (elapsed > 60 && character < actualString.length())
 				{
 					//Play sound if it is not a space
@@ -258,6 +271,7 @@ void DialoguePanel::update()
 			}
 			if (isAnswering)
 			{
+				tip.setString(L"Ответить");
 				pointer.setPosition(answers[selected].getPosition().x, answers[selected].getPosition().y + fontSize / 6);
 				pointer.setSize(sf::Vector2f(answers[selected].getGlobalBounds().width, fontSize));
 			}
@@ -345,6 +359,11 @@ void DialoguePanel::draw(sf::RenderTarget &rt)
 		{
 			rt.draw(text);
 		}
+
+		if (nby == 0 && nax == 0)
+		{
+			tip.draw(rt, sf::Vector2f(940, 701));
+		}		
 	}
 }
 

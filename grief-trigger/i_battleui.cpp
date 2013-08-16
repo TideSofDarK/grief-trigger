@@ -4,7 +4,7 @@
 
 #include "g_scenemanager.h"
 
-sf::Vector2f interpolate(
+sf::Vector2f interpolateVector(
 	const sf::Vector2f& pointA,
 	const sf::Vector2f& pointB,
 	float factor
@@ -66,7 +66,7 @@ void Logger::update(sf::Time time)
 				SoundManager::instance().playClickSound();
 			}
 			clock.restart();
-			character++;
+			character+=2;
 			text.setString( sf::String(actualString.substr(0, character)));				
 		}
 		else if (character >= actualString.length())
@@ -95,6 +95,7 @@ void Logger::stop()
 
 void Logger::setString(std::wstring str)
 {
+	stop();
 	if (ended) 
 	{
 		ended = false;
@@ -107,9 +108,11 @@ void Logger::setString(std::wstring str)
 
 Damage::Damage(sf::Vector2f pos, std::string str)
 {
-	text = sf::Text(str, DFont::instance().getFont(), 80);
+	text = sf::Text(str, DFont::instance().getGothicFont(), 80);
 	text.setColor(sf::Color::Red);
 	text.setPosition(pos);
+	text.setStyle(sf::Text::Bold);
+	text.move((rand() % (int)(11)), (rand() % (int)(1)));
 
 	active = true;
 
@@ -391,6 +394,36 @@ void SpellMenu::setSpells(std::vector<Spell> newSpells)
 	std::cout << "work" << std::endl;
 }
 
+SpellMenu::Item::Item(Spell &newSpell)
+{
+	text.setFont(DFont::instance().getFont());
+	spell = newSpell;
+	int diff;
+	if (GameData::instance().getPlayer().getLevel() - Parser::instance().getSpellLevel(spell.getFileName()) == 0)
+	{
+		diff = 1;
+	}
+	if (GameData::instance().getPlayer().getLevel() - Parser::instance().getSpellLevel(spell.getFileName()) == 1)
+	{
+		diff = 2;
+	}
+	if (GameData::instance().getPlayer().getLevel() - Parser::instance().getSpellLevel(spell.getFileName()) >= 2)
+	{
+		diff = 3;
+	}
+	if (GameData::instance().getPlayer().getLevel() < Parser::instance().getSpellLevel(spell.getFileName()))
+	{
+		diff = 1;
+	}
+	sprite.setTexture(TextureManager::instance().getTexture("assets/icons/" + spell.getFileName() + "_" + std::to_string(diff) + ".png"));
+
+	std::wstring string =  L", очков маны: " + std::to_wstring(spell.getMana());
+	std::wstring string4 = spell.getName() + string;
+
+	text.setString(string4);
+	text.setColor(sf::Color::White);
+}
+
 void SpellMenu::draw(sf::RenderTarget &tg)
 {
 	if (state != IDLE)
@@ -415,9 +448,34 @@ void SpellMenu::draw(sf::RenderTarget &tg)
 
 		for (auto i = spells.begin(); i != spells.end(); i++)
 		{
+			if (Parser::instance().getSpellLevel(i->getSpell().getFileName()) > GameData::instance().getPlayer().getLevel())
+			{
+				i->setColor(sf::Color(100,100,100,255));
+			}
+			else
+			{
+				i->setColor(sf::Color(255,255,255,255));
+			}
 			i->draw(tg);
 		}
+
+		tg.draw(descr);
 	}	
+}
+
+std::wstring wordWrap2( std::wstring str, size_t width = 24 ) {
+	size_t curWidth = width;
+	while( curWidth < str.length() ) {
+		std::string::size_type spacePos = str.rfind( ' ', curWidth );
+		if( spacePos == std::string::npos )
+			spacePos = str.find( ' ', curWidth );
+		if( spacePos != std::string::npos ) {
+			str[ spacePos ] = '\n';
+			curWidth = spacePos + width + 1;
+		}
+	}
+
+	return str;
 }
 
 void SpellMenu::input(sf::Event &event)
@@ -426,26 +484,36 @@ void SpellMenu::input(sf::Event &event)
 	{
 		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up)
 		{
-			if (selection > 0)
+			if (selection > 0 && Parser::instance().getSpellLevel(spells[selection].getSpell().getFileName()) <= GameData::instance().getPlayer().getLevel())
 			{
 				selection--;
 			}
 			else
 			{
-				selection = spells.size() - 1;
+				int newSelection = spells.size();
+				do
+				{
+					newSelection--;
+				}
+				while (Parser::instance().getSpellLevel(spells[selection].getSpell().getFileName()) > GameData::instance().getPlayer().getLevel());
 			}
 
 			SoundManager::instance().playSelectSound();
 		}
 		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down)
 		{
-			if (selection + 1 < spells.size())
+			if (selection + 1 < spells.size() && Parser::instance().getSpellLevel(spells[selection + 1].getSpell().getFileName()) <= GameData::instance().getPlayer().getLevel())
 			{
 				selection++;
 			}
 			else
 			{
-				selection = 0;
+				int newSelection = -1;
+				do
+				{
+					newSelection++;
+				}
+				while (Parser::instance().getSpellLevel(spells[selection].getSpell().getFileName()) > GameData::instance().getPlayer().getLevel());
 			}
 
 			SoundManager::instance().playSelectSound();
@@ -468,6 +536,8 @@ void SpellMenu::update(sf::Time time)
 
 		if(state == WORKING)
 		{
+			descr.setString(wordWrap2(Parser::instance().getDescr(spells[selection].getSpell().getFileName())));
+			descr.setPosition(25, horizontalPointer.getPosition().y + CHARACTER_SIZE * 1.5);
 			for (auto i = spells.begin(); i != spells.end(); i++)
 			{
 				i->update(i - spells.begin() == selection ? true : false);
@@ -603,14 +673,14 @@ void SpellQTE::update(sf::Time time)
 					else
 					{
 						//Else move block
-						block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f((WIDTH / 2) - CHARACTER_SIZE * 2, block.sprite.getPosition().y), 0.15));
+						block.sprite.setPosition(interpolateVector(block.sprite.getPosition(), sf::Vector2f((WIDTH / 2) - CHARACTER_SIZE * 2, block.sprite.getPosition().y), 0.15));
 					}
 					break;
 				}
 				else if (i->state == ENDED)
 				{
 					//Move and destroy
-					block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f(-128, block.sprite.getPosition().y), 0.2));
+					block.sprite.setPosition(interpolateVector(block.sprite.getPosition(), sf::Vector2f(-128, block.sprite.getPosition().y), 0.2));
 					if (block.sprite.getPosition().x + 128 == 0)
 					{
 						block.state = SLEEP;
@@ -658,7 +728,7 @@ void SpellQTE::update(sf::Time time)
 				if (block.state == ENDED)
 				{
 					//Move and destroy
-					block.sprite.setPosition(interpolate(block.sprite.getPosition(), sf::Vector2f(-128, block.sprite.getPosition().y), 0.05));
+					block.sprite.setPosition(interpolateVector(block.sprite.getPosition(), sf::Vector2f(-128, block.sprite.getPosition().y), 0.05));
 					block.sprite.setColor(sf::Color(255,255,255,interpolateLinear(block.sprite.getColor().a, 0, 0.1)));
 				}
 			}

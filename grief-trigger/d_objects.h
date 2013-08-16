@@ -74,4 +74,20 @@ public:
 	bool isWorking(){return working;};
 };
 
+class Column : Object
+{
+private:
+	sf::Sprite spriteUpper;
+	sf::Sprite sprite;
+	//Pointer to object on map
+	tmx::MapObject	*object;
+public:
+	Column();
+	void init(sf::Vector2f pos, tmx::MapObject &object);
+	void draw(sf::RenderTarget &tg);
+	void drawUpper(sf::RenderTarget &tg);
+	void update(sf::Time time);
+	tmx::MapObject& getOnMap();
+};
+
 #endif

@@ -228,58 +228,64 @@ bool PlayerObject::step(int dir)
 			if (walking == false && object.GetAABB().intersects(sf::FloatRect(sprite.getPosition().x + movement.x, sprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)) 
 				&& object.GetName() != "" 
 				&& object.GetName() != "hero" 
-				&& object.GetName() != "door"
 				&& object.GetName() != "null")
 			{
 				isMovable = false;
 			}
-		}		
+			if (walking == false && object.GetAABB().intersects(sf::FloatRect(sprite.getPosition().x + movement.x, sprite.getPosition().y + movement.y, CHARACTER_SIZE, CHARACTER_SIZE)) 
+				&& object.GetName() == "door")
+			{
+				for (auto i = SceneManager::instance().getScene().getDoors().begin(); i !=SceneManager::instance().getScene().getDoors().end(); ++i)
+				{
+					if (i->getOnMap().GetPosition() == object.GetPosition())
+					{
+						if (!i->isOpened())
+						{
+							isMovable = false;
+						}
+						else
+						{
+							isMovable = true;
+						}
+					}			
+				}			
+			}
+			if (!isMovable)
+			{
+				break;
+			}
+		}
+
+		direction = dir;
 
 		if(isMovable == true)
 		{
 			if (dir == DIR_DOWN || dir == DIR_UP) nextspot = sprite.getPosition().y + movement.y; 
-			else if (dir == DIR_LEFT || dir == DIR_RIGHT) nextspot = sprite.getPosition().x + movement.x; 
-			direction = dir;
+			else if (dir == DIR_LEFT || dir == DIR_RIGHT) nextspot = sprite.getPosition().x + movement.x; 			
 			walking = true;
 
 			switch (direction)
 			{
 			case DIR_UP:
-				if (animator.isPlayingAnimation() && animator.getPlayingAnimation() != "up")
-				{
-					animator.playAnimation("up", true);
-				}
-				else if (!animator.isPlayingAnimation())
+				if ((animator.isPlayingAnimation() && animator.getPlayingAnimation() != "up") || !animator.isPlayingAnimation())
 				{
 					animator.playAnimation("up", true);
 				}
 				break;
 			case DIR_DOWN:
-				if (animator.isPlayingAnimation() && animator.getPlayingAnimation() != "down")
-				{
-					animator.playAnimation("down", true);
-				}
-				else if (!animator.isPlayingAnimation())
+				if ((animator.isPlayingAnimation() && animator.getPlayingAnimation() != "down") || !animator.isPlayingAnimation())
 				{
 					animator.playAnimation("down", true);
 				}
 				break;
 			case DIR_LEFT:
-				if (animator.isPlayingAnimation() && animator.getPlayingAnimation() != "left")
-				{
-					animator.playAnimation("left", true);
-				}
-				else if (!animator.isPlayingAnimation())
+				if ((animator.isPlayingAnimation() && animator.getPlayingAnimation() != "left") || !animator.isPlayingAnimation())
 				{
 					animator.playAnimation("left", true);
 				}
 				break;
 			case DIR_RIGHT:
-				if (animator.isPlayingAnimation() && animator.getPlayingAnimation() != "right")
-				{
-					animator.playAnimation("right", true);
-				}
-				else if (!animator.isPlayingAnimation())
+				if ((animator.isPlayingAnimation() && animator.getPlayingAnimation() != "right") || !animator.isPlayingAnimation())
 				{
 					animator.playAnimation("right", true);
 				}
@@ -290,7 +296,6 @@ bool PlayerObject::step(int dir)
 		}	
 		else
 		{
-			//animator.stopAnimation();
 			switch (dir)
 			{
 			case DIR_UP:
@@ -308,7 +313,6 @@ bool PlayerObject::step(int dir)
 			default:
 				break;
 			}
-			direction = dir;
 		}
 	}
 

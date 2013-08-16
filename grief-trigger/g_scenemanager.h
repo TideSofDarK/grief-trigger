@@ -25,7 +25,7 @@
 #define SCENE_TYPE_MAP "map"
 #define SCENE_TYPE_CUTSCENE "cutscene"
 
-typedef enum { MAP, BATTLE, TRANSITION, PAUSED, LOADING, RESULT } SCENE_STATE;
+typedef enum { MAP, BATTLE, TRANSITION, PAUSED, LOADING, RESULT, STATS } SCENE_STATE;
 
 static bool resourcesLoaded = false;
 
@@ -37,11 +37,14 @@ private:
 	//State
 	SCENE_STATE			state;
 
+	//Stats window
+	StatsWindow			swindow;
+
 	//Scrolling
 	MapScrollingListener oListener;	
 
 	//Loading thread
-	sf::Thread thread;
+	sf::Thread			thread;
 
 	//Shaders
 	ShaderManager		sm;
@@ -57,6 +60,10 @@ private:
 
 	//The Doors
 	std::vector<NPC>	npcs;
+
+	std::vector<Column>	columns;
+
+	bool				started;
 
 	//Player object
 	PlayerObject		po;
@@ -116,6 +123,10 @@ private:
 	Result				resScreen;
 	bool				startResults;
 
+	//Galaxy back
+	sf::Texture			backTexture;
+	sf::Shader			galaxyBack;
+
 	//Loading resources
 	void				loadResources();
 
@@ -139,6 +150,7 @@ public:
 	std::deque<Squad> &getSquadList();
 	tmx::MapLoader *getMapLoader(){return map;};
 	Camera &getCamera(){return camera;};
+	std::vector<Door> &getDoors(){return doors;};
 };
 
 class SceneManager

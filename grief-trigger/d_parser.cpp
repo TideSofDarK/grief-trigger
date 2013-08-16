@@ -30,9 +30,9 @@ std::vector<std::string> Parser::parseSquad(std::string squad)
 	size_t pos = 0;
 	std::string token;
 	while ((pos = squad.find(';')) != std::string::npos) {
-	    token = squad.substr(0, pos);
-	    monsters.push_back(token);
-	    squad.erase(0, pos + 1);
+		token = squad.substr(0, pos);
+		monsters.push_back(token);
+		squad.erase(0, pos + 1);
 	}
 
 	return monsters;
@@ -151,7 +151,7 @@ std::string Parser::getBackground(std::string spellName)
 			if (spell.name() == spellName)
 			{
 				//std::cout << "sled" << std::endl;
-				return spell.last_attribute().as_string();
+				return spell.attribute("back").as_string();
 			}
 		}
 	}
@@ -171,7 +171,7 @@ std::vector<Spell> Parser::parseSpells(std::string hero, unsigned int level)
 			std::string shit = attr.name();
 			unsigned int shitInt = attr.as_int();
 
-			if (shit == "level" && shitInt <= level)
+			if (shit == "level")
 			{
 				for (pugi::xml_node child: spell.children())
 				{
@@ -186,6 +186,22 @@ std::vector<Spell> Parser::parseSpells(std::string hero, unsigned int level)
 
 	return newSpells;
 }
+
+std::string Parser::getSpellType(std::string spelln)
+{
+	for (pugi::xml_node hero: spellsDoc.children())
+	{
+		for (pugi::xml_node spell: hero.children())
+		{
+			if (spell.name() == spelln)
+			{
+				return spell.attribute("type").as_string();
+			}
+		}
+	}
+	return "";
+}
+
 
 bool Parser::nextScene(unsigned int day, unsigned int scene)
 {
@@ -326,4 +342,34 @@ std::string Parser::getPortrait(std::string name, std::string situation)
 	}
 
 	return text.attribute("name").as_string();
+}
+
+std::wstring Parser::getDescr(std::string sname)
+{
+	for (pugi::xml_node hero: spellsDoc.children())
+	{
+		for (pugi::xml_node spell: hero.children())
+		{
+			if (spell.name() == sname)
+			{
+				return pugi::as_wide(spell.attribute("descr").value());
+			}
+		}
+	}
+	return L"";
+}
+
+unsigned int Parser::getSpellLevel(std::string sname)
+{
+	for (pugi::xml_node hero: spellsDoc.children())
+	{
+		for (pugi::xml_node spell: hero.children())
+		{
+			if (spell.name() == sname)
+			{
+				return spell.attribute("level").as_int();
+			}
+		}
+	}
+	return 0;
 }

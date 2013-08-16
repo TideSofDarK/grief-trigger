@@ -11,7 +11,7 @@
 
 void Scene::loadResources()
 {
-	//vingette.setTexture(TextureManager::instance().getTexture("assets/vingette.png"));
+	vingette.setTexture(TextureManager::instance().getTexture("assets/vingette.png"));
 
 	//Init some managers/etc...
 
@@ -27,9 +27,13 @@ void Scene::loadResources()
 
 	pm.init("assets/smoke.png");
 
+	galaxyBack.loadFromFile("assets/galaxy.frag", sf::Shader::Fragment);
+
 	state = MAP;
 
 	resScreen.loadResources();
+
+	backTexture.create(WIDTH,HEIGHT);
 
 	resourcesLoaded = true;
 }
@@ -67,10 +71,9 @@ void Scene::init(std::string newType, std::string name, tmx::MapLoader &ml)
 			if (object.GetName() == "hero")
 			{
 				//Set center of camera to player coords
-				camera.setPosition(0, 0);
+				camera.setPosition(object.GetPosition().x - (HALF_WIDTH / 2), object.GetPosition().y - (HALF_HEIGHT / 2));
 				ncx = camera.getPosition().x;
 				ncy = camera.getPosition().y;
-				//camera.setCenter(0 + (HALF_WIDTH / 2), 0 + (HALF_HEIGHT / 2));
 
 				//Init hero object
 				po.init(object.GetPosition(), object);
@@ -89,6 +92,13 @@ void Scene::init(std::string newType, std::string name, tmx::MapLoader &ml)
 				door.init(object.GetPosition(), object);
 				doors.push_back(door);
 			}	
+			else if (object.GetName() == "column")
+			{
+				//Init column
+				Column col;
+				col.init(object.GetPosition(), object);
+				columns.push_back(col);
+			}
 			else if (object.GetName() != "")
 			{
 				//Add NPC
@@ -104,11 +114,7 @@ void Scene::init(std::string newType, std::string name, tmx::MapLoader &ml)
 
 	MusicManager::instance().playMusic(Parser::instance().getMusic(Level::instance().getDay(), Level::instance().getScene()));
 
-	//Start speech if cutscene
-	if (type == SCENE_TYPE_CUTSCENE)
-	{
-		DialoguePanel::instance().openDialogue("cutscene", "day" + std::to_string(Level::instance().getDay()) + "/scene" + std::to_string(Level::instance().getScene()));
-	}
+	started = false;
 }
 
 void Scene::endBattle()
@@ -142,17 +148,18 @@ void Scene::removeTip(std::string type)
 
 void Scene::update(sf::Time time)
 {
+	DialoguePanel::instance().update(); 
 	if (type == SCENE_TYPE_MAP)
 	{
 		if (state != LOADING)
 		{
+			if (state == STATS)
+			{
+				swindow.update(time);
+			}
 			if (state == BATTLE)
 			{
 				battle.update(time);
-			}
-			else
-			{
-				DialoguePanel::instance().update(); 
 			}
 			if (state == TRANSITION)
 			{
@@ -177,6 +184,15 @@ void Scene::update(sf::Time time)
 			}
 			if (state == MAP)
 			{
+				if (po.getSprite().getLocalBounds().intersects(xpbar.getBounds()))
+				{
+					xpbar.setTransparent(true);
+				}
+				else
+				{
+					xpbar.setTransparent(false);
+				}
+
 				/************************************************************************/
 				/* Scrolling															*/
 				/************************************************************************/
@@ -191,45 +207,45 @@ void Scene::update(sf::Time time)
 					}
 					//Update objects only if camera is not moving
 
-					if (po.getSprite().getPosition().y > camera.getPosition().y + HALF_HEIGHT)
+					if (po.getSprite().getPosition().y > camera.getPosition().y + HALF_HEIGHT - (CHARACTER_SIZE*2) )
 					{
 						ncy = camera.getPosition().y;
 						CDBTweener::CTween *pTween = new CDBTweener::CTween();
-						pTween->setEquation(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 1.0f);
-						pTween->addValue(&ncy, ncy + HALF_HEIGHT);
+						pTween->setEquation(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 1.5f);
+						pTween->addValue(&ncy, ncy + (HALF_HEIGHT / 2));
 						pTween->setUserData("Eagle");
 						oTweener.addTween(pTween);
 						oTweener.addListener(&oListener);
 						moving = true;
 					}
-					if(po.getSprite().getPosition().y < camera.getPosition().y)
+					if(po.getSprite().getPosition().y < camera.getPosition().y + (CHARACTER_SIZE*2) )
 					{
 						ncy = camera.getPosition().y;
 						CDBTweener::CTween *pTween = new CDBTweener::CTween();
-						pTween->setEquation(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 1.0f);
-						pTween->addValue(&ncy, ncy - HALF_HEIGHT);
+						pTween->setEquation(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 1.5f);
+						pTween->addValue(&ncy, ncy - (HALF_HEIGHT / 2));
 						pTween->setUserData("Eagle");
 						oTweener.addTween(pTween);
 						oTweener.addListener(&oListener);
 						moving = true;
 					}
-					if (po.getSprite().getPosition().x >= camera.getPosition().x + HALF_WIDTH)
+					if (po.getSprite().getPosition().x >= camera.getPosition().x + HALF_WIDTH - (CHARACTER_SIZE*2) )
 					{
 						ncx = camera.getPosition().x;
 						CDBTweener::CTween *pTween = new CDBTweener::CTween();
-						pTween->setEquation(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 1.0f);
-						pTween->addValue(&ncx, ncx + HALF_WIDTH);
+						pTween->setEquation(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 1.5f);
+						pTween->addValue(&ncx, ncx + (HALF_WIDTH / 2));
 						pTween->setUserData("Eagle");
 						oTweener.addTween(pTween);
 						oTweener.addListener(&oListener);
 						moving = true;
 					}
-					if (po.getSprite().getPosition().x < camera.getPosition().x)
+					if (po.getSprite().getPosition().x < camera.getPosition().x + (CHARACTER_SIZE*2) )
 					{
 						ncx = camera.getPosition().x;
 						CDBTweener::CTween *pTween = new CDBTweener::CTween();
-						pTween->setEquation(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 1.0f);
-						pTween->addValue(&ncx, ncx - HALF_WIDTH);
+						pTween->setEquation(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 1.5f);
+						pTween->addValue(&ncx, ncx - (HALF_WIDTH / 2));
 						pTween->setUserData("Eagle");
 						oTweener.addTween(pTween);
 						oTweener.addListener(&oListener);
@@ -251,7 +267,8 @@ void Scene::update(sf::Time time)
 					for (auto it = doors.begin(); it != doors.end(); ++it)
 					{
 						Door &door = *it;
-						if (!door.isOpened() && door.getOnMap().GetAABB().intersects(sf::FloatRect(po.getSprite().getPosition().x, po.getSprite().getPosition().y - CHARACTER_SIZE, CHARACTER_SIZE, CHARACTER_SIZE * 2)))
+						if ((!door.isOpened() && door.getOnMap().GetAABB().intersects(sf::FloatRect(po.getSprite().getPosition().x, po.getSprite().getPosition().y - CHARACTER_SIZE, CHARACTER_SIZE, CHARACTER_SIZE * 2)))
+							|| (!door.isOpened() && door.getOnMap().GetAABB().intersects(sf::FloatRect(po.getSprite().getPosition().x, po.getSprite().getPosition().y + CHARACTER_SIZE, CHARACTER_SIZE, CHARACTER_SIZE * 2))))
 						{
 							//Some fuking magic with the doors
 							if (tips.size() == 0) tips.push_back(Tip(L"Открыть дверь", _Z, "door"));
@@ -319,7 +336,16 @@ void Scene::update(sf::Time time)
 	}
 	else if (type == SCENE_TYPE_CUTSCENE)
 	{
-		DialoguePanel::instance().update();
+		//Start speech if cutscene
+		if (type == SCENE_TYPE_CUTSCENE && !started && state != LOADING)
+		{
+			DialoguePanel::instance().stop();
+			DialoguePanel::instance().clean();
+			DialoguePanel::instance().hide();
+			DialoguePanel::instance().openDialogue("cutscene", "day" + std::to_string(Level::instance().getDay()) + "/scene" + std::to_string(Level::instance().getScene()));
+			started = true;
+			//DialoguePanel::instance().openDialogue("cutscene", "day1/scene1");
+		}
 	}
 
 	if (state == LOADING) //loading screen
@@ -329,6 +355,10 @@ void Scene::update(sf::Time time)
 		else if (counter % 15 == 0) loadingText.setString("Loading..");
 		else if (counter % 20 == 0) loadingText.setString("Loading...");
 		else if (counter >= 20) counter = 0;
+		counter++;
+	}
+	else
+	{
 		counter++;
 	}
 
@@ -352,6 +382,13 @@ void Scene::draw(sf::RenderTarget &tg)
 			{
 				//Game content
 				finalTexture.setView(camera.getView());
+
+				sf::Sprite spr;
+				spr.setTexture(backTexture);
+				galaxyBack.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+				galaxyBack.setParameter("seconds", counter);
+				finalTexture.draw(spr, &galaxyBack);
+
 				//Map
 				map->Draw(finalTexture);
 				//Enemy squads
@@ -359,20 +396,39 @@ void Scene::draw(sf::RenderTarget &tg)
 				{
 					i->draw(finalTexture);
 				}
+
 				//Player object
-				po.draw(finalTexture);
 				for (auto i = doors.begin(); i != doors.end(); ++i)
 				{
-					i->draw(finalTexture);
+					if (!i->isOpened())
+					{
+						i->draw(finalTexture);
+					}					
 				}
+				for (auto i = columns.begin(); i != columns.end(); ++i)
+				{
+					i->draw(finalTexture);				
+				}
+				po.draw(finalTexture); //poor white guy
+				for (auto i = doors.begin(); i != doors.end(); ++i)
+				{
+					if (i->isOpened())
+					{
+						i->draw(finalTexture);
+					}					
+				}
+				for (auto i = columns.begin(); i != columns.end(); ++i)
+				{
+					i->drawUpper(finalTexture);				
+				}
+
 				for (auto i = npcs.begin(); i != npcs.end(); ++i)
 				{
 					i->draw(finalTexture);
 				}
 				swing.draw(finalTexture);
 
-				//Unscalable
-				finalTexture.draw(vingette);
+				//Unscalable				
 				finalTexture.setView(unscalable);
 
 				//Tips, only if hero is not moving
@@ -384,17 +440,25 @@ void Scene::draw(sf::RenderTarget &tg)
 					}
 				}
 
-				xpbar.draw(finalTexture);
+				
 
 				//Dialogue UI
 				DialoguePanel::instance().draw(finalTexture);
 
+				xpbar.draw(finalTexture);
+				finalTexture.draw(days);
+
 				if (state == RESULT)
 				{
 					resScreen.draw(finalTexture);
-				}
+				}				
+				
+				finalTexture.draw(vingette);	
 
-				finalTexture.draw(days);
+				if (state == STATS)
+				{
+					swindow.draw(finalTexture);
+				}
 			}
 			else if (!swing.isWorking() && state == BATTLE) //Draw battle
 			{
@@ -432,6 +496,8 @@ void Scene::draw(sf::RenderTarget &tg)
 			DialoguePanel::instance().draw(finalTexture);
 			finalTexture.draw(days);
 
+			finalTexture.draw(vingette);
+
 			finalTexture.display();
 
 			sm.draw(finalTexture, tg);
@@ -463,6 +529,7 @@ void Scene::startBattle(Squad &squad)
 void Scene::input(sf::Event &event)
 {
 	DialoguePanel::instance().input(event);
+	if (state == STATS)swindow.input(event);
 	if (type == SCENE_TYPE_MAP)
 	{
 		if (state != LOADING)
@@ -472,6 +539,11 @@ void Scene::input(sf::Event &event)
 				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::E) setCurrentEffect("distortion", sf::seconds(1));
 				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) setCurrentEffect("acid", sf::seconds(1));
 				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P) finalTexture.getTexture().copyToImage().saveToFile("screenshot.png");
+				if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape && state == MAP)
+				{
+					swindow.show();
+					state = STATS;
+				}
 
 				if (state != PAUSED)
 				{
@@ -576,8 +648,6 @@ void SceneManager::input(sf::Event &event)
 
 void SceneManager::initBattle(Squad &squad)
 {
-	//current.setPaused(true);
-	//current.setCurrentEffect("battle", sf::seconds(0.97));
 	current.startBattle(squad);
 }
 

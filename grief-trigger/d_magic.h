@@ -14,6 +14,7 @@ private:
 	sf::String name;
 	sf::String fileName;
 	unsigned int mana;
+	unsigned int level;
 
 	std::vector<int> combo;
 
