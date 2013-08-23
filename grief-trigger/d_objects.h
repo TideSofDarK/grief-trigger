@@ -18,6 +18,71 @@ public:
 	void input(sf::Event &event);
 };
 
+class MoneyEffect : Object
+{
+private:
+	//Portal sprite
+	AnimatedSprite	*sprite;
+	Animation		*anim;
+
+	sf::Vector2f sPos;
+
+	bool visible;
+
+public:
+	MoneyEffect(sf::Vector2f pos);
+	void draw(sf::RenderTarget &tg);
+	void update(sf::Time time);
+};
+
+class ShopCrystal : Object
+{
+private:
+	//Portal sprite
+	AnimatedSprite	*sprite;
+	Animation		*anim;
+
+	//Pointer to object on map
+	tmx::MapObject	*object;
+
+	bool falling;
+
+	sf::Vector2f sPos;
+
+public:
+	ShopCrystal();
+	void init(sf::Vector2f pos, tmx::MapObject &object);
+	void draw(sf::RenderTarget &tg);
+	void update(sf::Time time);
+	tmx::MapObject& getOnMap(){return *object;};
+};
+
+class Portal : Object
+{
+private:
+	//Portal sprite
+	AnimatedSprite	*sprite;
+	Animation		*anim;
+
+	//Pointer to object on map
+	tmx::MapObject	*object;
+
+	//State
+	bool			state;
+
+	bool falling;
+
+	sf::Vector2f sPos;
+
+public:
+	Portal(bool type);
+	void init(sf::Vector2f pos, tmx::MapObject &object);
+	void draw(sf::RenderTarget &tg);
+	void update(sf::Time time);
+	tmx::MapObject& getOnMap(){return *object;};
+	bool getType(){return state;};
+};
+
 class NPC : Object
 {
 private:
@@ -31,6 +96,31 @@ public:
 	NPC();
 	void init(sf::Vector2f pos, tmx::MapObject &object);
 	void draw(sf::RenderTarget &tg);
+	tmx::MapObject& getOnMap();
+};
+
+class Chest : Object
+{
+private:
+	//Chest sprite
+	AnimatedSprite	*sprite;
+	Animation		*anim;
+	Animation		*idle;
+
+	//Is opened
+	bool			opened;
+
+	//Pointer to object on map
+	tmx::MapObject	*object;
+
+public:
+	Chest();
+	void init(sf::Vector2f pos, tmx::MapObject &object);
+	void draw(sf::RenderTarget &tg);
+	void update(sf::Time time);
+	void input(sf::Event &event);
+	void open();
+	bool isOpened();
 	tmx::MapObject& getOnMap();
 };
 

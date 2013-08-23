@@ -49,6 +49,8 @@ private:
 	//Answers list
 	std::vector<sf::Text>						answers;
 
+	sf::Texture t;
+
 	//Background panel
 	sf::Sprite									background;
 	//Tween variable

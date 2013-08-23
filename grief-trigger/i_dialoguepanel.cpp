@@ -1,4 +1,4 @@
-#include "i_dialoguepanel.h"
+ï»¿#include "i_dialoguepanel.h"
 
 #include "d_parser.h"
 #include "d_gamedata.H"
@@ -98,24 +98,51 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		}
 
 		if (Parser::instance().getPortrait(name, lastSituation) == "")
-		{
-			sf::Texture t;
+		{      
+			t.create(400 ,HEIGHT);
 			art.setTexture(t);
+			art.setTextureRect(sf::IntRect(0,0,1, 1));
 		}
 		else
 		{
 			art.setTexture(TextureManager::instance().getTexture("assets/" + Parser::instance().getPortrait(name, lastSituation) + ".png"));
+			art.setTextureRect(sf::IntRect(0,0,400, HEIGHT));
+		}              
+
+		if (Parser::instance().getIntBonus(name, lastSituation) != 0)
+		{
+			GameData::instance().getPlayer().addInt(Parser::instance().getIntBonus(name, lastSituation));
+
+			if (Parser::instance().getIntBonus(name, lastSituation) > 0)
+			{
+				SoundManager::instance().playSuccessSound();
+			}
+			else
+			{
+				SoundManager::instance().playFailSound();
+			}
 		}
-		
-		art.setTextureRect(sf::IntRect(0,0,400, 800));
+		if (Parser::instance().getSocialBonus(name, lastSituation) != 0)
+		{
+			GameData::instance().getPlayer().addSocial(Parser::instance().getSocialBonus(name, lastSituation));
+
+			if (Parser::instance().getSocialBonus(name, lastSituation) > 0)
+			{
+				SoundManager::instance().playSuccessSound();
+			}
+			else
+			{
+				SoundManager::instance().playFailSound();
+			}
+		}
 
 		//If next string is
-		if (nextString != L"") 
+		if (nextString != L"")
 		{
 			actualString = nextString;
 			nextString = L"";
 		}
-		else 
+		else
 		{
 			actualString = Parser::instance().parseDialogue(name, lastSituation);
 		}
@@ -154,14 +181,17 @@ void DialoguePanel::openDialogue(std::string name, std::string situation)
 		if (!visible)
 		{
 			nby = HALF_HEIGHT;
-			oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 0.3f, &nby, 0.0f);
+			oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 0.6f, &nby, 0.0f);
 
 			nax = -400;
-			oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 0.3f, &nax, 0.0f);
+			oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 0.6f, &nax, 0.0f);
 
 			background.setPosition(0, nby);
 			art.setPosition(nax, 0);
 		}
+
+		background.setColor(sf::Color(255,255,255,0));
+		//art.setColor(sf::Color(255,255,255,0));
 
 		if (Parser::instance().isLast(name, lastSituation) == true)
 		{
@@ -212,7 +242,7 @@ bool DialoguePanel::showAnswers()
 
 void DialoguePanel::hide()
 {
-	if (nextS == true)
+	if (Parser::instance().isLast(lastName, lastSituation))
 	{
 		Level::instance().nextScene();
 		SceneManager::instance().startTransition(Parser::instance().getSceneInfo(Level::instance().getDay(), Level::instance().getScene()));
@@ -231,6 +261,9 @@ void DialoguePanel::update()
 {
 	if (visible)
 	{
+		art.setColor(sf::Color(255,255,255,interpolateLinear(art.getColor().a, 255, 0.2f)));
+		background.setColor(sf::Color(255,255,255,interpolateLinear(background.getColor().a, 255, 0.2f)));
+
 		sf::Uint32 elapsed = clock.getElapsedTime().asMilliseconds();
 
 		//Update tween if animation is not ended
@@ -244,10 +277,10 @@ void DialoguePanel::update()
 		}
 		else
 		{
-			tip.setString(L"Ïğîäîëæèòü");
+			tip.setString(L"ĞÑÑ‚Ğ°Ğ½Ğ¾Ğ²Ğ¸Ñ‚ÑŒ");
 			if (ended == false)
 			{
-				tip.setString(L"Îñòàíîâèòü");
+				tip.setString(L"ĞŸÑ€Ğ¾Ğ´Ğ¾Ğ»Ğ¶Ğ¸Ñ‚ÑŒ");
 				if (elapsed > 60 && character < actualString.length())
 				{
 					//Play sound if it is not a space
@@ -271,7 +304,7 @@ void DialoguePanel::update()
 			}
 			if (isAnswering)
 			{
-				tip.setString(L"Îòâåòèòü");
+				tip.setString(L"ĞÑ‚Ğ²ĞµÑ‚Ğ¸Ñ‚ÑŒ");
 				pointer.setPosition(answers[selected].getPosition().x, answers[selected].getPosition().y + fontSize / 6);
 				pointer.setSize(sf::Vector2f(answers[selected].getGlobalBounds().width, fontSize));
 			}
@@ -311,13 +344,13 @@ void DialoguePanel::input(sf::Event &event)
 				if (nextString == L"")
 				{
 					//std::cout << lastSituation + "\n";
-					
+
 					hide();
-						
+
 					if (showAnswers() == false) 
 					{
 						if (Parser::instance().goNext(lastName, lastSituation) != "")
-							{
+						{
 							openDialogue(lastName, Parser::instance().goNext(lastName, lastSituation));
 						}
 					}										
@@ -357,7 +390,10 @@ void DialoguePanel::draw(sf::RenderTarget &rt)
 		}
 		else
 		{
-			rt.draw(text);
+			if (background.getPosition().y == 0.0)
+			{
+				rt.draw(text);
+			}			
 		}
 
 		if (nby == 0 && nax == 0)

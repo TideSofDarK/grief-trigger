@@ -31,6 +31,7 @@ private:
 	pugi::xml_document resourcesDoc;
 	pugi::xml_document spellsDoc;
 	pugi::xml_document scenesDoc;
+	pugi::xml_document saveDoc;
 
 	Parser();
 	Parser( const Parser& );
@@ -54,6 +55,11 @@ public:
 	std::string getSpellType(std::string spell);
 	std::wstring getDescr(std::string spell);
 	unsigned int getSpellLevel(std::string spell);
+	void saveGame();
+	void loadGame();
+	std::string getMap(unsigned int day, unsigned int scene);
+	int getSocialBonus(std::string name, std::string situation);
+	int getIntBonus(std::string name, std::string situation);
 };
 
 #endif

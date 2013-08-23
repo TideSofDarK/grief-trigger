@@ -17,11 +17,8 @@ static const sf::Uint32 CHARACTER_SIZE = 32;
 
 static const float playerMoveSpeed = 2.f;
 
-static const sf::Uint32 scrollAreaX = 1280 / 3;
-static const sf::Uint32 scrollAreaY = 800 / 3;
-
-static const sf::Uint32 WIDTH = 1280;
-static const sf::Uint32 HEIGHT = 800;
+static sf::Uint32 WIDTH = 1280;
+static sf::Uint32 HEIGHT = 800;
 
 static const sf::Uint32 HALF_WIDTH = WIDTH / 2;
 static const sf::Uint32 HALF_HEIGHT = HEIGHT / 2;
@@ -32,6 +29,6 @@ static const sf::Uint32 DIR_RIGHT = 1;
 static const sf::Uint32 DIR_LEFT = 2;
 static const sf::Uint32 DIR_DOWN = 3;
 
-static const std::string fontPath = "assets/fonts/default.TTF";
+static const std::string fontPath = "assets/fonts/default.ttf";
 
 #endif

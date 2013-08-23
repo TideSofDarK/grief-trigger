@@ -52,8 +52,12 @@ private:
 	//Battle screen
 	Battle				battle;
 
+	std::vector<MoneyEffect> me;
+
 	//Enemy squads
-	std::deque<Squad>	squads;
+	std::vector<Squad>	squads;
+
+	std::deque<Portal>	portals;
 
 	//The Doors
 	std::vector<Door>	doors;
@@ -61,15 +65,16 @@ private:
 	//The Doors
 	std::vector<NPC>	npcs;
 
+	std::vector<Chest>	chests;
+
+	std::vector<ShopCrystal>	shops;
+
 	std::vector<Column>	columns;
 
 	bool				started;
 
 	//Player object
 	PlayerObject		po;
-
-	//Pointer to map loader
-	tmx::MapLoader		*map;
 
 	//Particles manager
 	ParticlesManager	pm;
@@ -85,6 +90,8 @@ private:
 	unsigned int		counter;
 	sf::Text			loadingText;
 
+	Shop shop;
+
 	//Transition timer
 	sf::Clock			transitionClock;
 
@@ -93,7 +100,7 @@ private:
 	unsigned int		toDelete;
 
 	//Day counter
-	sf::Sprite			days;
+	Days				days;
 
 	//List of tips
 	std::vector<Tip>	tips;
@@ -127,17 +134,23 @@ private:
 	sf::Texture			backTexture;
 	sf::Shader			galaxyBack;
 
+	bool				lastSpeaked;
+
 	//Loading resources
 	void				loadResources();
 
 public:
 	Scene() : thread(&Scene::loadResources, this), oListener(moving)
 	{
+		//Create render texture
+		finalTexture.create(WIDTH, HEIGHT);
 		unscalable = sf::View(sf::FloatRect(0, 0, WIDTH, HEIGHT));
 	};
-	void init(std::string newType, std::string name, tmx::MapLoader &ml);
-	void startBattle(Squad &squad);
+	void init(std::string newType, std::string name);
+	void startBattle(Squad &squad, bool p);
+	void startBattle(Monster &m, bool p);
 	void endBattle();
+	void endBattleB();
 	void setMapState(){state = MAP;};
 	void removeTip(std::string type);
 	void setPaused(bool p) {state = (p == true ? PAUSED : MAP);};
@@ -148,9 +161,11 @@ public:
 	std::vector<tmx::MapObject> &getObjects();
 	PlayerObject &getPlayerObject();
 	std::deque<Squad> &getSquadList();
-	tmx::MapLoader *getMapLoader(){return map;};
 	Camera &getCamera(){return camera;};
 	std::vector<Door> &getDoors(){return doors;};
+	sf::Vector2f getPlayerPositionOnMap(){return po.getOnMap().GetPosition();};
+	sf::FloatRect getPlayerBoundOnMap(){return po.getSprite().getGlobalBounds();};
+	void setBattleState(){battle.setW();state = BATTLE;};
 };
 
 class SceneManager
@@ -184,18 +199,21 @@ private:
 	sf::RenderTexture	t2;
 	sf::Clock			timer;
 	unsigned int		counter;
+	SceneInfo lastSi;
 
 public:
 	void draw(sf::RenderTarget &rt);
 	void update(sf::Time time);
 	void input(sf::Event &event);
-	void setScene(SceneInfo si, tmx::MapLoader &ml);
+	void setScene(SceneInfo si);
 	Scene &getScene()
 	{
 		return current;
 	};
-	void initBattle(Squad &squad);
+	void initBattle(Squad &squad, bool p);
+	void initBattle(Monster &b, bool p);
 	void endBattle();
+	void endBattleB(){current.endBattleB();};
 	void startTransition(SceneInfo si);
 };
 

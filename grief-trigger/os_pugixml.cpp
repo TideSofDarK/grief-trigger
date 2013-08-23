@@ -1611,7 +1611,7 @@ PUGI__NS_BEGIN
 		}
 	};
 	
-	PUGI__FN char_t* strconv_escape(char_t* s, gap& g)
+	PUGI__FN char_t* strconv_Z(char_t* s, gap& g)
 	{
 		char_t* stre = s + 1;
 
@@ -1812,7 +1812,7 @@ PUGI__NS_BEGIN
 	
 	typedef char_t* (*strconv_pcdata_t)(char_t*);
 		
-	template <typename opt_eol, typename opt_escape> struct strconv_pcdata_impl
+	template <typename opt_eol, typename opt_Z> struct strconv_pcdata_impl
 	{
 		static char_t* parse(char_t* s)
 		{
@@ -1834,9 +1834,9 @@ PUGI__NS_BEGIN
 					
 					if (*s == '\n') g.push(s, 1);
 				}
-				else if (opt_escape::value && *s == '&')
+				else if (opt_Z::value && *s == '&')
 				{
-					s = strconv_escape(s, g);
+					s = strconv_Z(s, g);
 				}
 				else if (*s == 0)
 				{
@@ -1851,7 +1851,7 @@ PUGI__NS_BEGIN
 	{
 		PUGI__STATIC_ASSERT(parse_escapes == 0x10 && parse_eol == 0x20);
 
-		switch ((optmask >> 4) & 3) // get bitmask for flags (eol escapes)
+		switch ((optmask >> 4) & 3) // get bitmask for flags (eol Zs)
 		{
 		case 0: return strconv_pcdata_impl<opt_false, opt_false>::parse;
 		case 1: return strconv_pcdata_impl<opt_false, opt_true>::parse;
@@ -1863,7 +1863,7 @@ PUGI__NS_BEGIN
 
 	typedef char_t* (*strconv_attribute_t)(char_t*, char_t);
 	
-	template <typename opt_escape> struct strconv_attribute_impl
+	template <typename opt_Z> struct strconv_attribute_impl
 	{
 		static char_t* parse_wnorm(char_t* s, char_t end_quote)
 		{
@@ -1905,9 +1905,9 @@ PUGI__NS_BEGIN
 						g.push(s, str - s);
 					}
 				}
-				else if (opt_escape::value && *s == '&')
+				else if (opt_Z::value && *s == '&')
 				{
-					s = strconv_escape(s, g);
+					s = strconv_Z(s, g);
 				}
 				else if (!*s)
 				{
@@ -1941,9 +1941,9 @@ PUGI__NS_BEGIN
 					}
 					else *s++ = ' ';
 				}
-				else if (opt_escape::value && *s == '&')
+				else if (opt_Z::value && *s == '&')
 				{
-					s = strconv_escape(s, g);
+					s = strconv_Z(s, g);
 				}
 				else if (!*s)
 				{
@@ -1973,9 +1973,9 @@ PUGI__NS_BEGIN
 					
 					if (*s == '\n') g.push(s, 1);
 				}
-				else if (opt_escape::value && *s == '&')
+				else if (opt_Z::value && *s == '&')
 				{
-					s = strconv_escape(s, g);
+					s = strconv_Z(s, g);
 				}
 				else if (!*s)
 				{
@@ -1999,9 +1999,9 @@ PUGI__NS_BEGIN
 				
 					return s + 1;
 				}
-				else if (opt_escape::value && *s == '&')
+				else if (opt_Z::value && *s == '&')
 				{
-					s = strconv_escape(s, g);
+					s = strconv_Z(s, g);
 				}
 				else if (!*s)
 				{
@@ -2016,7 +2016,7 @@ PUGI__NS_BEGIN
 	{
 		PUGI__STATIC_ASSERT(parse_escapes == 0x10 && parse_eol == 0x20 && parse_wconv_attribute == 0x40 && parse_wnorm_attribute == 0x80);
 		
-		switch ((optmask >> 4) & 15) // get bitmask for flags (wconv wnorm eol escapes)
+		switch ((optmask >> 4) & 15) // get bitmask for flags (wconv wnorm eol Zs)
 		{
 		case 0:  return strconv_attribute_impl<opt_false>::parse_simple;
 		case 1:  return strconv_attribute_impl<opt_true>::parse_simple;
@@ -2989,7 +2989,7 @@ PUGI__NS_BEGIN
 		xml_encoding encoding;
 	};
 
-	PUGI__FN void text_output_escaped(xml_buffered_writer& writer, const char_t* s, chartypex_t type)
+	PUGI__FN void text_output_Zd(xml_buffered_writer& writer, const char_t* s, chartypex_t type)
 	{
 		while (*s)
 		{
@@ -3035,7 +3035,7 @@ PUGI__NS_BEGIN
 		if (flags & format_no_escapes)
 			writer.write(s);
 		else
-			text_output_escaped(writer, s, type);
+			text_output_Zd(writer, s, type);
 	}
 
 	PUGI__FN void text_output_cdata(xml_buffered_writer& writer, const char_t* s)

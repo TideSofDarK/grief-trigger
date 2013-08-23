@@ -1,8 +1,9 @@
-#include "i_battleui.h"
+﻿#include "i_battleui.h"
 
 #include <SFML/Window.hpp>
 
 #include "g_scenemanager.h"
+#include "os_x360controller.hpp"
 
 sf::Vector2f interpolateVector(
 	const sf::Vector2f& pointA,
@@ -30,6 +31,182 @@ float interpolateLinear(
 			factor = 0.f;
 
 		return pointA + (pointB - pointA) * factor;
+}
+
+Effects::Effects()
+{
+	emitter = thor::UniversalEmitter();
+	system = new thor::ParticleSystem(TextureManager::instance().getTexture("assets/magic.png"));
+
+	emitter2 = thor::UniversalEmitter();
+	system2 = new thor::ParticleSystem(TextureManager::instance().getTexture("assets/magic.png"));
+
+	visible = true;
+}
+
+void Effects::initMagicAOE(sf::Vector2f p1, sf::Vector2f p2, sf::Vector2f p3)
+{	
+	emitter.setEmissionRate(1.0f);
+	emitter.setParticleLifetime( thor::Distributions::uniform(sf::seconds(8), sf::seconds(8)) );
+
+	emitter.setParticleRotation( thor::Distributions::uniform(0.f, 360.f) );
+	
+	emitter.setParticleScale(sf::Vector2f(0.3,0.3));
+	emitter.setParticleVelocity(sf::Vector2f(0, -30.0f));
+
+	emitter.setParticlePosition(thor::Distributions::circle(p1, 40) );
+	system->addEmitter(thor::UniversalEmitter(emitter));
+	emitter.setParticlePosition( thor::Distributions::circle(p2, 40));
+	system->addEmitter(thor::UniversalEmitter(emitter));
+	emitter.setParticlePosition( thor::Distributions::circle(p3, 40) );
+	system->addEmitter(thor::UniversalEmitter(emitter));
+
+	thor::ColorGradient gradient;
+	gradient[0.0f] = sf::Color::Blue;
+	gradient[0.5f] = sf::Color(17,100,240);
+	gradient[1.0f] = sf::Color(150,160,250);
+
+	thor::ColorAnimation colorizer(gradient);
+	thor::FadeAnimation fader(0.15f, 0.15f);
+
+	system->addAffector( thor::AnimationAffector(colorizer) );
+	system->addAffector( thor::AnimationAffector(fader) );
+
+	emitter2.setEmissionRate(1.0f);
+	emitter2.setParticleLifetime( thor::Distributions::uniform(sf::seconds(10), sf::seconds(10)) );
+
+	emitter2.setParticleRotation( thor::Distributions::uniform(0.f, 360.f) );
+	
+	emitter2.setParticleScale(sf::Vector2f(0.3,0.3));
+	emitter2.setParticleVelocity(sf::Vector2f(0, -30.0f));
+
+	emitter2.setParticlePosition( thor::Distributions::circle(p1, 40) );
+	system2->addEmitter(thor::UniversalEmitter(emitter2));
+	emitter2.setParticlePosition( thor::Distributions::circle(p2, 40) );
+	system2->addEmitter(thor::UniversalEmitter(emitter2));
+	emitter2.setParticlePosition( thor::Distributions::circle(p3, 40) );
+	system2->addEmitter(thor::UniversalEmitter(emitter2));
+
+	system2->addAffector( thor::AnimationAffector(colorizer) );
+	system2->addAffector( thor::AnimationAffector(fader) );
+
+	sf::Vector2f acceleration(0.f, 1.0f);
+	thor::ForceAffector gravityAffector(acceleration);
+	system->addAffector(gravityAffector);
+	system2->addAffector(gravityAffector);
+}
+
+void Effects::initMagic()
+{
+	emitter.setEmissionRate(1.5f);
+	emitter.setParticleLifetime( thor::Distributions::uniform(sf::seconds(8), sf::seconds(8)) );
+
+	emitter.setParticleRotation( thor::Distributions::uniform(0.f, 360.f) );
+	emitter.setParticlePosition( sf::Vector2f(400,400) );
+	emitter.setParticleScale(sf::Vector2f(0.3,0.3));
+	emitter.setParticleVelocity(sf::Vector2f(0, -30.0f));
+
+	system->addEmitter(thor::refEmitter(emitter));
+
+	thor::ColorGradient gradient;
+	gradient[0.0f] = sf::Color::Blue;
+	gradient[0.5f] = sf::Color::Yellow;
+	gradient[1.0f] = sf::Color::Red;
+
+	thor::ColorAnimation colorizer(gradient);
+	thor::FadeAnimation fader(0.15f, 0.15f);
+
+
+	system->addAffector( thor::AnimationAffector(colorizer) );
+	system->addAffector( thor::AnimationAffector(fader) );
+	
+
+	emitter2.setEmissionRate(1.5f);
+	emitter2.setParticleLifetime( thor::Distributions::uniform(sf::seconds(10), sf::seconds(10)) );
+
+	emitter2.setParticleRotation( thor::Distributions::uniform(0.f, 360.f) );
+	emitter2.setParticlePosition( sf::Vector2f(400,400) );
+	emitter2.setParticleScale(sf::Vector2f(0.3,0.3));
+	emitter2.setParticleVelocity(sf::Vector2f(0, -30.0f));
+
+	system2->addEmitter(thor::refEmitter(emitter2));
+
+	system2->addAffector( thor::AnimationAffector(colorizer) );
+	system2->addAffector( thor::AnimationAffector(fader) );
+
+	sf::Vector2f acceleration(0.f, 1.0f);
+	thor::ForceAffector gravityAffector(acceleration);
+	system->addAffector(gravityAffector);
+	system2->addAffector(gravityAffector);
+}
+
+void Effects::draw(sf::RenderTarget &tg)
+{
+	if(visible) tg.draw(*system);
+}
+
+void Effects::drawSecondary(sf::RenderTarget &tg)
+{
+	if(visible) tg.draw(*system2);
+}
+
+void Effects::update(sf::Time time)
+{
+	system->update(time);
+	system2->update(time);
+	
+	if (working && timer.getElapsedTime().asSeconds() > 2)
+	{
+		timer.restart();
+
+		system->clearEmitters();
+		//system->clearAffectors();
+
+		system2->clearEmitters();
+		//system2->clearAffectors();
+
+		working = false;
+	}
+}
+
+void Effects::show(sf::Vector2f p, std::string type)
+{
+	if (!working)
+	{
+		initMagic();
+
+		if (type == "magic")
+		{
+			system->setTexture(TextureManager::instance().getTexture("assets/magic.png"));
+			system2->setTexture(TextureManager::instance().getTexture("assets/magic.png"));
+		}
+
+		timer.restart();
+
+		visible = true;
+		working = true;
+		emitter.setParticlePosition(thor::Distributions::circle(p, 50.0f));
+		emitter2.setParticlePosition(thor::Distributions::circle(p, 50.0f));
+	}
+}
+
+void Effects::showAOE(sf::Vector2f p1, sf::Vector2f p2, sf::Vector2f p3, std::string type)
+{
+	if (!working)
+	{
+		initMagicAOE(p1,p2,p3);
+
+		if (type == "magic")
+		{
+			system->setTexture(TextureManager::instance().getTexture("assets/magic.png"));
+			system2->setTexture(TextureManager::instance().getTexture("assets/magic.png"));
+		}
+
+		timer.restart();
+
+		visible = true;
+		working = true;
+	}
 }
 
 Logger::Logger()
@@ -78,7 +255,7 @@ void Logger::update(sf::Time time)
 
 void Logger::input(sf::Event &event)
 {
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X)
+	if((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X) || (xb::Joystick::isButtonPressed(0, xb::Joystick::A)))
 	{
 		SoundManager::instance().playEnterSound();
 		if (ended) read = true;
@@ -202,12 +379,57 @@ void Bar::init(bool vert, sf::Vector2f pos, unsigned int &var, sf::Color color)
 
 	bar.setOutlineColor(sf::Color::Black);
 	bar.setOutlineThickness(1.0);
+
+	c = color;
 }
 
 void Bar::draw(sf::RenderTarget &tg)
 {
 	tg.draw(shape);
 	tg.draw(bar);
+}
+
+void Bar::update(sf::Time time, sf::Vector2f np, float v1, float v2)
+{
+	if (v1 > 0)
+	{
+		double p = (v1 / v2) * 100.0;
+
+		if (np != sf::Vector2f())
+		{
+			bar.setPosition(sf::Vector2f(np.x + OFFSET - OFFSET, np.y + (BAR_WIDTH / 2) + OFFSET)); // Im tired so enjoy shit
+			shape.setPosition(sf::Vector2f(np.x - OFFSET, np.y + (BAR_WIDTH / 2)));
+		}
+
+		if(!vertical)
+		{
+			bar.setSize(sf::Vector2f(((BAR_WIDTH / 100) * p) + OFFSET, BAR_HEIGHT)); 
+			shape.setSize(sf::Vector2f(bar.getSize().x + (OFFSET * 2), SHAPE_HEIGHT));
+		}
+		else
+		{
+			bar.setSize(sf::Vector2f((BAR_HEIGHT / 2) - OFFSET, ((BAR_WIDTH / 100) * p) + OFFSET)); 
+			shape.setSize(sf::Vector2f(SHAPE_HEIGHT/ 2, bar.getSize().y + (OFFSET * 2)));
+		}
+	}
+	else if (v1 <= 0)
+	{
+		if(!vertical)
+		{
+			bar.setSize(sf::Vector2f(((BAR_WIDTH / 100) * 1) + OFFSET, BAR_HEIGHT)); 
+			shape.setSize(sf::Vector2f(bar.getSize().x + (OFFSET * 2), SHAPE_HEIGHT));
+		}
+		else
+		{
+			bar.setSize(sf::Vector2f((BAR_HEIGHT / 2) - OFFSET, ((BAR_WIDTH / 100) * 1) + OFFSET)); 
+			shape.setSize(sf::Vector2f(SHAPE_HEIGHT/ 2, bar.getSize().y + (OFFSET * 2)));
+		}
+		bar.setFillColor(sf::Color::Black);
+	}
+	if (v1 > 0)
+	{
+		bar.setFillColor(c);
+	}
 }
 
 void Bar::update(sf::Time time, sf::Vector2f np)
@@ -247,6 +469,10 @@ void Bar::update(sf::Time time, sf::Vector2f np)
 			shape.setSize(sf::Vector2f(SHAPE_HEIGHT/ 2, bar.getSize().y + (OFFSET * 2)));
 		}
 		bar.setFillColor(sf::Color::Black);
+	}
+	if (t > 0)
+	{
+		bar.setFillColor(c);
 	}
 }
 
@@ -305,12 +531,12 @@ void Menu::input(sf::Event &event)
 {
 	if (working)
 	{
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X)
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X) || (xb::Joystick::isButtonPressed(0, xb::Joystick::A)  && event.type == sf::Event::JoystickButtonPressed)))
 		{
 			select();
 			disappear();
 		}
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up)
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up) || (xb::Joystick::getAxisDir() == DIR_UP && event.type == sf::Event::JoystickMoved)))
 		{
 			if (selection > 0)
 			{
@@ -323,7 +549,7 @@ void Menu::input(sf::Event &event)
 
 			SoundManager::instance().playSelectSound();
 		}
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down)
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down) || (xb::Joystick::getAxisDir() == DIR_DOWN && event.type == sf::Event::JoystickMoved)))
 		{
 			if (selection + 1 < items.size())
 			{
@@ -417,7 +643,7 @@ SpellMenu::Item::Item(Spell &newSpell)
 	}
 	sprite.setTexture(TextureManager::instance().getTexture("assets/icons/" + spell.getFileName() + "_" + std::to_string(diff) + ".png"));
 
-	std::wstring string =  L", ����� ����: " + std::to_wstring(spell.getMana());
+	std::wstring string =  L", очков маны: " + std::to_wstring(spell.getMana());
 	std::wstring string4 = spell.getName() + string;
 
 	text.setString(string4);
@@ -482,7 +708,7 @@ void SpellMenu::input(sf::Event &event)
 {
 	if (state == WORKING)
 	{
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up)
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up) || (xb::Joystick::getAxisDir() == DIR_UP)))
 		{
 			if (selection > 0 && Parser::instance().getSpellLevel(spells[selection].getSpell().getFileName()) <= GameData::instance().getPlayer().getLevel())
 			{
@@ -500,7 +726,7 @@ void SpellMenu::input(sf::Event &event)
 
 			SoundManager::instance().playSelectSound();
 		}
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down)
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down) || (xb::Joystick::getAxisDir() == DIR_DOWN)))
 		{
 			if (selection + 1 < spells.size() && Parser::instance().getSpellLevel(spells[selection + 1].getSpell().getFileName()) <= GameData::instance().getPlayer().getLevel())
 			{
@@ -518,7 +744,7 @@ void SpellMenu::input(sf::Event &event)
 
 			SoundManager::instance().playSelectSound();
 		}
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X)
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X) || (xb::Joystick::isButtonPressed(0, xb::Joystick::A)  && event.type == sf::Event::JoystickButtonPressed)))
 		{
 			select();
 			close();
@@ -568,10 +794,13 @@ void SpellMenu::select()
 
 SpellQTE::SpellQTE()
 {
+	static const unsigned int	startX = WIDTH / 3;
+	static const unsigned int	startY = HEIGHT / 3;
+
 	state = IDLE;
-	
+
 	line.setPosition(0, startY );
-	
+
 	cell.setPosition((WIDTH / 2) - CHARACTER_SIZE * 2 - 12, startY + CHARACTER_SIZE - 14); //Some position fixes
 	shape.setSize(sf::Vector2f(30,10));
 	shape.setPosition(cell.getPosition().x + 10, cell.getPosition().y + 14);
@@ -766,7 +995,31 @@ void SpellQTE::input(sf::Event &event)
 							Block &block = *i;
 							if (shape.getGlobalBounds().intersects(block.sprite.getGlobalBounds()))
 							{
-								if ( event.key.code == i->b)
+								int jButton = xb::Joystick::BACK;
+								switch (block.b)
+								{
+								case sf::Keyboard::X :
+									jButton = xb::Joystick::A;
+									break;
+								case sf::Keyboard::Z :
+									jButton = xb::Joystick::B;
+									break;
+								case sf::Keyboard::Up :
+									jButton = xb::Joystick::DPAD_UP;
+									break;
+								case sf::Keyboard::Down :
+									jButton = xb::Joystick::DPAD_DOWN;
+									break;
+								case sf::Keyboard::Left :
+									jButton = xb::Joystick::DPAD_LEFT;
+									break;
+								case sf::Keyboard::Right :
+									jButton = xb::Joystick::DPAD_RIGHT;
+									break;
+								default:
+									break;
+								}
+								if ( event.key.code == i->b || (xb::Joystick::isButtonPressed(0, jButton)  && event.type == sf::Event::JoystickButtonPressed))
 								{
 									double p;
 									if (shape.getPosition().x < block.sprite.getPosition().x)
@@ -842,9 +1095,33 @@ void SpellQTE::input(sf::Event &event)
 					{
 						if (shape.getGlobalBounds().intersects(block.sprite.getGlobalBounds()))
 						{
-							if(event.type == sf::Event::KeyPressed)
+							if(event.type == sf::Event::KeyPressed || event.type == sf::Event::JoystickButtonPressed)
 							{
-								if ( event.key.code == block.b)
+								int jButton = xb::Joystick::BACK;
+								switch (block.b)
+								{
+								case _X :
+									jButton = xb::Joystick::A;
+									break;
+								case _Z :
+									jButton = xb::Joystick::B;
+									break;
+								case UP :
+									jButton = DIR_UP;
+									break;
+								case DOWN :
+									jButton = DIR_DOWN;
+									break;
+								case LEFT :
+									jButton = DIR_LEFT;
+									break;
+								case RIGHT :
+									jButton = DIR_RIGHT;
+									break;
+								default:
+									break;
+								}
+								if ( (event.key.code == block.b || (xb::Joystick::isButtonPressed(0, jButton))) || jButton == xb::Joystick::getAxisDir())
 								{
 									double p;
 									if (shape.getPosition().x < block.sprite.getPosition().x)
@@ -958,6 +1235,10 @@ void SpellQTE::start(Spell &sp,  std::string name)
 		default:
 			break;
 		}
+
+		static const unsigned int	startX = WIDTH / 3;
+		static const unsigned int	startY = HEIGHT / 3;
+
 		block.sprite.setTexture(TextureManager::instance().getTexture("assets/" + name + ".png"));
 		block.sprite.setPosition(WIDTH + ((i - v.begin()) * (CHARACTER_SIZE * 5)) + ((i - v.begin()) * 8),startY + CHARACTER_SIZE);
 		block.b = *i;
@@ -1051,54 +1332,63 @@ void Result::loadResources()
 
 void Result::show()
 {
-	if (current == 0)
-	{
-		back.setTexture(TextureManager::instance().getTexture("assets/girl_screen.jpg"));
-	}
-	else if (current == 1)
-	{
-		back.setTexture(TextureManager::instance().getTexture("assets/red_screen.jpg"));
-	}
-	else if (current == 2)
-	{
-		back.setTexture(TextureManager::instance().getTexture("assets/blue_screen.jpg"));
-	}
-	switch (current)
-	{
-	case 0:
-		stats[0].setString(std::to_string(GameData::instance().getPlayer().getHP()));
-		stats[1].setString(std::to_string(GameData::instance().getPlayer().getMP()));
-		stats[2].setString(std::to_string(GameData::instance().getPlayer().getStrength()));
-		stats[3].setString(std::to_string(GameData::instance().getPlayer().getAgility()));
-		stats[4].setString(std::to_string(GameData::instance().getPlayer().getIntelligence()));
-		break;
-	case 1:
-		stats[0].setString(std::to_string(GameData::instance().getEmber().getHP()));
-		stats[1].setString(std::to_string(GameData::instance().getEmber().getMP()));
-		stats[2].setString(std::to_string(GameData::instance().getEmber().getStrength()));
-		stats[3].setString(std::to_string(GameData::instance().getEmber().getAgility()));
-		stats[4].setString(std::to_string(GameData::instance().getEmber().getIntelligence()));
-		break;
-	case 2:
-		stats[0].setString(std::to_string(GameData::instance().getThunder().getHP()));
-		stats[1].setString(std::to_string(GameData::instance().getThunder().getMP()));
-		stats[2].setString(std::to_string(GameData::instance().getThunder().getStrength()));
-		stats[3].setString(std::to_string(GameData::instance().getThunder().getAgility()));
-		stats[4].setString(std::to_string(GameData::instance().getThunder().getIntelligence()));
-		break;
-	default:	
-		break;
-	}
+	std::cout << "OFFSET = " + std::to_string(GameData::instance().getPlayer().getLevelOffset()) + "\n"; 
 
 	if (GameData::instance().getPlayer().getLevelOffset() == 0)
 	{
+		GameData::instance().getPlayer().clearOffset();
+		GameData::instance().getEmber().clearOffset();
+		GameData::instance().getThunder().clearOffset();
+
 		SceneManager::instance().getScene().setMapState();
+		current = 3;
+	}
+	else
+	{
+		if (current == 0)
+		{
+			back.setTexture(TextureManager::instance().getTexture("assets/girl_screen.jpg"));
+		}
+		else if (current == 1)
+		{
+			back.setTexture(TextureManager::instance().getTexture("assets/red_screen.jpg"));
+		}
+		else if (current == 2)
+		{
+			back.setTexture(TextureManager::instance().getTexture("assets/blue_screen.jpg"));
+		}
+		switch (current)
+		{
+		case 0:
+			stats[0].setString("+" + std::to_string(GameData::instance().getPlayer().getHPOffset()));
+			stats[1].setString("+" + std::to_string(GameData::instance().getPlayer().getMPOffset()));
+			stats[2].setString("+" + std::to_string(GameData::instance().getPlayer().getStrengthOffset()));
+			stats[3].setString("+" + std::to_string(GameData::instance().getPlayer().getAgilityOffset()));
+			stats[4].setString("+" + std::to_string(GameData::instance().getPlayer().getIntelligenceOffset()));
+			break;
+		case 1:
+			stats[0].setString("+" + std::to_string(GameData::instance().getEmber().getHPOffset()));
+			stats[1].setString("+" + std::to_string(GameData::instance().getEmber().getMPOffset()));
+			stats[2].setString("+" + std::to_string(GameData::instance().getEmber().getStrengthOffset()));
+			stats[3].setString("+" + std::to_string(GameData::instance().getEmber().getAgilityOffset()));
+			stats[4].setString("+" + std::to_string(GameData::instance().getEmber().getIntelligenceOffset()));
+			break;
+		case 2:
+			stats[0].setString("+" + std::to_string(GameData::instance().getThunder().getHPOffset()));
+			stats[1].setString("+" + std::to_string(GameData::instance().getThunder().getMPOffset()));
+			stats[2].setString("+" + std::to_string(GameData::instance().getThunder().getStrengthOffset()));
+			stats[3].setString("+" + std::to_string(GameData::instance().getThunder().getAgilityOffset()));
+			stats[4].setString("+" + std::to_string(GameData::instance().getThunder().getIntelligenceOffset()));
+			break;
+		default:	
+			break;
+		}
 	}
 }
 
 void Result::update(sf::Time time)
 {
-	
+	std::cout << "start update result\n";
 }
 
 void Result::draw(sf::RenderTarget &tg)
@@ -1126,6 +1416,206 @@ void Result::next()
 	show();
 	if (current > 2)
 	{
+		GameData::instance().getPlayer().clearOffset();
+		GameData::instance().getEmber().clearOffset();
+		GameData::instance().getThunder().clearOffset();
 		SceneManager::instance().getScene().setMapState();
 	}
+}
+
+ItemMenu::MenuItem::MenuItem(std::wstring name)
+{
+	n = name;
+}
+
+void ItemMenu::MenuItem::init()
+{
+	if (n == L"Медикаменты")
+	{
+		sprite.setTexture(TextureManager::instance().getTexture("assets/icons/item_health.png"));
+		text.setString(L"Лечит часть максимального здоровья. (x" + std::to_wstring(GameData::instance().getMeds()) + L")");
+	}
+	if (n == L"Эфир")
+	{
+		sprite.setTexture(TextureManager::instance().getTexture("assets/icons/item_mana.png"));
+		text.setString(L"Восстанавливает часть максимальной маны. (x" + std::to_wstring(GameData::instance().getManas()) + L")");
+	}
+	if (n == L"Феникс")
+	{
+		sprite.setTexture(TextureManager::instance().getTexture("assets/icons/item_res.png"));
+		text.setString(L"Воскрешает мертвого героя. (x" + std::to_wstring(GameData::instance().getShards()) + L")");
+	}
+
+	text.setColor(sf::Color::White);
+	text.setFont(DFont::instance().getFont());
+}
+
+void ItemMenu::show()
+{
+	const unsigned int startX = WIDTH / 3;
+	const unsigned int startY = HEIGHT / 7;
+
+	verticalPointer.setPosition(startX + (CHARACTER_SIZE / 2), 0);
+	horizontalPointer.setPosition(sf::Vector2f(0, items[selection].getPosition().y));
+
+	verticalPointer.setFillColor(YELLOW);
+	horizontalPointer.setFillColor(YELLOW);
+
+	selection = 0;
+
+	working = true;
+
+	blackRect.setSize(sf::Vector2f(WIDTH, HEIGHT));
+	blackRect.setFillColor(sf::Color(0,0,0,190));
+
+	for (auto i = items.begin(); i != items.end(); i++)
+	{
+		i->init();
+	}
+}
+
+void ItemMenu::close()
+{
+	working = false;
+}
+
+void ItemMenu::draw(sf::RenderTarget &tg)
+{
+	if (working)
+	{
+		tg.draw(blackRect);
+
+		verticalPointer.setFillColor(BLUE);
+		horizontalPointer.setFillColor(BLUE);
+
+		tg.draw(verticalPointer);
+		tg.draw(horizontalPointer);
+
+		verticalPointer.setFillColor(YELLOW);
+		horizontalPointer.setFillColor(YELLOW);
+
+		verticalPointer.move(3, 0);
+		horizontalPointer.move(0, -3);
+
+		tg.draw(verticalPointer);
+		tg.draw(horizontalPointer);
+
+		verticalPointer.move(-3, 0);
+		horizontalPointer.move(0, 3);
+
+		for (auto i = items.begin(); i != items.end(); i++)
+		{
+			i->draw(tg);
+		}
+	}
+}
+
+void ItemMenu::update(sf::Time time)
+{
+	if (working)
+	{
+		horizontalPointer.setPosition(sf::Vector2f(0, items[selection].getPosition().y + (CHARACTER_SIZE / 2)));
+
+		for (auto i = items.begin(); i != items.end(); i++)
+		{
+			i->update(i - items.begin() == selection ? true : false);
+			if (i - items.begin() == selection)
+			{
+				i->setPosition(sf::Vector2f(WIDTH / 3 + 10, i->getPosition().y));
+			}
+			else
+			{
+				i->setPosition(sf::Vector2f(WIDTH / 3, i->getPosition().y));
+			}
+		}
+
+		loaded = true;
+	}
+}
+
+void ItemMenu::input(sf::Event &event)
+{
+	if (working && loaded)
+	{
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X)
+		{
+			switch (selection)
+			{
+			case 0:
+				if (GameData::instance().getMeds()>0) select();
+				break;
+			case 1:
+				if (GameData::instance().getManas()>0) select();
+				break;
+			case 2:
+				if (GameData::instance().getShards()>0) select();
+				break;
+			default:
+				break;
+			}	
+		}
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up) || (xb::Joystick::getAxisDir() == DIR_UP)))
+		{
+			if (selection > 0 )
+			{
+				selection--;
+			}
+			else
+			{
+				selection = items.size();
+				selection--;
+			}
+
+			SoundManager::instance().playSelectSound();
+		}
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down) || (xb::Joystick::getAxisDir() == DIR_DOWN)))
+		{
+			if (selection + 1 < items.size())
+			{
+				selection++;
+			}
+			else
+			{
+				selection = 0;
+			}
+
+			SoundManager::instance().playSelectSound();
+		}
+	}
+}
+
+void ItemMenu::select()
+{
+	selected = selection;
+	working = false;
+	selection = 0;
+}
+
+ItemMenu::ItemMenu()
+{
+	const unsigned int startX = WIDTH / 3;
+	const unsigned int startY = HEIGHT / 7;
+
+	horizontalPointer = sf::RectangleShape(sf::Vector2f(WIDTH, CHARACTER_SIZE));
+	verticalPointer = sf::RectangleShape(sf::Vector2f(CHARACTER_SIZE, HEIGHT));
+
+	selection = 0;
+	selected = NOT_SELECTED;
+
+	MenuItem item(L"Медикаменты");
+	item.init();
+	item.setPosition(sf::Vector2f(startX, 15 + startY + (0 * CHARACTER_SIZE * 3)));
+	items.push_back(item);
+
+	item = MenuItem(L"Эфир");
+	item.init();
+	item.setPosition(sf::Vector2f(startX, 15 + startY + (1 * CHARACTER_SIZE * 3)));
+	items.push_back(item);
+
+	item = MenuItem(L"Феникс");
+	item.init();
+	item.setPosition(sf::Vector2f(startX, 15 + startY + (2 * CHARACTER_SIZE * 3)));
+	items.push_back(item);
+
+	loaded = false;
 }

@@ -10,12 +10,16 @@
 
 #include <Thor/Animation.hpp>
 
+#include "os_animatedsprite.hpp"
+#include "os_animation.hpp"
+
 #include "MapLoader.h"
 
 #include "d_basicstats.h"
 #include "d_parser.h"
 #include "h_config.h"
 #include "d_resourcesmanager.h"
+#include "i_battleui.h"
 
 class Monster : BasicStats
 {
@@ -71,6 +75,11 @@ private:
 	//Squad sprite itself
 	thor::Animator<sf::Sprite, std::string> animator;
 	sf::Sprite sprite;
+
+	Animation				*animationA;
+	AnimatedSprite			*spriteA;
+	sf::Clock				aggroTimer;
+	bool					aggr;
 
 	//List of monsters
 	std::vector<Monster>	monsters;

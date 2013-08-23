@@ -1,8 +1,10 @@
-#include "i_ui.h"
+﻿#include "i_ui.h"
 
 #include "h_config.h"
 #include "d_gamedata.H"
 #include "g_scenemanager.h"
+
+#include "os_x360controller.hpp"
 
 StatsWindow::StatsWindow() : listener(goMap, state), listener2(state)
 {
@@ -54,36 +56,42 @@ void StatsWindow::setText(std::wstring wstr)
 
 void StatsWindow::close()
 {
-	speech.setColor(sf::Color(255,255,255,0));
-	setText(L"");
-
-	newY = 0;
-	back.setPosition(0, 0);
-	oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 3.0f, &newY, 800.0f);
-	for (int i = 0; i < 5; i++)
+	if (state != DIS)
 	{
-		statsPos[i] = stats[i].getPosition().y;
+		speech.setColor(sf::Color(255,255,255,0));
+		setText(L"");
+
+		newY = 0;
+		back.setPosition(0, 0);
+		oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 3.0f, &newY, 800.0f);
+		for (int i = 0; i < 5; i++)
+		{
+			statsPos[i] = stats[i].getPosition().y;
+		}
+		state = DIS;
+		oTweener.addListener(&listener);
 	}
-	state = DIS;
-	oTweener.addListener(&listener);
 }
 
 void StatsWindow::show()
 {
-	speech.setColor(sf::Color(255,255,255,0));
-	setText(getFeeling());
-
-	newY = -800;
-	back.setPosition(0, -800);
-	for (int i = 0; i < 5; i++)
+	if (state != FALLING)
 	{
-		stats[i].setPosition(164, 100 + (120*i));
-		statsPos[i] = stats[i].getPosition().y;	
-		stats[i].move(0, -HEIGHT);
-	}
-	oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 3.0f, &newY, 0.0f);
-	oTweener.addListener(&listener2);
-	state = FALLING;
+		speech.setColor(sf::Color(255,255,255,0));
+		setText(getFeeling());
+
+		newY = -800;
+		back.setPosition(0, -800);
+		for (int i = 0; i < 5; i++)
+		{
+			stats[i].setPosition(164, 100 + (120*i));
+			statsPos[i] = stats[i].getPosition().y;	
+			stats[i].move(0, -HEIGHT);
+		}
+		oTweener.addTween(&CDBTweener::TWEQ_ELASTIC, CDBTweener::TWEA_INOUT, 3.0f, &newY, 0.0f);
+		oTweener.addListener(&listener2);
+		state = FALLING;
+	}	
 }
 
 void StatsWindow::draw(sf::RenderTarget &tg)
@@ -119,54 +127,72 @@ void StatsWindow::draw(sf::RenderTarget &tg)
 
 std::wstring StatsWindow::getFeeling()
 {
+	std::wstring str;
+
+	float hp;
+
 	switch (current)
 	{
-	case 0:
-		if (GameData::instance().getPlayer().getHP() > (float)((float)GameData::instance().getPlayer().getMaxHP()/100.f)*(float)80)
+	case 0:		
+		hp = GameData::instance().getPlayer().getHP();
+		if (hp > (float)((float)GameData::instance().getPlayer().getMaxHP()/100.f)*(float)80.0)
 		{
-			return L"� � �������.";
+			str = L"Я в порядке.";
 		}
-		if (GameData::instance().getPlayer().getMP() < GameData::instance().getPlayer().getMaxMP() / 3)
+		else
 		{
-			return L"� ������, � ������ ������������ ���� ����.";
+			str = L"Мне нужно лечение.";
 		}
-		if (GameData::instance().getPlayer().getHP() < GameData::instance().getPlayer().getMaxHP() / 2)
+
+		if ((float)GameData::instance().getPlayer().getMP() < (float)GameData::instance().getPlayer().getMaxMP() / (float)3.0)
 		{
-			return L"��� ����� �������.";
+			str = L"Я устала, я должна восстановить свои силы.";
+		}
+		else
+		{
+			//str = L"...";
 		}
 		break;
 	case 1:
-		if (GameData::instance().getPlayer().getHP() > (float)((float)GameData::instance().getPlayer().getMaxHP()/100.f)*(float)80)
+		if ((float)GameData::instance().getEmber().getHP() > (float)((float)GameData::instance().getEmber().getMaxHP()/100.f)*(float)8.00)
 		{
-			return L"�� ���� ��� ������.";
+			str = L"Со мной все хорошо.";
 		}
-		if (GameData::instance().getPlayer().getMP() < GameData::instance().getPlayer().getMaxMP() / 3)
+		else if ((float)GameData::instance().getEmber().getMP() < (float)GameData::instance().getEmber().getMaxMP() / (float)3.0)
 		{
-			return L"��� ���� �������, ��� ����� �����.";
+			str = L"Мои силы иссякли, мне нужен отдых.";
 		}
-		if (GameData::instance().getPlayer().getHP() < GameData::instance().getPlayer().getMaxHP() / 2)
+		else if ((float)GameData::instance().getEmber().getHP() < (float)GameData::instance().getEmber().getMaxHP() / (float)2.0)
 		{
-			return L"��� ����� �������.";
+			str = L"Мне нужно лечение.";
+		}
+		else
+		{
+			str = L"...";
 		}
 		break;
 	case 2:
-		if (GameData::instance().getPlayer().getHP() > (float)((float)GameData::instance().getPlayer().getMaxHP()/100.f)*(float)80)
+		if ((float)GameData::instance().getThunder().getHP() > (float)((float)GameData::instance().getThunder().getMaxHP()/100.f)*(float)80.0)
 		{
-			return L"� ������� ���� ��������.";
+			str = L"Я отлично себя чувствую.";
 		}
-		if (GameData::instance().getPlayer().getMP() < GameData::instance().getPlayer().getMaxMP() / 3)
+		else if ((float)GameData::instance().getThunder().getMP() < (float)GameData::instance().getThunder().getMaxMP() / (float)3.0)
 		{
-			return L"��� ����� ����������� ����� ����� ��������!.";
+			str = L"Мне нужно передохнуть после такой нагрузки!.";
 		}
-		if (GameData::instance().getPlayer().getHP() < GameData::instance().getPlayer().getMaxHP() / 2)
+		else if ((float)GameData::instance().getThunder().getHP() < (float)GameData::instance().getThunder().getMaxHP() / (float)2.0)
 		{
-			return L"��� �� �� �������� �� �������.";
+			str = L"Мне бы не помешало бы лечение.";
+		}
+		else
+		{
+			str = L"...";
 		}
 		break;
 	default:
 		break;
 	} 
-	return L"";
+	return str;
 }
 
 void StatsWindow::update(sf::Time time)
@@ -262,7 +288,7 @@ void StatsWindow::update(sf::Time time)
 		p = ((float)((float)GameData::instance().getPlayer().getSocial() + (float)GameData::instance().getThunder().getSocial()) / 50.0f) * 100.0f;
 		heroBars[1].setTextureRect(sf::IntRect(0, 0, 29,  (325/100.f)*p));
 
-		name.setString(L"�����");
+		name.setString(L"Джейд");
 		break;
 	case 1:
 		p = ((float)((float)GameData::instance().getEmber().getSocial() + (float)GameData::instance().getPlayer().getSocial()) / 50.0f) * 100.0f;
@@ -270,7 +296,7 @@ void StatsWindow::update(sf::Time time)
 		p = ((float)((float)GameData::instance().getEmber().getSocial() + (float)GameData::instance().getThunder().getSocial()) / 50.0f) * 100.0f;
 		heroBars[1].setTextureRect(sf::IntRect(0, 0, 29,  (325/100.f)*p));
 
-		name.setString(L"�����");
+		name.setString(L"Эмбер");
 		break;
 	case 2:
 		p = ((float)((float)GameData::instance().getThunder().getSocial() + (float)GameData::instance().getEmber().getSocial()) / 50.0f) * 100.0f;
@@ -278,7 +304,7 @@ void StatsWindow::update(sf::Time time)
 		p = ((float)((float)GameData::instance().getThunder().getSocial() + (float)GameData::instance().getPlayer().getSocial()) / 50.0f) * 100.0f;
 		heroBars[1].setTextureRect(sf::IntRect(0, 0, 29,  (325/100.f)*p));
 
-		name.setString(L"������");
+		name.setString(L"Сандер");
 		break;
 	default:	
 		break;
@@ -320,11 +346,11 @@ void StatsWindow::update(sf::Time time)
 
 void StatsWindow::input(sf::Event &event)
 {	
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape && state == IDLE)
+	if((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Z) || (xb::Joystick::isButtonPressed(0, xb::Joystick::B)  && event.type == sf::Event::JoystickButtonPressed) && state == IDLE)
 	{
 		close();
 	}
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Left && state == IDLE)
+	if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Left) || (xb::Joystick::getAxisDir() == DIR_LEFT && event.type == sf::Event::JoystickMoved)) && state == IDLE)
 	{
 		if (current > 0)
 		{
@@ -340,7 +366,7 @@ void StatsWindow::input(sf::Event &event)
 
 		SoundManager::instance().playSelectSound();SceneManager::instance().getScene().setCurrentEffect("distortion", sf::seconds(0.1f));
 	}
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Right && state == IDLE)
+	if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Right) || (xb::Joystick::getAxisDir() == DIR_RIGHT && event.type == sf::Event::JoystickMoved)) && state == IDLE)
 	{
 		if (current + 1 < 3)
 		{
@@ -427,7 +453,6 @@ XPBar::XPBar()
 	xpbar.move(253, 0);
 	level.setFont(DFont::instance().getFont());
 	level.setPosition(HALF_WIDTH - 90, 17);
-	str = L"������� " + std::to_wstring(GameData::instance().getPlayer().getLevel());
 }
 
 void XPBar::draw(sf::RenderTarget &tg)
@@ -445,7 +470,379 @@ void XPBar::draw(sf::RenderTarget &tg)
 
 void XPBar::update(sf::Time time)
 {
-	level.setString(str);
+	level.setString(L"Уровень " + std::to_wstring(GameData::instance().getPlayer().getLevel()));
 	float p = ((float)GameData::instance().getPlayer().getXP() / (float)GameData::instance().getPlayer().getNextLevelXP()) * 100.0;
 	xpbar.setTextureRect(sf::IntRect(0,0, (737 / 100) * p, 67));
+}
+
+Days::Days()
+{
+	back.setTexture(TextureManager::instance().getTexture("assets/day.png"));
+	dayText.setFont(DFont::instance().getFont());
+
+	back.setPosition(WIDTH - back.getTextureRect().width, 0);
+	dayText.setPosition(back.getPosition().x + 154, 33);
+
+	dayText.setCharacterSize(20);
+	dayText.setColor(sf::Color::Black);
+	//dayText.setStyle(sf::Text::Bold);
+}
+
+void Days::draw(sf::RenderTarget &tg)
+{
+	tg.draw(back);
+	tg.draw(dayText);
+}
+
+void Days::update(sf::Time time)
+{
+	std::wstring day;
+	int dl = 1;
+	switch (Level::instance().getDay())
+	{
+	case 1:
+		day = L"Понедельник";
+		dl = 1;
+		break;
+	case 2:
+		day = L"Вторник";
+		dl = 2;
+		break;
+	case 3:
+		day = L"Среда";
+		dl = 3;
+		break;
+	case 4:
+		day = L"Четверг";
+		dl = 4;
+		break;
+	case 5:
+		day = L"Пятница";
+		dl = 5;
+		break;
+	case 6:
+		day = L"Суббота";
+		dl = 6;
+		break;
+	case 7:
+		day = L"Понедельник";
+		dl = 8;
+		break;
+	case 8:
+		day = L"Понедельник";
+		dl = 8;
+		break;
+	default:
+		break;
+	}
+	dayText.setString(L"0"+std::to_wstring(dl)+L"/09, " + day);
+}
+
+Shop::ShopItem::ShopItem(std::wstring name)
+{
+	n = name;
+}
+
+void Shop::ShopItem::init()
+{
+	if (n == L"Медикаменты")
+	{
+		sprite.setTexture(TextureManager::instance().getTexture("assets/icons/item_health.png"));
+		text.setString(L"Лечит часть максимального здоровья. (x" + std::to_wstring(GameData::instance().getMeds()) + L")");
+		cost.setString(L"500¥");
+		c = 500;
+	}
+	if (n == L"Эфир")
+	{
+		sprite.setTexture(TextureManager::instance().getTexture("assets/icons/item_mana.png"));
+		text.setString(L"Восстанавливает часть максимальной маны. (x" + std::to_wstring(GameData::instance().getManas()) + L")");
+		cost.setString(L"600¥");
+		c = 600;
+	}
+	if (n == L"Феникс")
+	{
+		sprite.setTexture(TextureManager::instance().getTexture("assets/icons/item_res.png"));
+		text.setString(L"Воскрешает мертвого героя. (x" + std::to_wstring(GameData::instance().getShards()) + L")");
+		cost.setString(L"1500¥");
+		c = 1500;
+	}
+	if (n == L"Клеймор")
+	{
+		sprite.setTexture(TextureManager::instance().getTexture("assets/icons/sword_" + std::to_string(GameData::instance().getPlayer().getWeapon().getLevel()) +".png"));
+		text.setString(L"Тяжелый двуручный меч.");	
+		switch (GameData::instance().getPlayer().getWeapon().getLevel())
+		{
+		case 1:
+			cost.setString(L"5000¥");
+			c = 5000;
+			break;
+		case 2:
+			cost.setString(L"10000¥");
+			c= 10000;
+			break;
+		default:
+			cost.setString(L"N/A");
+			break;
+		}
+	}
+	if (n == L"Посох")
+	{
+		sprite.setTexture(TextureManager::instance().getTexture("assets/icons/staff_" + std::to_string(GameData::instance().getEmber().getWeapon().getLevel()) +".png"));
+		text.setString(L"Легкий посох, помогающий использовать магию.");
+		switch (GameData::instance().getEmber().getWeapon().getLevel())
+		{
+		case 1:
+			cost.setString(L"5000¥");
+			c = 5000;
+			break;
+		case 2:
+			cost.setString(L"10000¥");
+			c= 10000;
+			break;
+		default:
+			cost.setString(L"N/A");
+			break;
+		}
+	}
+	if (n == L"Катана")
+	{
+		sprite.setTexture(TextureManager::instance().getTexture("assets/icons/katana_" + std::to_string(GameData::instance().getThunder().getWeapon().getLevel()) +".png"));
+		text.setString(L"Длинный изогнутый меч с односторонним клинком.");
+		switch (GameData::instance().getThunder().getWeapon().getLevel())
+		{
+		case 1:
+			cost.setString(L"5000¥");
+			c = 5000;
+			break;
+		case 2:
+			cost.setString(L"10000¥");
+			c= 10000;
+			break;
+		default:
+			cost.setString(L"N/A");
+			break;
+		}
+	}
+
+	text.setColor(sf::Color::White);
+	text.setFont(DFont::instance().getFont());
+
+	cost.setColor(sf::Color::White);
+	cost.setFont(DFont::instance().getFont());
+}
+
+void Shop::show()
+{
+	const unsigned int startX = WIDTH / 3;
+	const unsigned int startY = HEIGHT / 7;
+
+	verticalPointer.setPosition(startX + (CHARACTER_SIZE / 2), 0);
+	horizontalPointer.setPosition(sf::Vector2f(0, items[selection].getPosition().y));
+
+	verticalPointer.setFillColor(YELLOW);
+	horizontalPointer.setFillColor(YELLOW);
+
+	selection = 0;
+
+	working = true;
+
+	blackRect.setSize(sf::Vector2f(WIDTH, HEIGHT));
+	blackRect.setFillColor(sf::Color(0,0,0,190));
+
+	for (auto i = items.begin(); i != items.end(); i++)
+	{
+		i->init();
+	}
+}
+
+void Shop::close()
+{
+	working = false;
+}
+
+void Shop::draw(sf::RenderTarget &tg)
+{
+	if (working)
+	{
+		tg.draw(blackRect);
+
+		verticalPointer.setFillColor(BLUE);
+		horizontalPointer.setFillColor(BLUE);
+
+		tg.draw(verticalPointer);
+		tg.draw(horizontalPointer);
+
+		verticalPointer.setFillColor(YELLOW);
+		horizontalPointer.setFillColor(YELLOW);
+
+		verticalPointer.move(3, 0);
+		horizontalPointer.move(0, -3);
+
+		tg.draw(verticalPointer);
+		tg.draw(horizontalPointer);
+
+		verticalPointer.move(-3, 0);
+		horizontalPointer.move(0, 3);
+
+		for (auto i = items.begin(); i != items.end(); i++)
+		{
+			i->draw(tg);
+		}
+
+		tg.draw(money);
+	}
+}
+
+void Shop::update(sf::Time time)
+{
+	if (working)
+	{
+		for (auto i = items.begin(); i != items.end(); i++)
+		{
+			i->init();
+		}
+
+		money.setString(L"Баланс: " + std::to_wstring(GameData::instance().getMoney()) + L"¥");
+
+		horizontalPointer.setPosition(sf::Vector2f(0, items[selection].getPosition().y + (CHARACTER_SIZE / 2)));
+
+		for (auto i = items.begin(); i != items.end(); i++)
+		{
+			i->update(i - items.begin() == selection ? true : false);
+			if (i - items.begin() == selection)
+			{
+				i->setPosition(sf::Vector2f(WIDTH / 3 + 10, i->getPosition().y));
+			}
+			else
+			{
+				i->setPosition(sf::Vector2f(WIDTH / 3, i->getPosition().y));
+			}
+		}
+
+		loaded = true;
+	}
+}
+
+void Shop::input(sf::Event &event)
+{
+	if (working && loaded)
+	{
+		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X)
+		{
+			if (GameData::instance().useMoney(items[selection].getCost()))
+			{
+				std::cout << "cost: " + std::to_string(items[selection].getCost());
+				SoundManager::instance().playPressSound();
+
+				switch (selection)
+				{
+				case 0:
+					GameData::instance().addMed();
+					break;
+				case 1:
+					GameData::instance().addMana();
+					break;
+				case 2:
+					GameData::instance().addShard();
+					break;
+				case 3:
+					if (!GameData::instance().getPlayer().getWeapon().upgrade())
+					{
+						GameData::instance().addMoney(items[selection].getCost());
+					}
+					break;
+				case 4:
+					if (!GameData::instance().getEmber().getWeapon().upgrade())
+					{
+						GameData::instance().addMoney(items[selection].getCost());
+					}
+					break;
+				case 5:
+					if (!GameData::instance().getThunder().getWeapon().upgrade())
+					{
+						GameData::instance().addMoney(items[selection].getCost());
+					}
+					break;
+				default:
+					break;
+				}
+			}
+			else
+			{
+				SoundManager::instance().playFailSound();
+			}		
+		}
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up) || (xb::Joystick::getAxisDir() == DIR_UP)))
+		{
+			if (selection > 0 )
+			{
+				selection--;
+			}
+			else
+			{
+				selection = items.size();
+				selection--;
+			}
+
+			SoundManager::instance().playSelectSound();
+		}
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down) || (xb::Joystick::getAxisDir() == DIR_DOWN)))
+		{
+			if (selection + 1 < items.size())
+			{
+				selection++;
+			}
+			else
+			{
+				selection = 0;
+			}
+
+			SoundManager::instance().playSelectSound();
+		}
+	}
+}
+
+Shop::Shop()
+{
+	const unsigned int startX = WIDTH / 3;
+	const unsigned int startY = HEIGHT / 7;
+
+	money.setFont(DFont::instance().getFont());
+	money.setColor(sf::Color::White);
+	money.setPosition(startX + 95, startY - 30);
+
+	horizontalPointer = sf::RectangleShape(sf::Vector2f(WIDTH, CHARACTER_SIZE));
+	verticalPointer = sf::RectangleShape(sf::Vector2f(CHARACTER_SIZE, HEIGHT));
+
+	ShopItem item(L"Медикаменты");
+	item.init();
+	item.setPosition(sf::Vector2f(startX, 15 + startY + (0 * CHARACTER_SIZE * 3)));
+	items.push_back(item);
+
+	item = ShopItem(L"Эфир");
+	item.init();
+	item.setPosition(sf::Vector2f(startX, 15 + startY + (1 * CHARACTER_SIZE * 3)));
+	items.push_back(item);
+
+	item = ShopItem(L"Феникс");
+	item.init();
+	item.setPosition(sf::Vector2f(startX, 15 + startY + (2 * CHARACTER_SIZE * 3)));
+	items.push_back(item);
+
+	item = ShopItem(L"Клеймор");
+	item.init();
+	item.setPosition(sf::Vector2f(startX, 15 + startY + (3 * CHARACTER_SIZE * 3)));
+	items.push_back(item);
+
+	item = ShopItem(L"Посох");
+	item.init();
+	item.setPosition(sf::Vector2f(startX, 15 + startY + (4 * CHARACTER_SIZE * 3)));
+	items.push_back(item);
+
+	item = ShopItem(L"Катана");
+	item.init();
+	item.setPosition(sf::Vector2f(startX, 15 + startY + (5 * CHARACTER_SIZE * 3)));
+	items.push_back(item);
+
+	loaded = false;
 }

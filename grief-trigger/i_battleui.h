@@ -9,6 +9,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
+#include <Thor/Particles.hpp>
 #include <Thor/Resources.hpp>
 #include <Thor/Graphics.hpp>
 
@@ -44,6 +45,37 @@ float interpolateLinear(
 	const float pointB,
 	float factor
 	);
+
+sf::Vector2f interpolateVector(
+	const sf::Vector2f& pointA,
+	const sf::Vector2f& pointB,
+	float factor
+	);
+
+class Effects
+{
+private:
+	thor::ParticleSystem *system;
+	thor::UniversalEmitter emitter;
+
+	thor::ParticleSystem *system2;
+	thor::UniversalEmitter emitter2;
+
+	bool visible;
+	bool working;
+	sf::Clock timer;
+
+public:
+	Effects();
+	void draw(sf::RenderTarget &tg);
+	void drawSecondary(sf::RenderTarget &tg);
+	void update(sf::Time time);
+	void show(sf::Vector2f p, std::string type);
+	void showAOE(sf::Vector2f p1, sf::Vector2f p2, sf::Vector2f p3, std::string type);
+	void initMagic();
+	void initMagicAOE(sf::Vector2f p1, sf::Vector2f p2, sf::Vector2f p3);
+	void initSmoke();
+};
 
 //Similar to DialoguePanel but simpler
 class Logger
@@ -99,11 +131,14 @@ private:
 
 	bool				vertical;
 
+	sf::Color c;
+
 public:
 	Bar();
 	void init(bool vert, sf::Vector2f pos, unsigned int &var, sf::Color color = sf::Color(145, 199, 105));
 	void draw(sf::RenderTarget &tg);
 	void update(sf::Time time, sf::Vector2f np = sf::Vector2f());
+	void update(sf::Time time, sf::Vector2f np, float v1, float v2);
 };
 
 class Menu
@@ -112,7 +147,7 @@ private:
 	static const unsigned int	appearingSpeed = 2;
 	bool						working;
 	bool						initialized;
-	std::vector<sf::Text>		items;
+	std::deque<sf::Text>		items;
 	unsigned int				selection;
 	sf::RectangleShape			selector;
 	float						nx;
@@ -178,7 +213,7 @@ private:
 
 	SPELLMENU_STATE		state;
 
-	std::vector<Item>	spells;
+	std::deque<Item>	spells;
 
 	unsigned int		selection;
 	unsigned int		selected;
@@ -295,12 +330,11 @@ private:
 		bool isWorking(){return working;};
 	};
 
-	static const unsigned int	startX = WIDTH / 3;
-	static const unsigned int	startY = HEIGHT / 3;
+
 	static const unsigned int	offset = 10;
 	static const bool			type = 1;
 
-	std::vector<EText>			etexts;
+	std::deque<EText>			etexts;
 
 	Spell						spell;
 
@@ -367,6 +401,69 @@ public:
 	void input(sf::Event &event);
 	void next();
 	void reset(){current = 0;};
+};
+
+class ItemMenu
+{
+private:
+	class MenuItem
+	{
+	private:
+		sf::Sprite		sprite;
+		sf::Text		text;
+		std::wstring n;
+
+	public:
+		MenuItem(std::wstring name);
+		void init();
+		void update(bool selected)
+		{
+			if (selected)
+			{
+				text.setColor(sf::Color::Black);
+			}
+			else
+			{
+				text.setColor(sf::Color::White);
+			}
+		};
+		void draw(sf::RenderTarget &tg)
+		{
+			text.setPosition(sprite.getPosition().x + (CHARACTER_SIZE * 3) - 2, sprite.getPosition().y + 10);
+			tg.draw(sprite);
+			tg.draw(text);
+		};
+		void setPosition(sf::Vector2f pos) {sprite.setPosition(pos);};
+		sf::Vector2f getPosition() {return sprite.getPosition();};
+		void move(sf::Vector2f m) {sprite.move(m);};
+		sf::Sprite &getSprite(){return sprite;};
+		void setColor(sf::Color c){sprite.setColor(c);};
+	};
+
+	sf::RectangleShape	horizontalPointer;
+	sf::RectangleShape	verticalPointer;
+
+	std::vector<MenuItem>	items;
+
+	sf::RectangleShape blackRect;
+
+	int selection;
+	int selected;
+
+	bool working;
+	bool loaded;
+
+public:
+	ItemMenu();
+	void close();
+	void show();
+	void select();
+	int getSelected(){return selected;};
+	void draw(sf::RenderTarget &tg);
+	void update(sf::Time time);
+	void input(sf::Event &event);
+	bool isWorking(){return working;};
+	void clean(){selection = 0;selected = NOT_SELECTED;};
 };
 
 #endif

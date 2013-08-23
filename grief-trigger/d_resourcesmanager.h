@@ -73,10 +73,42 @@ private:
 	sf::SoundBuffer failBuffer;
 	sf::Sound failSound;
 
+	sf::SoundBuffer hitBuffer;
+	sf::Sound hitSound;
+
+	sf::SoundBuffer critBuffer;
+	sf::Sound critSound;
+
 	sf::SoundBuffer transitionBuffer;
 	sf::Sound transitionSound;
 
+	sf::SoundBuffer successBuffer;
+	sf::Sound successSound;
+
+	sf::SoundBuffer chestBuffer;
+	sf::Sound chestSound;
+
+	sf::SoundBuffer step1Buffer;
+	sf::Sound step1Sound;
+	sf::SoundBuffer step2Buffer;
+	sf::Sound step2Sound;
+	sf::SoundBuffer step3Buffer;
+	sf::Sound step3Sound;
+	sf::SoundBuffer step4Buffer;
+	sf::Sound step4Sound;
+
+	sf::SoundBuffer noiseBuffer;
+	sf::Sound		noiseSound;
+
+	sf::SoundBuffer pressBuffer;
+	sf::Sound		pressSound;
+
+	bool lastStep;
+
 public:
+	void playCritSound();
+	void playHitSound();
+	void playChestSound();
 	void playDoorSound();
 	void playClickSound();
 	void playEnterSound();
@@ -86,6 +118,14 @@ public:
 	void playWinSound();
 	void playFailSound();
 	void playTransitionSound();	
+	void playNoiseSound();	
+	void playPressSound();	
+	void playSuccessSound();	
+
+	void playStep1Sound();	
+	void playStep2Sound();	
+	void playStep3Sound();	
+	void playStep4Sound();	
 };
 
 class DFont
@@ -127,6 +167,7 @@ public:
 	bool transition;
 
 	void playMusic( const std::string& filename );
+	void playMusicFast( const std::string& filename );
 	void update(sf::Time time)
 	{
 		if (music.getStatus() != sf::Music::Playing)
@@ -146,7 +187,7 @@ public:
 			
 			transition = false;
 		}	
-		if (!transition && music.getVolume() < 100)
+		if (!transition && music.getVolume() < 70)
 		{
 			music.setVolume(music.getVolume() + 1);
 		}

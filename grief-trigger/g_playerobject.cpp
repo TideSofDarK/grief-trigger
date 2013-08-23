@@ -3,6 +3,7 @@
 #include "h_config.h"
 #include "d_objects.h"
 #include "g_scenemanager.h"
+#include "os_x360controller.hpp"
 
 void addFrames(thor::FrameAnimation& animation, int y, int xFirst, int xLast, float duration = 1.f)
 {
@@ -15,14 +16,7 @@ void addFrames(thor::FrameAnimation& animation, int y, int xFirst, int xLast, fl
 
 PlayerObject::PlayerObject()
 {
-}
-
-void PlayerObject::init(sf::Vector2f pos, tmx::MapObject &playerObject)
-{
-	object = &playerObject;
-
 	sprite.setTexture(TextureManager::instance().getTexture("assets/player.png"));
-	sprite.setPosition(pos);
 
 	for (int a = 0; a < 4; a++)
 	{
@@ -48,6 +42,13 @@ void PlayerObject::init(sf::Vector2f pos, tmx::MapObject &playerObject)
 	animator.addAnimation("idle_down", idleAnimations[DIR_DOWN], sf::seconds(1.f));
 
 	animator.playAnimation("idle_down");
+}
+
+void PlayerObject::init(sf::Vector2f pos, tmx::MapObject &playerObject)
+{
+	object = &playerObject;
+
+	sprite.setPosition(pos);
 
 	nx = sprite.getPosition().x;
 	ny = sprite.getPosition().y;
@@ -80,35 +81,38 @@ void PlayerObject::update(sf::Time &time)
 		/************************************************************************/
 		/* Check for input														*/
 		/************************************************************************/
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+
+		sf::Vector2f ls, rs;
+		xb::Joystick::getSticksPosition(0, ls, rs);
+		
+		sf::Vector2f ja = xb::Joystick::sfJoystick_normaliseDirectionProportional(ls);
+
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || xb::Joystick::getAxisDir() == DIR_UP)
 		{
 			step(DIR_UP);
 		}
 
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down) || xb::Joystick::getAxisDir() == DIR_DOWN)
 		{
 			step(DIR_DOWN);
 		}
 
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left)  || xb::Joystick::getAxisDir() == DIR_LEFT)
 		{
 			step(DIR_LEFT);
 		}
 
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right)  || xb::Joystick::getAxisDir() == DIR_RIGHT)
 		{
 			step(DIR_RIGHT);
-		}
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::G))
-		{
-			animator.playAnimation("up", true);
-		}		
+		}	
 	}
 	if(walking == true)
 	{
 		if(direction == DIR_UP)
 		{
 			ny -= playerMoveSpeed;
+			SoundManager::instance().playStep1Sound();
 
 			if(ny <= nextspot)
 			{
@@ -123,7 +127,7 @@ void PlayerObject::update(sf::Time &time)
 		}
 		if(direction == DIR_DOWN)
 		{
-			ny += playerMoveSpeed;
+			ny += playerMoveSpeed;SoundManager::instance().playStep1Sound();
 
 			if(ny >= nextspot)
 			{
@@ -138,7 +142,7 @@ void PlayerObject::update(sf::Time &time)
 		}
 		if(direction == DIR_LEFT)
 		{
-			nx -= playerMoveSpeed;
+			nx -= playerMoveSpeed;SoundManager::instance().playStep1Sound();
 
 			if(nx <= nextspot)
 			{
@@ -153,7 +157,7 @@ void PlayerObject::update(sf::Time &time)
 		}
 		if(direction == DIR_RIGHT)
 		{
-			nx += playerMoveSpeed;
+			nx += playerMoveSpeed;SoundManager::instance().playStep1Sound();
 
 			if(nx >= nextspot)
 			{

@@ -3,6 +3,7 @@
 #include "h_config.h"
 #include "d_parser.h"
 #include "g_scenemanager.h"
+#include "os_x360controller.hpp"
 
 //Every time when i use "* 2" means that i'm fag
 
@@ -49,10 +50,14 @@ void Enemy::drawUI(sf::RenderTarget &tg)
 		counter = 0;
 		fading = false;
 	}
+
+	DialoguePanel::instance().draw(tg);
 }
 
 void Enemy::update(sf::Time time)
 {
+	DialoguePanel::instance().update();
+
 	if (!animation)
 	{
 		if (-20 + (rand() % (int)(21)) == -3)
@@ -128,6 +133,8 @@ Battle::Battle()
 	light.loadFromFile("assets/light.frag", sf::Shader::Fragment);
 	creo.loadFromFile("assets/creo.frag", sf::Shader::Fragment);
 	shards.loadFromFile("assets/shards.frag", sf::Shader::Fragment);
+	hell.loadFromFile("assets/hell.frag", sf::Shader::Fragment);
+	mech.loadFromFile("assets/mech.frag", sf::Shader::Fragment);
 
 	effectRect = sf::RectangleShape(sf::Vector2f(WIDTH, HEIGHT));
 	effectRect.setFillColor(sf::Color(0,0,0,205));
@@ -142,36 +149,83 @@ Battle::Battle()
 	menu.init(str);
 }
 
-void Battle::start(Squad &squad_)
+void Battle::start(std::vector<Monster> &ms, bool p)
 {
-	squad = squad_;
-
-	std::vector<Monster> &list = squad.getMonsters();
-
 	sf::FloatRect bounds(HALF_WIDTH / 4, HALF_HEIGHT / 5, (HALF_WIDTH / 4) * 3, (HALF_HEIGHT / 5) * 3);
 	enemies.clear();
-	for (auto i = list.begin(); i != list.end(); i++)
+
+	if (ms.size() > 1)
 	{
-		Monster &m = *i;
-		Enemy newEnemy(sf::Vector2f(HALF_WIDTH - ((67 * 2) * (list.size())) + ((67 * 2) * (i - list.begin())), 
-			bounds.top + ((((i - list.begin()) % 2)) ? 10 : -10)), TextureManager::instance().getTexture("assets/" + i->getName() + ".png"), m);
+		for (auto i = ms.begin(); i != ms.end(); i++)
+		{
+			Monster &m = *i;
+			Enemy newEnemy(sf::Vector2f(HALF_WIDTH - ((67 * 2) * (ms.size())) + ((67 * 2) * (i - ms.begin())), 
+				bounds.top + ((((i - ms.begin()) % 2)) ? 10 : -10)), TextureManager::instance().getTexture("assets/" + i->getName() + ".png"), m);
+			enemies.push_back(newEnemy);
+		}
+	}
+	else
+	{
+		Enemy newEnemy(sf::Vector2f(HALF_WIDTH/2 - 10, 
+			bounds.top + 10), TextureManager::instance().getTexture("assets/" + ms.back().getName() + ".png"), ms.back());
 		enemies.push_back(newEnemy);
 	}
+
 
 	selected = 0;
 	seconds = 0;
 	currentAttacking = 0;
 	turnNumber = 0;
 
-	state = AI;
+	if (p)
+	{
+		state = PLAYER;
+		log.setString(L"Вы атакуете первыми!");
+		advantage.setTexture(TextureManager::instance().getTexture("assets/playersadvantage.png"));
+
+		currentAttacking = -1;
+		bool stop;
+		do
+		{
+			currentAttacking++;
+			if (currentAttacking == 0 && GameData::instance().getPlayer().getHP() == 0 
+				|| currentAttacking == 1 && GameData::instance().getEmber().getHP() == 0 
+				|| currentAttacking == 2 && GameData::instance().getThunder().getHP() == 0)
+			{
+				stop = false;
+			}
+			else
+			{
+				stop = true;
+				break;
+			}
+		}
+		while (!stop);
+	}
+	else
+	{
+		state = AI;
+		log.setString(L"Враг атакует первым!");
+		advantage.setTexture(TextureManager::instance().getTexture("assets/enemyadvantage.png"));
+	}
 
 	clock.restart();
 
 	res = BattleResult();
+
+	advantage.setPosition(-189,0);
+	advantage.setColor(sf::Color(255,255,255,0));
+	nax = 0.0;
+	aEffect = true;
+	check = false;
+
+	oTweener.addTween(&CDBTweener::TWEQ_LINEAR, CDBTweener::TWEA_INOUT, 2.f, &nax, -189);
 }
 
 void Battle::drawUI(sf::RenderTarget &tg)
 {
+	effects.drawSecondary(tg);
+
 	tg.draw(emberSprite);
 	tg.draw(thunderSprite);
 	tg.draw(playerSprite);
@@ -212,6 +266,15 @@ void Battle::drawUI(sf::RenderTarget &tg)
 
 	//Hit effects
 	he.draw(tg);
+
+	effects.draw(tg);
+
+	if (aEffect) tg.draw(advantage);
+
+	if (state == ITEM_MENU)
+	{
+		itemMenu.draw(tg);
+	}
 }
 
 void Battle::draw(sf::RenderTarget &tg)
@@ -245,6 +308,16 @@ void Battle::draw(sf::RenderTarget &tg)
 	{
 		sf::Sprite back(background3);
 		tg.draw(back, &shards);
+	}
+	else if (currentBackground == hellType)
+	{
+		sf::Sprite back(background3);
+		tg.draw(back, &hell);
+	}
+	else if (currentBackground == mechType)
+	{
+		sf::Sprite back(background3);
+		tg.draw(back, &mech);
 	}
 
 	for (auto i = enemies.begin(); i != enemies.end(); ++i)
@@ -300,31 +373,60 @@ void Battle::damagePlayer(Monster &monster)
 		damageEffects.push_back(Damage(sf::Vector2f(playerSprite.getPosition().x + (playerSprite.getTextureRect().width / 3), 
 			playerSprite.getPosition().y + (playerSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg)));
 		GameData::instance().getPlayer().setHP(GameData::instance().getPlayer().getHP() - dmg);
-		name = L"Игрок";
+		name = L"Джейд";
+
+		he.init(sf::Vector2f((playerSprite.getPosition().x * 2) + (playerSprite.getTexture()->getSize().x / 2) -  (784 / 2) + 40, playerSprite.getPosition().y + (playerSprite.getTexture()->getSize().y / 2)));
 		break;
 	case 1:
 		damageEffects.push_back(Damage(sf::Vector2f(emberSprite.getPosition().x + (emberSprite.getTextureRect().width / 3), 
 			emberSprite.getPosition().y + (emberSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg)));
 		GameData::instance().getEmber().setHP(GameData::instance().getEmber().getHP() - dmg);
 		name = L"Эмбер";
+
+		he.init(sf::Vector2f((emberSprite.getPosition().x * 2) + (emberSprite.getTexture()->getSize().x / 2) -  (784 / 2) + 40, emberSprite.getPosition().y + (emberSprite.getTexture()->getSize().y / 2)));
 		break;
 	case 2:
 		damageEffects.push_back(Damage(sf::Vector2f(thunderSprite.getPosition().x + (thunderSprite.getTextureRect().width / 3), 
 			thunderSprite.getPosition().y + (thunderSprite.getTextureRect().height / 4)), "-" + std::to_string(dmg)));
 		GameData::instance().getThunder().setHP(GameData::instance().getThunder().getHP() - dmg);
 		name = L"Сандер";
+
+		he.init(sf::Vector2f((thunderSprite.getPosition().x * 2) + (thunderSprite.getTexture()->getSize().x / 2) -  (784 / 2) + 40, thunderSprite.getPosition().y + (thunderSprite.getTexture()->getSize().y / 2)));
 		break;
 	default:
 		break;
 	}
 
 	std::wstring tmpw;
-	std::string tmp = enemies[currentAttacking].getMonster().getName();
-	tmp[0] = toupper(tmp[0]);
+	sf::String tmp = enemies[currentAttacking].getMonster().getName();
+	if (tmp == "boss1")
+	{
+		tmp = L"Темная Мами";
+	}
+	if (tmp == "boss2")
+	{
+		tmp = L"Мами-монстр";
+	}
+	if (tmp == "doom")
+	{
+		tmp = L"Дум";
+	}
+	if (tmp == "flower")
+	{
+		tmp = L"Скрытень";
+	}
+	if (tmp == "skull")
+	{
+		tmp = L"Череп";
+	}
+	if (tmp == "slug")
+	{
+		tmp = L"Ужас";
+	}
 
-	stringToWString(tmpw, tmp);
+	//stringToWString(tmpw, tmp);
 
-	log.setString(tmpw + L" нанес " + std::to_wstring(dmg) + L" урона персонажу " + name + L".");
+	log.setString(tmp.toWideString() + L" нанес " + std::to_wstring(dmg) + L" урона персонажу " + name + L".");
 
 	SceneManager::instance().getScene().setCurrentEffect("distortion", sf::seconds(0.1));
 }
@@ -377,363 +479,623 @@ void Battle::loadResources()
 	currentBackground = fireType;
 
 	spellQTE.loadResources();
+
+	TextureManager::instance().getTexture("assets/playersadvantage.png");
+	advantage.setTexture(TextureManager::instance().getTexture("assets/enemyadvantage.png"));
 }
 
 void Battle::update(sf::Time time)
 {
-	if (state != SPELL)
+	if (GameData::instance().getPlayer().getHP() > 0 || GameData::instance().getEmber().getHP() > 0 || GameData::instance().getThunder().getHP() > 0)
 	{
-		//Update damage effect
-		for (auto i = damageEffects.begin(); i != damageEffects.end();)
+		effects.update(time);
+
+		if (state == ITEM_MENU)
 		{
-			Damage &d = *i;
-			if (d.isActive())
-			{
-				d.update(time);
-				i++;
-			}
-			else
-			{
-				i = damageEffects.erase(i);
-			}
+			itemMenu.update(time);
 		}
 
-		//Update enemies
-		for (auto i = enemies.begin(); i != enemies.end(); ++i)
+		if (check)
 		{
-			i->update(time);
-		}
-
-		//Bla-bla-bla
-		emberHPBar.update(time);
-		thunderHPBar.update(time);
-		playerHPBar.update(time);
-		emberManaBar.update(time);
-		thunderManaBar.update(time);
-		playerManaBar.update(time);
-
-		//Log on top of the screen
-		log.update(time);
-
-		//Is message completely read
-		if (state == AI && log.isRead())
-		{
-			//Let them turn
-			nextAIStep();
-		}
-
-		//Change pointer position
-		if (state == PLAYER)
-		{
-			switch (currentAttacking)
+			if (t.getElapsedTime().asSeconds() > 1.5)
 			{
-			case 0:
-				pointer.setPosition(playerSprite.getPosition().x + 150, playerSprite.getPosition().y + 100);
-				break;
-			case 1:
-				pointer.setPosition(emberSprite.getPosition().x + 190, emberSprite.getPosition().y + 100);
-				break;
-			case 2:
-				pointer.setPosition(thunderSprite.getPosition().x + 170, thunderSprite.getPosition().y + 100);
-				break;
-			default:
-				break;
-			}		
-		}
-		else if (state == HEROSELECT)
-		{
-			switch (selectedHero)
-			{
-			case 0:
-				pointer.setPosition(playerSprite.getPosition().x + 150, playerSprite.getPosition().y + 100);
-				break;
-			case 1:
-				pointer.setPosition(emberSprite.getPosition().x + 190, emberSprite.getPosition().y + 100);
-				break;
-			case 2:
-				pointer.setPosition(thunderSprite.getPosition().x + 170, thunderSprite.getPosition().y + 100);
-				break;
-			default:
-				break;
-			}
-		}
-
-		//Menu, opens by ENTER
-		menu.update(time);
-	}
-
-	//Using menu, 0 is attack, 1 is spell, 2 is item
-	if (state == PLAYER && menu.getSelected() != NOT_SELECTED && log.isRead()) 
-	{
-		log.stop();
-		if (menu.getSelected() == 0)
-		{			
-			nextPlayerStep();
-			menu.clean();
-			menu.disappear();
-		}
-
-		if (menu.getSelected() == 1)
-		{			
-			state = SPELL;
-			menu.clean();
-			menu.disappear();
-			switch (currentAttacking)
-			{
-			case 0:
-				spellMenu.setSpells(Parser::instance().parseSpells("player", GameData::instance().getPlayer().getLevel()));
-				break;
-			case 1:
-				spellMenu.setSpells(Parser::instance().parseSpells("ember", GameData::instance().getEmber().getLevel()));
-				break;
-			case 2:
-				spellMenu.setSpells(Parser::instance().parseSpells("thunder", GameData::instance().getThunder().getLevel()));std::cout << "sdfsdfsd: " + std::to_string(currentAttacking) << std::endl;
-				break;
-			default:
-				break;
+				aEffect = false;
+				check = false;
 			}	
 		}
-
-		if (menu.getSelected() == 2)
-		{			
-		}
-	}
-
-	//Very bad handling of game's end
-	bool allDead = true;
-	for (auto i = enemies.begin(); i != enemies.end(); i++)
-	{
-		if (!i->isDied())
+		else if (advantage.getColor().a >= 240)
 		{
-			allDead = false;
-			break;
+			check = true;
+			t.restart();
 		}
-	}
-	if(allDead && state != ENDED)
-	{
-		SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.2));
-		state = ENDED;
-		log.setString(L"Бой окончен!");
-		SoundManager::instance().playWinSound();
-	}
+		advantage.setPosition(interpolateLinear(advantage.getPosition().x, 0, 0.04f),0);
 
-	//Spells
-	if (state == SPELL)
-	{
-		spellMenu.update(time);
-		if (spellMenu.getSelected() != -1)
+		if (aEffect)
 		{
-			menu.clean();
-			menu.disappear();
-			if (spellMenu.getSelectedSpell().getFileName() == "heal")
+			if ((int)(rand() % 50) == 3) SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.3));	
+			advantage.setColor(sf::Color(255,255,255,interpolateLinear(advantage.getColor().a, 255, 0.07f)));
+		}
+
+		if (state != SPELL)
+		{
+			//Update damage effect
+			for (auto i = damageEffects.begin(); i != damageEffects.end();)
 			{
-				state = HEROSELECT;
-				log.setString(L"Выберите героя.");
+				Damage &d = *i;
+				if (d.isActive())
+				{
+					d.update(time);
+					i++;
+				}
+				else
+				{
+					i = damageEffects.erase(i);
+				}
 			}
-			else
-			{
-				state = QTE;
 
+			//Update enemies
+			for (auto i = enemies.begin(); i != enemies.end(); ++i)
+			{
+				i->update(time);
+			}
+
+			//Bla-bla-bla
+			emberHPBar.update(time, sf::Vector2f(), GameData::instance().getEmber().getHP(), GameData::instance().getEmber().getMaxHP());
+			thunderHPBar.update(time, sf::Vector2f(), GameData::instance().getThunder().getHP(), GameData::instance().getThunder().getMaxHP());
+			playerHPBar.update(time, sf::Vector2f(), GameData::instance().getPlayer().getHP(), GameData::instance().getPlayer().getMaxHP());
+			emberManaBar.update(time, sf::Vector2f(), GameData::instance().getEmber().getMP(), GameData::instance().getEmber().getMaxMP());
+			thunderManaBar.update(time, sf::Vector2f(), GameData::instance().getThunder().getMP(), GameData::instance().getThunder().getMaxMP());
+			playerManaBar.update(time, sf::Vector2f(), GameData::instance().getPlayer().getMP(), GameData::instance().getPlayer().getMaxMP());
+
+			//Log on top of the screen
+			log.update(time);
+
+			//Is message completely read
+			if (state == AI && log.isRead() && !aEffect)
+			{
+				//Let them turn
+				nextAIStep();
+			}
+
+			//Change pointer position
+			if (state == PLAYER)
+			{
 				switch (currentAttacking)
 				{
 				case 0:
-					spellQTE.start(spellMenu.getSelectedSpell(), "player");
+					pointer.setPosition(playerSprite.getPosition().x + 150, playerSprite.getPosition().y + 100);
 					break;
 				case 1:
-					spellQTE.start(spellMenu.getSelectedSpell(), "red");
+					pointer.setPosition(emberSprite.getPosition().x + 190, emberSprite.getPosition().y + 100);
 					break;
 				case 2:
-					spellQTE.start(spellMenu.getSelectedSpell(), "blue");
+					pointer.setPosition(thunderSprite.getPosition().x + 170, thunderSprite.getPosition().y + 100);
+					break;
+				default:
+					break;
+				}		
+			}
+			else if (state == HEROSELECT)
+			{
+				switch (selectedHero)
+				{
+				case 0:
+					pointer.setPosition(playerSprite.getPosition().x + 150, playerSprite.getPosition().y + 100);
+					break;
+				case 1:
+					pointer.setPosition(emberSprite.getPosition().x + 190, emberSprite.getPosition().y + 100);
+					break;
+				case 2:
+					pointer.setPosition(thunderSprite.getPosition().x + 170, thunderSprite.getPosition().y + 100);
 					break;
 				default:
 					break;
 				}
-			}		
-		}
-	}
+			}
 
-	//QTE
-	if(state == QTE) 
-	{
-		if (spellQTE.isDamaged())
+			//Menu, opens by ENTER
+			menu.update(time);
+		}
+
+		//Using menu, 0 is attack, 1 is spell, 2 is item
+		if (state == PLAYER && menu.getSelected() != NOT_SELECTED && log.isRead()) 
 		{
-			damageSpell();
-			spellQTE.clean();
+			log.stop();
+			if (menu.getSelected() == 0)
+			{			
+				nextPlayerStep();
+			}
+
+			if (menu.getSelected() == 1)
+			{			
+				state = SPELL;
+				switch (currentAttacking)
+				{
+				case 0:
+					spellMenu.setSpells(Parser::instance().parseSpells("player", GameData::instance().getPlayer().getLevel()));
+					break;
+				case 1:
+					spellMenu.setSpells(Parser::instance().parseSpells("ember", GameData::instance().getEmber().getLevel()));
+					break;
+				case 2:
+					spellMenu.setSpells(Parser::instance().parseSpells("thunder", GameData::instance().getThunder().getLevel()));
+					break;
+				default:
+					break;
+				}	
+			}
+
+			if (menu.getSelected() == 2)
+			{			
+				state = ITEM_MENU;
+				itemMenu.show();
+
+				selectedHero = 0;
+				itemSelected = NOT_SELECTED;
+			}
+
+			menu.clean();
+			menu.disappear();
 		}
 
-		if (spellQTE.isEnded())
+		if (state == ITEM_MENU && itemMenu.getSelected() != NOT_SELECTED)
+		{
+			itemSelected = itemMenu.getSelected() + 1;
+			itemMenu.close();
+
+			state = HEROSELECT;
+			log.stop();
+			log.setString(L"Выберите героя.");
+
+			itemMenu.clean();
+		}
+
+		//Very bad handling of game's end
+		bool allDead = true;
+		for (auto i = enemies.begin(); i != enemies.end(); i++)
+		{
+			if (!i->isDied())
+			{
+				allDead = false;
+				break;
+			}
+		}
+		if(allDead && state != ENDED)
 		{
 			SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.2));
-			state = PLAYER;
-			bool stop;
-			do
+			state = ENDED;
+			log.setString(L"Бой окончен!");
+			SoundManager::instance().playWinSound();
+		}
+
+		//Spells
+		if (state == SPELL)
+		{
+			spellMenu.update(time);
+			if (spellMenu.getSelected() != -1)
 			{
-				currentAttacking++;
-				if (currentAttacking == 1 && GameData::instance().getEmber().getHP() == 0 || currentAttacking == 2 && GameData::instance().getThunder().getHP() == 0)
+				menu.clean();
+				menu.disappear();
+				if (spellMenu.getSelectedSpell().getFileName() == "heal")
 				{
-					stop = false;
-				}
-				else
-				{
-					stop = true;
-				}
-			}
-			while (!stop);
-			if (currentAttacking >= 3)
-			{
-				currentAttacking = 0;
-				state = AI;
-			}
-			else
-			{
-				for (auto i = enemies.begin(); i != enemies.end(); i++)
-				{
-					if (!i->isDied())
+					switch (currentAttacking)
 					{
-						selected = i - enemies.begin();
+					case 0:
+						if (GameData::instance().getPlayer().getMP() >= spellMenu.getSelectedSpell().getMana())
+						{
+							state = HEROSELECT;
+							log.setString(L"Выберите героя.");
+						}
+						else
+						{
+							state = PLAYER;
+							SoundManager::instance().playFailSound();
+
+							log.setString(L"Недостаточно маны!");
+						}
+						break;
+					case 1:
+						if (GameData::instance().getEmber().getMP() >= spellMenu.getSelectedSpell().getMana())
+						{
+							state = HEROSELECT;
+							log.setString(L"Выберите героя.");
+						}
+						else
+						{
+							state = PLAYER;
+							SoundManager::instance().playFailSound();
+
+							log.setString(L"Недостаточно маны!");
+						}
+						break;
+					case 2:
+						if (GameData::instance().getThunder().getMP() >= spellMenu.getSelectedSpell().getMana())
+						{
+							state = HEROSELECT;
+							log.setString(L"Выберите героя.");
+						}
+						else
+						{
+							state = PLAYER;
+							SoundManager::instance().playFailSound();
+
+							log.setString(L"Недостаточно маны!");
+						}
+						break;
+					default:
 						break;
 					}
 				}
+				else
+				{
+					state = QTE;
+
+					switch (currentAttacking)
+					{
+					case 0:
+						if (GameData::instance().getPlayer().useMana(spellMenu.getSelectedSpell().getMana()) == true)
+						{
+							spellQTE.start(spellMenu.getSelectedSpell(), "player");
+						}
+						else
+						{
+							state = PLAYER;
+							SoundManager::instance().playFailSound();
+
+							log.setString(L"Недостаточно маны!");
+						}
+						break;
+					case 1:
+						if (GameData::instance().getEmber().useMana(spellMenu.getSelectedSpell().getMana()) == true)
+						{
+							spellQTE.start(spellMenu.getSelectedSpell(), "red");
+						}
+						else
+						{
+							state = PLAYER;
+							SoundManager::instance().playFailSound();
+
+							log.setString(L"Недостаточно маны!");
+						}
+						break;
+					case 2:
+						if (GameData::instance().getThunder().useMana(spellMenu.getSelectedSpell().getMana()) == true)
+						{
+							spellQTE.start(spellMenu.getSelectedSpell(), "blue");
+						}
+						else
+						{
+							state = PLAYER;
+							SoundManager::instance().playFailSound();
+
+							log.setString(L"Недостаточно маны!");
+						}
+						break;
+					default:
+						break;
+					}
+				}		
 			}
 		}
-		spellQTE.update(time);
 
-		if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "space")
+		//QTE
+		if(state == QTE) 
 		{
-			currentBackground = spaceType;
-		}
-		else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "fire")
-		{
-			currentBackground = fireType;
-		}
-		else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "light")
-		{
-			currentBackground = lightType;
-		}
-		else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "sback")
-		{
-			currentBackground = sbackType;
-		}
-		else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "creo")
-		{
-			currentBackground = creoType;
-		}
-		else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "shards")
-		{
-			currentBackground = shardsType;
-		}
-	}
-	else
-	{
-		if (Level::instance().getDay() == 1)
-		{
-			currentBackground = sbackType;
+			if (spellQTE.isDamaged())
+			{
+				damageSpell();
+				spellQTE.clean();
+			}
+
+			if (spellQTE.isEnded())
+			{
+				SceneManager::instance().getScene().setCurrentEffect("rgb", sf::seconds(0.2));
+				state = PLAYER;
+				bool stop;
+				do
+				{
+					currentAttacking++;
+					if (currentAttacking == 1 && GameData::instance().getEmber().getHP() == 0 || currentAttacking == 2 && GameData::instance().getThunder().getHP() == 0)
+					{
+						stop = false;
+					}
+					else
+					{
+						stop = true;
+					}
+				}
+				while (!stop);
+				if (currentAttacking >= 3)
+				{
+					currentAttacking = 0;
+					state = AI;
+				}
+				else
+				{
+					for (auto i = enemies.begin(); i != enemies.end(); i++)
+					{
+						if (!i->isDied())
+						{
+							selected = i - enemies.begin();
+							break;
+						}
+					}
+				}
+			}
+			spellQTE.update(time);
+
+			if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "space")
+			{
+				currentBackground = spaceType;
+			}
+			else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "fire")
+			{
+				currentBackground = fireType;
+			}
+			else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "light")
+			{
+				currentBackground = lightType;
+			}
+			else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "sback")
+			{
+				currentBackground = sbackType;
+			}
+			else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "creo")
+			{
+				currentBackground = creoType;
+			}
+			else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "shards")
+			{
+				currentBackground = shardsType;
+			}
+			else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "hell")
+			{
+				currentBackground = hellType;
+			}
+			else if (Parser::instance().getBackground(spellMenu.getSelectedSpell().getFileName()) == "mech")
+			{
+				currentBackground = mechType;
+			}
 		}
 		else
 		{
-			currentBackground = fireType;
+			if (Level::instance().getDay() <=3)
+			{
+				currentBackground = fireType;
+			}
+			else
+			{
+				currentBackground = sbackType;
+			}
+			if (Level::instance().getDay() == 6 && Level::instance().getScene() == 7 || Level::instance().getDay() == 6 && Level::instance().getScene() == 8)
+			{
+				currentBackground = mechType;
+			}
 		}
-	}
 
-	//Hit effects
-	he.update(time);
+		//Hit effects
+		he.update(time);
 
-	if (currentBackground == spaceType)
-	{
-		//Update shader
-		space.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
-		space.setParameter("seconds", seconds / 50.0);
-		space.setParameter("texture1", background);
-		space.setParameter("texture2", background2);
-		seconds+=1;
-	}
-	else if (currentBackground == fireType)
-	{
-		//Update shader
-		fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
-		fire.setParameter("seconds", seconds);
-		if (state == QTE)
+		if (currentBackground == spaceType)
 		{
-			seconds+=5;
-			fire.setParameter("type", 1);		
+			//Update shader
+			space.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+			space.setParameter("seconds", seconds / 50.0);
+			space.setParameter("texture1", background);
+			space.setParameter("texture2", background2);
+			seconds+=1;
 		}
-		else
+		else if (currentBackground == fireType)
 		{
+			//Update shader
+			fire.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+			fire.setParameter("seconds", seconds);
+			if (state == QTE)
+			{
+				seconds+=5;
+				fire.setParameter("type", 1);		
+			}
+			else
+			{
+				seconds++;
+				fire.setParameter("type", 0);
+			}
+		}
+		else if (currentBackground == sbackType)
+		{
+			//Update shader
+			sback.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+			sback.setParameter("seconds", seconds);
 			seconds++;
-			fire.setParameter("type", 0);
+		}
+		else if (currentBackground == lightType)
+		{
+			//Update shader
+			light.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+			light.setParameter("seconds", seconds);
+			light.setParameter("pts", 10.f);
+			seconds++;
+		}
+		else if (currentBackground == creoType)
+		{
+			//Update shader
+			creo.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+			creo.setParameter("seconds", seconds);
+			seconds++;
+		}
+		else if (currentBackground == shardsType)
+		{
+			//Update shader
+			shards.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+			shards.setParameter("seconds", seconds/100.0f);
+			seconds++;
+		}
+		else if (currentBackground == hellType)
+		{
+			//Update shader
+			hell.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+			hell.setParameter("seconds", seconds/100.0f);
+			seconds++;
+		}
+		else if (currentBackground == mechType)
+		{
+			//Update shader
+			mech.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
+			mech.setParameter("seconds", seconds/100.0f);
+			seconds++;
+		}
+
+		if (GameData::instance().getPlayer().getHP() == 0)
+		{
+			playerSprite.setColor(sf::Color(100,100,100,255));
+		}
+		else
+		{
+			playerSprite.setColor(sf::Color(255,255,255,255));
+		}
+		if (GameData::instance().getEmber().getHP() == 0)
+		{
+			emberSprite.setColor(sf::Color(100,100,100,255));
+		}
+		else
+		{
+			emberSprite.setColor(sf::Color(255,255,255,255));
+		}
+		if (GameData::instance().getThunder().getHP() == 0)
+		{
+			thunderSprite.setColor(sf::Color(100,100,100,255));
+		}
+		else
+		{
+			thunderSprite.setColor(sf::Color(255,255,255,255));
 		}
 	}
-	else if (currentBackground == sbackType)
+	else
 	{
-		//Update shader
-		sback.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
-		sback.setParameter("seconds", seconds);
-		seconds++;
-	}
-	else if (currentBackground == lightType)
-	{
-		//Update shader
-		light.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
-		light.setParameter("seconds", seconds);
-		light.setParameter("pts", 10.f);
-		seconds++;
-	}
-	else if (currentBackground == creoType)
-	{
-		//Update shader
-		creo.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
-		creo.setParameter("seconds", seconds);
-		seconds++;
-	}
-	else if (currentBackground == shardsType)
-	{
-		//Update shader
-		shards.setParameter("size", sf::Vector2f(WIDTH, HEIGHT));
-		shards.setParameter("seconds", seconds/100.f);
-		seconds++;
-	}
+		//state = ENDED;
 
-	if (GameData::instance().getPlayer().getHP() == 0)
-	{
-		playerSprite.setColor(sf::Color(100,100,100,255));
-	}
-	else
-	{
-		playerSprite.setColor(sf::Color(255,255,255,255));
-	}
-	if (GameData::instance().getEmber().getHP() == 0)
-	{
-		emberSprite.setColor(sf::Color(100,100,100,255));
-	}
-	else
-	{
-		emberSprite.setColor(sf::Color(255,255,255,255));
-	}
-	if (GameData::instance().getThunder().getHP() == 0)
-	{
-		thunderSprite.setColor(sf::Color(100,100,100,255));
-	}
-	else
-	{
-		thunderSprite.setColor(sf::Color(255,255,255,255));
+		Parser::instance().loadGame();
+
+		GameData::instance().getThunder().clearOffset();
+		GameData::instance().getPlayer().clearOffset();
+		GameData::instance().getEmber().clearOffset();
+
+		SceneManager::instance().startTransition(Parser::instance().getSceneInfo(Level::instance().getDay(), Level::instance().getScene()));
 	}
 }
 
 void Battle::damageSpell()
 {
 	unsigned int dmg;
-	if (spellMenu.getSelectedSpell().getFileName() != "heal")
+	if (spellMenu.getSelectedSpell().getFileName() == "heal")
 	{
 		switch (currentAttacking)
 		{
 		case 0:
-			dmg = (GameData::instance().getPlayer().getIntelligence() / 4) + (rand() % (int)(2));
+			dmg = (GameData::instance().getPlayer().getIntelligence() / 6) + (rand() % (int)(2));
 			break;
 		case 1:
-			dmg = (GameData::instance().getEmber().getIntelligence() / 4) + (rand() % (int)(2));
+			dmg = (GameData::instance().getEmber().getIntelligence() / 6) + (rand() % (int)(2));
 			break;
 		case 2:
-			dmg = (GameData::instance().getThunder().getIntelligence() / 4) + (rand() % (int)(2));
+			dmg = (GameData::instance().getThunder().getIntelligence() / 6) + (rand() % (int)(2));
+			break;
+		default:
+			break;
+		}
+		switch (selectedHero)
+		{
+		case 0:
+			GameData::instance().getPlayer().addHP(dmg);
+			effects.show(sf::Vector2f(playerSprite.getPosition().x+ 80, playerSprite.getPosition().y+190), "magic");
+			break;
+		case 1:
+			GameData::instance().getEmber().addHP(dmg);
+			effects.show(sf::Vector2f(emberSprite.getPosition().x+ 80, emberSprite.getPosition().y+190), "magic");
+			break;
+		case 2:
+			GameData::instance().getThunder().addHP(dmg);
+			effects.show(sf::Vector2f(thunderSprite.getPosition().x + 80, thunderSprite.getPosition().y+190), "magic");
+			break;
+		default:
+			break;
+		} 
+
+		SoundManager::instance().playHurtSound();
+	}
+	else if (spellMenu.getSelectedSpell().getFileName() == "health")
+	{
+		int diff;
+		if (GameData::instance().getPlayer().getLevel() - Parser::instance().getSpellLevel(spellMenu.getSelectedSpell().getFileName()) == 0)
+		{
+			diff = 1;
+		}
+		if (GameData::instance().getPlayer().getLevel() - Parser::instance().getSpellLevel(spellMenu.getSelectedSpell().getFileName()) == 1)
+		{
+			diff = 2;
+		}
+		if (GameData::instance().getPlayer().getLevel() - Parser::instance().getSpellLevel(spellMenu.getSelectedSpell().getFileName()) >= 2)
+		{
+			diff = 3;
+		}
+		if (GameData::instance().getPlayer().getLevel() < Parser::instance().getSpellLevel(spellMenu.getSelectedSpell().getFileName()))
+		{
+			diff = 1;
+		}
+
+		switch (currentAttacking)
+		{
+		case 0:
+			dmg = (GameData::instance().getPlayer().getIntelligence() / (7-diff)) + (rand() % (int)(2));
+			break;
+		case 1:
+			dmg = (GameData::instance().getEmber().getIntelligence() / (7-diff)) + (rand() % (int)(2));
+			break;
+		case 2:
+			dmg = (GameData::instance().getThunder().getIntelligence() / (7-diff)) + (rand() % (int)(2));
+			break;
+		default:
+			break;
+		}
+
+		GameData::instance().getPlayer().addHP(dmg);
+		GameData::instance().getEmber().addHP(dmg);
+		GameData::instance().getThunder().addHP(dmg);
+
+		effects.showAOE(sf::Vector2f(thunderSprite.getPosition().x + 80, thunderSprite.getPosition().y+190) , sf::Vector2f(emberSprite.getPosition().x+ 80, emberSprite.getPosition().y+190) ,sf::Vector2f(playerSprite.getPosition().x+ 80, playerSprite.getPosition().y+190) ,"magic");
+
+		SoundManager::instance().playHurtSound();
+	}
+	else if (spellMenu.getSelectedSpell().getFileName() == "wind" || spellMenu.getSelectedSpell().getFileName() == "snow" || spellMenu.getSelectedSpell().getFileName() == "acid" || spellMenu.getSelectedSpell().getFileName() == "burn" || spellMenu.getSelectedSpell().getFileName() == "fire")
+	{
+		int diff;
+		if (GameData::instance().getPlayer().getLevel() - Parser::instance().getSpellLevel(spellMenu.getSelectedSpell().getFileName()) == 0)
+		{
+			diff = 1;
+		}
+		if (GameData::instance().getPlayer().getLevel() - Parser::instance().getSpellLevel(spellMenu.getSelectedSpell().getFileName()) == 1)
+		{
+			diff = 2;
+		}
+		if (GameData::instance().getPlayer().getLevel() - Parser::instance().getSpellLevel(spellMenu.getSelectedSpell().getFileName()) >= 2)
+		{
+			diff = 3;
+		}
+		if (GameData::instance().getPlayer().getLevel() < Parser::instance().getSpellLevel(spellMenu.getSelectedSpell().getFileName()))
+		{
+			diff = 1;
+		}
+
+		switch (currentAttacking)
+		{
+		case 0:
+			dmg = (GameData::instance().getPlayer().getIntelligence() / (8 - diff)) + (rand() % (int)(2));
+			break;
+		case 1:
+			dmg = (GameData::instance().getEmber().getIntelligence() / (8 - diff)) + (rand() % (int)(2));
+			break;
+		case 2:
+			dmg = (GameData::instance().getThunder().getIntelligence() / (8 - diff)) + (rand() % (int)(2));
 			break;
 		default:
 			break;
@@ -759,39 +1121,62 @@ void Battle::damageSpell()
 
 		SoundManager::instance().playHurtSound();
 	}
-	else
+	else if (spellMenu.getSelectedSpell().getFileName() == "flame" 
+		|| spellMenu.getSelectedSpell().getFileName() == "frost")
 	{
+		int diff;
+		if (GameData::instance().getPlayer().getLevel() - Parser::instance().getSpellLevel(spellMenu.getSelectedSpell().getFileName()) == 0)
+		{
+			diff = 1;
+		}
+		if (GameData::instance().getPlayer().getLevel() - Parser::instance().getSpellLevel(spellMenu.getSelectedSpell().getFileName()) == 1)
+		{
+			diff = 2;
+		}
+		if (GameData::instance().getPlayer().getLevel() - Parser::instance().getSpellLevel(spellMenu.getSelectedSpell().getFileName()) >= 2)
+		{
+			diff = 3;
+		}
+		if (GameData::instance().getPlayer().getLevel() < Parser::instance().getSpellLevel(spellMenu.getSelectedSpell().getFileName()))
+		{
+			diff = 1;
+		}
+
 		switch (currentAttacking)
 		{
 		case 0:
-			dmg = (GameData::instance().getPlayer().getIntelligence() / 4) + (rand() % (int)(2));
+			dmg = (GameData::instance().getPlayer().getIntelligence() / (7-diff)) + (rand() % (int)(2));
 			break;
 		case 1:
-			dmg = (GameData::instance().getEmber().getIntelligence() / 4) + (rand() % (int)(2));
+			dmg = (GameData::instance().getEmber().getIntelligence() / (7-diff)) + (rand() % (int)(2));
 			break;
 		case 2:
-			dmg = (GameData::instance().getThunder().getIntelligence() / 4) + (rand() % (int)(2));
-			break;
-		default:
-			break;
-		}
-
-		std::cout << std::to_string(selectedHero) + " wdfsdfdsfsdfsdf" << std::endl;
-
-		switch (selectedHero)
-		{
-		case 0:
-			GameData::instance().getPlayer().addHP(dmg);
-			break;
-		case 1:
-			GameData::instance().getEmber().addHP(dmg);
-			break;
-		case 2:
-			GameData::instance().getThunder().addHP(dmg);
+			dmg = (GameData::instance().getThunder().getIntelligence() / (7-diff)) + (rand() % (int)(2));
 			break;
 		default:
 			break;
 		} 
+
+		for(auto i = enemies.begin(); i != enemies.end(); i++)
+		{
+			i->playAnimation();
+			i->getMonster().receiveDamage(dmg);
+
+			if (i->isDied())
+			{
+				res.playerXP += i->getMonster().getMaxHP();
+				res.emberXP += i->getMonster().getMaxHP();
+				res.thunderXP += i->getMonster().getMaxHP();
+			}
+		}
+
+		for (auto it = enemies.begin(); it != enemies.end(); it++)
+		{
+			if (!it->isDied())
+			{
+				selected = it - enemies.begin();
+			}
+		}
 
 		SoundManager::instance().playHurtSound();
 	}
@@ -799,54 +1184,224 @@ void Battle::damageSpell()
 
 void Battle::selectHero()
 {
-	state = QTE;
-
-	switch (currentAttacking)
+	if (itemSelected == 1)
 	{
-	case 0:
-		spellQTE.start(spellMenu.getSelectedSpell(), "player");
-		break;
-	case 1:
-		spellQTE.start(spellMenu.getSelectedSpell(), "red");
-		break;
-	case 2:
-		spellQTE.start(spellMenu.getSelectedSpell(), "blue");
-		break;
-	default:
-		break;
+		switch (selectedHero)
+		{
+		case 0:
+			if (GameData::instance().getPlayer().getHP() > 0 && GameData::instance().useMed())
+			{
+				GameData::instance().getPlayer().addHP(((float)GameData::instance().getPlayer().getMaxHP() / 100.0f) * 40.0);
+				effects.show(sf::Vector2f(playerSprite.getPosition().x+ 80, playerSprite.getPosition().y+190), "magic");
+			}			
+			break;
+		case 1:
+			if (GameData::instance().getEmber().getHP() > 0 && GameData::instance().useMed())
+			{
+				GameData::instance().getEmber().addHP(((float)GameData::instance().getEmber().getMaxHP() / 100.0f) * 40.0);
+				effects.show(sf::Vector2f(emberSprite.getPosition().x+ 80, emberSprite.getPosition().y+190), "magic");
+			}
+			break;
+		case 2:
+			if (GameData::instance().getThunder().getHP() > 0 && GameData::instance().useMed())
+			{
+				GameData::instance().getThunder().addHP(((float)GameData::instance().getThunder().getMaxHP() / 100.0f) * 40.0);
+				effects.show(sf::Vector2f(thunderSprite.getPosition().x + 80, thunderSprite.getPosition().y+190), "magic");
+			}
+			break;
+		default:
+			break;
+		}
+		SoundManager::instance().playSuccessSound();		
+
+		state = PLAYER;
 	}
+	else if (itemSelected == 2 && GameData::instance().useMana())
+	{
+		switch (selectedHero)
+		{
+		case 0:
+			GameData::instance().getPlayer().addMP(((float)GameData::instance().getPlayer().getMaxMP() / 100.0f) * 40.0);
+			effects.show(sf::Vector2f(playerSprite.getPosition().x+ 80, playerSprite.getPosition().y+190), "magic");
+			break;
+		case 1:
+			GameData::instance().getEmber().addMP(((float)GameData::instance().getEmber().getMaxMP() / 100.0f) * 40.0);
+			effects.show(sf::Vector2f(emberSprite.getPosition().x+ 80, emberSprite.getPosition().y+190), "magic");
+			break;
+		case 2:
+			GameData::instance().getThunder().addMP(((float)GameData::instance().getThunder().getMaxMP() / 100.0f) * 40.0);
+			effects.show(sf::Vector2f(thunderSprite.getPosition().x+ 80, thunderSprite.getPosition().y+190), "magic");
+			break;
+		default:
+			break;
+		}
+		SoundManager::instance().playSuccessSound();
+
+		state = PLAYER;
+	}
+	else if (itemSelected == 3)
+	{
+		switch (selectedHero)
+		{
+		case 0:
+			if (GameData::instance().getPlayer().getHP()==0 && GameData::instance().useShard())
+			{
+				GameData::instance().getPlayer().addHP(GameData::instance().getPlayer().getMaxHP() / 2);
+				effects.show(sf::Vector2f(playerSprite.getPosition().x+ 80, playerSprite.getPosition().y+190), "magic");
+
+				SoundManager::instance().playSuccessSound();
+			}
+			else
+			{
+				SoundManager::instance().playFailSound();
+				log.setString(L"Цель жива.");
+			}
+			break;
+		case 1:
+			if (GameData::instance().getEmber().getHP()==0 && GameData::instance().useShard())
+			{
+				GameData::instance().getEmber().addHP(GameData::instance().getEmber().getMaxHP() / 2);
+				effects.show(sf::Vector2f(emberSprite.getPosition().x+ 80, emberSprite.getPosition().y+190), "magic");
+
+				SoundManager::instance().playSuccessSound();
+			}
+			else
+			{
+				SoundManager::instance().playFailSound();
+				log.setString(L"Цель жива.");
+			}		
+			break;
+		case 2:
+			if (GameData::instance().getThunder().getHP()==0 && GameData::instance().useShard())
+			{
+				GameData::instance().getThunder().addHP(GameData::instance().getThunder().getMaxHP() / 2);
+				effects.show(sf::Vector2f(thunderSprite.getPosition().x+ 80, thunderSprite.getPosition().y+190), "magic");
+
+				SoundManager::instance().playSuccessSound();
+			}
+			else
+			{
+				SoundManager::instance().playFailSound();	
+				log.setString(L"Цель жива.");
+			}		
+			break;
+		default:
+			break;
+		}
+
+		state = PLAYER;
+	}
+	else if (spellMenu.getSelectedSpell().getFileName() == "heal")
+	{
+		switch (currentAttacking)
+		{
+		case 0:
+			if (GameData::instance().getPlayer().useMana(spellMenu.getSelectedSpell().getMana()))
+			{
+				spellQTE.start(spellMenu.getSelectedSpell(), "player");
+			}		
+			break;
+		case 1:
+			if (GameData::instance().getEmber().useMana(spellMenu.getSelectedSpell().getMana()))
+			{
+				spellQTE.start(spellMenu.getSelectedSpell(), "red");
+			}			
+			break;
+		case 2:
+			if (GameData::instance().getThunder().useMana(spellMenu.getSelectedSpell().getMana()))
+			{
+				spellQTE.start(spellMenu.getSelectedSpell(), "blue");
+			}		
+			break;
+		default:
+			break;
+		}
+
+		state = QTE;
+	}
+	else if (spellMenu.getSelectedSpell().getFileName() == "health")
+	{
+		switch (currentAttacking)
+		{
+		case 0:
+			if (GameData::instance().getPlayer().useMana(spellMenu.getSelectedSpell().getMana()))
+			{
+				spellQTE.start(spellMenu.getSelectedSpell(), "player");
+			}		
+			break;
+		case 1:
+			if (GameData::instance().getEmber().useMana(spellMenu.getSelectedSpell().getMana()))
+			{
+				spellQTE.start(spellMenu.getSelectedSpell(), "red");
+			}			
+			break;
+		case 2:
+			if (GameData::instance().getThunder().useMana(spellMenu.getSelectedSpell().getMana()))
+			{
+				spellQTE.start(spellMenu.getSelectedSpell(), "blue");
+			}		
+			break;
+		default:
+			break;
+		}
+
+		state = QTE;
+	}
+	itemSelected = NOT_SELECTED;
+	//selectedHero = 0;
 }
 
 void Battle::damageMonster()
 {
 	int dmg;
+	int crit;
 	sf::String tmpw;
 	//Count damage
 	switch (currentAttacking)
 	{
 	case 0:
 		dmg = (GameData::instance().getPlayer().getStrength() / 4 + GameData::instance().getPlayer().getAgility() / 5 + GameData::instance().getPlayer().getIntelligence() / 6) + (rand() % (int)(2));
-		tmpw = L"Игрок";
+		tmpw = L"Джейд";
+		crit = GameData::instance().getPlayer().getWeapon().getLevel();
 		break;
 	case 1:
 		dmg = (GameData::instance().getEmber().getStrength() / 4 + GameData::instance().getEmber().getAgility() / 5 + GameData::instance().getEmber().getIntelligence() / 6) + (rand() % (int)(2));
 		tmpw = L"Эмбер";
+		crit = GameData::instance().getEmber().getWeapon().getLevel();
 		break;
 	case 2:
 		dmg = (GameData::instance().getThunder().getStrength() / 4 + GameData::instance().getThunder().getAgility() / 5 + GameData::instance().getThunder().getIntelligence() / 6) + (rand() % (int)(2));
 		tmpw = L"Сандер";
+		crit = GameData::instance().getThunder().getWeapon().getLevel();
 		break;
 	default:
 		break;
 	} 
 
-	he.init(sf::Vector2f((enemies[selected].getPosition().x * 2) + (enemies[selected].getTexture()->getSize().x / 2) -  (784 / 2) + 40, enemies[selected].getPosition().y + (enemies[selected].getTexture()->getSize().y / 2)));
+	he.init(sf::Vector2f((enemies[selected].getPosition().x * 2) + (enemies[selected].getTexture()->getSize().x / 2) -  (HEIGHT / 2) + 40, enemies[selected].getPosition().y + (enemies[selected].getTexture()->getSize().y / 2)));
+
+	log.stop();
+
+	if ((rand() % (int)(20 - (crit * 2))) == 1)
+	{
+		dmg *= 5;
+		log.setString(tmpw.toWideString() + L" выносит " + std::to_wstring(dmg) + L" урона. Критический удар!");
+		SoundManager::instance().playCritSound();
+
+		damageEffects.push_back(Damage(sf::Vector2f(enemies[selected].getPosition().x * 2 + 50, 
+			enemies[selected].getPosition().y + (enemies[selected].getTexture()->getSize().y)), "CRIT"));
+	}
+	else
+	{
+		log.setString(tmpw.toWideString() + L" наносит " + std::to_wstring(dmg) + L" урона. Отличный удар!");
+		SoundManager::instance().playHitSound();
+
+		damageEffects.push_back(Damage(sf::Vector2f(enemies[selected].getPosition().x * 2 + 50, 
+			enemies[selected].getPosition().y + (enemies[selected].getTexture()->getSize().y)), "-" + std::to_string(dmg)));
+	}
 
 	enemies[selected].playAnimation();
 	enemies[selected].getMonster().receiveDamage(dmg);
-
-	log.stop();
-	log.setString(tmpw.toWideString() + L" наносит " + std::to_wstring(dmg) + L" урона. Отличный удар!");
 
 	if (enemies[selected].isDied())
 	{
@@ -862,8 +1417,6 @@ void Battle::damageMonster()
 			}
 		}
 	}
-
-	SoundManager::instance().playHurtSound();
 }
 
 void Battle::nextPlayerStep()
@@ -872,7 +1425,7 @@ void Battle::nextPlayerStep()
 	{
 		SoundManager::instance().playHurtSound();
 		damageMonster();
-	
+
 		bool stop;
 		do
 		{
@@ -893,7 +1446,6 @@ void Battle::nextPlayerStep()
 void Battle::clean()
 {
 	//Should i do it in start()?
-	squad = Squad();
 	enemies.clear();
 	selected = 0;
 	seconds = 0;
@@ -963,134 +1515,184 @@ void Battle::nextAIStep()
 
 void Battle::input(sf::Event &event)
 {
-	//For some fucking reason only works if update log's input firstly
-	log.input(event);
-	if (menu.isWorking() && state == PLAYER)
-	{
-		menu.input(event);
-	}
+	if (DialoguePanel::instance().isEnded())DialoguePanel::instance().input(event);
 
-	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X)
+	if (!aEffect)
 	{
-		if (currentAttacking >= 3 && state == PLAYER && log.isRead())
+		//For some fucking reason only works if update log's input firstly
+		log.input(event);
+		if (menu.isWorking() && state == PLAYER)
 		{
-			currentAttacking = 0;
-			state = AI;
+			menu.input(event);
 		}
-	}
 
-	//Select fucking hero
-	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X && state == HEROSELECT)
-	{
-		switch (selectedHero)
+		if (state == ITEM_MENU)
 		{
-		case 0:
-			if (GameData::instance().getPlayer().getHP() > 0) selectHero();
-			break;
-		case 1:
-			if (GameData::instance().getEmber().getHP() > 0) selectHero();
-			break;
-		case 2:
-			if (GameData::instance().getThunder().getHP() > 0) selectHero();
-			break;
-		default:
-			break;
-		} 
-		log.stop();
-	}
+			itemMenu.input(event);
+		}
 
-	//Input qtes
-	if (state == QTE)
-	{
-		spellQTE.input(event);
-	}
-
-	//End battle
-	if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X && state == ENDED && log.isRead())
-	{
-		//GameData::instance().appendResult(res);
-		GameData::instance().getPlayer().addXP(res.playerXP);
-		GameData::instance().getEmber().addXP(res.emberXP);
-		GameData::instance().getThunder().addXP(res.thunderXP);
-		SceneManager::instance().endBattle();
-	}
-
-	//Open menu when player's turn
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X && state == PLAYER && !menu.isWorking() && log.isRead() && !enemies[selected].isDied())
-	{
-		menu.appear(sf::Vector2f(enemies[selected].getPosition().x * 2, enemies[selected].getPosition().y));
-	}
-
-	//Close menu on ESCAPE
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape && state == PLAYER && menu.isWorking())
-	{
-		menu.disappear();
-		SoundManager::instance().playSelectSound();
-	}
-
-	//Close spells menu
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape && state == SPELL && spellMenu.isWorking())
-	{
-		state = PLAYER;
-		spellMenu.close();
-		SoundManager::instance().playEnterSound();
-	}
-
-	if (state == SPELL)
-	{
-		spellMenu.input(event);
-	}
-
-	//Stop animation if log is read
-	if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X && !log.isRead() && state == AI)
-	{
-		enemies[currentAttacking - 1].stopAnimation();
-	}
-
-	//Update selected
-	if (state == PLAYER && !menu.isWorking())
-	{
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Left && !menu.isWorking())
+		if (((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X) || (xb::Joystick::isButtonPressed(0, xb::Joystick::A)  && event.type == sf::Event::JoystickButtonPressed)))
 		{
-			do 
+			if (currentAttacking >= 3 && state == PLAYER && log.isRead())
 			{
-				if (selected > 0)
+				currentAttacking = 0;
+				state = AI;
+			}
+		}
+
+		//Select fucking hero
+		if (((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X) || (xb::Joystick::isButtonPressed(0, xb::Joystick::A)  && event.type == sf::Event::JoystickButtonPressed)) && state == HEROSELECT)
+		{
+			selectHero();
+			log.stop();
+		}
+		else if (((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Z) || (xb::Joystick::isButtonPressed(0, xb::Joystick::B)  && event.type == sf::Event::JoystickButtonPressed)) && state == HEROSELECT)
+		{
+			state = PLAYER;
+			log.stop();
+			log.setString(L"Атакуйте!");		
+		}
+		if (((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Z) || (xb::Joystick::isButtonPressed(0, xb::Joystick::B)  && event.type == sf::Event::JoystickButtonPressed)) && itemMenu.isWorking() && state == ITEM_MENU)
+		{
+			state = PLAYER;
+			log.stop();
+			log.setString(L"Атакуйте!");		
+		}
+
+		//Input qtes
+		if (state == QTE)
+		{
+			spellQTE.input(event);
+		}
+
+		//End battle
+		if (((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X) || (xb::Joystick::isButtonPressed(0, xb::Joystick::A)  && event.type == sf::Event::JoystickButtonPressed)) && state == ENDED && log.isRead())
+		{
+			//GameData::instance().appendResult(res);
+
+			if (Level::instance().getDay() == 6)
+			{
+				if (Level::instance().getScene() == 7)
 				{
-					selected--;
+					GameData::instance().getPlayer().addXP(res.playerXP);
+					GameData::instance().getEmber().addXP(res.emberXP);
+					GameData::instance().getThunder().addXP(res.thunderXP);
+					SceneManager::instance().endBattleB();
+
+					Level::instance().nextScene();
+
+					SceneManager::instance().startTransition(Parser::instance().getSceneInfo(Level::instance().getDay(), Level::instance().getScene()));
+				}
+				else if  (Level::instance().getScene() == 8)
+				{
+					SceneManager::instance().endBattleB();
+
+					if (GameData::instance().getPlayer().getSocial() >= 11)
+					{
+						DialoguePanel::instance().openDialogue("misc", "scene8");
+						SoundManager::instance().playSuccessSound();
+					}
+					else
+					{
+						DialoguePanel::instance().openDialogue("misc", "scene9");
+						SoundManager::instance().playTransitionSound();
+					}	
 				}
 				else
 				{
-					selected = enemies.size() - 1;
+					GameData::instance().getPlayer().addXP(res.playerXP);
+					GameData::instance().getEmber().addXP(res.emberXP);
+					GameData::instance().getThunder().addXP(res.thunderXP);
+					SceneManager::instance().endBattle();
+
 				}
-			} while (enemies[selected].isDied());
-
-
-			SoundManager::instance().playSelectSound();
-		}
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Right && !menu.isWorking())
-		{
-			do 
+			}
+			else
 			{
-				if (selected + 1 < enemies.size())
+				if (Level::instance().getScene() != 7 && Level::instance().getDay() != 6)
 				{
-					selected++;
+					GameData::instance().getPlayer().addXP(res.playerXP);
+					GameData::instance().getEmber().addXP(res.emberXP);
+					GameData::instance().getThunder().addXP(res.thunderXP);
+					SceneManager::instance().endBattle();
 				}
-				else
-				{
-					selected = 0;
-				}
-			} while (enemies[selected].isDied());	
+			}
+		}
 
+		//Open menu when player's turn
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X) || (xb::Joystick::isButtonPressed(0, xb::Joystick::A)  && event.type == sf::Event::JoystickButtonPressed)) && state == PLAYER && !menu.isWorking() && log.isRead() && !enemies[selected].isDied())
+		{
+			menu.appear(sf::Vector2f(enemies[selected].getPosition().x * 2, enemies[selected].getPosition().y));
+		}
+
+		//Close menu on Z
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Z) || (xb::Joystick::isButtonPressed(0, xb::Joystick::B)  && event.type == sf::Event::JoystickButtonPressed)) && state == PLAYER && menu.isWorking())
+		{
+			menu.disappear();
 			SoundManager::instance().playSelectSound();
 		}
-	}
 
-	//Update selected hero FUCK IT FFS
-	if (state == HEROSELECT)
-	{
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Left && !menu.isWorking())
+		//Close spells menu
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Z) || (xb::Joystick::isButtonPressed(0, xb::Joystick::B)  && event.type == sf::Event::JoystickButtonPressed)) && state == SPELL && spellMenu.isWorking())
 		{
-			do 
+			state = PLAYER;
+			spellMenu.close();
+			SoundManager::instance().playEnterSound();
+		}
+
+		if (state == SPELL)
+		{
+			spellMenu.input(event);
+		}
+
+		//Stop animation if log is read
+		if(((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::X) || (xb::Joystick::isButtonPressed(0, xb::Joystick::A)  && event.type == sf::Event::JoystickButtonPressed)) && !log.isRead() && state == AI)
+		{
+			enemies[currentAttacking - 1].stopAnimation();
+		}
+
+		//Update selected
+		if (state == PLAYER && !menu.isWorking())
+		{
+			if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Left && !menu.isWorking())
+			{
+				do 
+				{
+					if (selected > 0)
+					{
+						selected--;
+					}
+					else
+					{
+						selected = enemies.size() - 1;
+					}
+				} while (enemies[selected].isDied());
+
+
+				SoundManager::instance().playSelectSound();
+			}
+			if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Right && !menu.isWorking())
+			{
+				do 
+				{
+					if (selected + 1 < enemies.size())
+					{
+						selected++;
+					}
+					else
+					{
+						selected = 0;
+					}
+				} while (enemies[selected].isDied());	
+
+				SoundManager::instance().playSelectSound();
+			}
+		}
+
+		//Update selected hero FUCK IT FFS
+		if (state == HEROSELECT)
+		{
+			if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Left && !menu.isWorking())
 			{
 				if (selectedHero > 0)
 				{
@@ -1100,14 +1702,11 @@ void Battle::input(sf::Event &event)
 				{
 					selectedHero = 2;
 				}
-			} while (enemies[selected].isDied());
 
 
-			SoundManager::instance().playSelectSound();
-		}
-		if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Right && !menu.isWorking())
-		{
-			do 
+				SoundManager::instance().playSelectSound();
+			}
+			if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Right && !menu.isWorking())
 			{
 				if (selectedHero < 2)
 				{
@@ -1117,9 +1716,9 @@ void Battle::input(sf::Event &event)
 				{
 					selectedHero = 0;
 				}
-			} while (enemies[selected].isDied());	
 
-			SoundManager::instance().playSelectSound();
+				SoundManager::instance().playSelectSound();
+			}
 		}
 	}
 }

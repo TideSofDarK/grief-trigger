@@ -62,7 +62,7 @@ class Battle
 {
 private:
 	//Current state
-	typedef enum { PLAYER, AI, SPELL, QTE, ENDED, HEROSELECT } BATTLE_STATE;
+	typedef enum { PLAYER, AI, SPELL, QTE, ENDED, HEROSELECT, ITEM_MENU } BATTLE_STATE;
 	BATTLE_STATE				state;
 	unsigned int				turnNumber;
 	int							currentAttacking;
@@ -70,13 +70,10 @@ private:
 	sf::Clock clock;
 
 	//Damage effect
-	std::vector<Damage>			damageEffects;
+	std::deque<Damage>			damageEffects;
 
 	//Enemies on screen
-	std::vector<Enemy>			enemies;
-
-	//Enemy squad
-	Squad						squad;
+	std::deque<Enemy>			enemies;
 
 	//Number of selected enemy
 	unsigned int				selected;
@@ -86,6 +83,15 @@ private:
 
 	//Top panel's back
 	sf::Sprite					battleBox;
+
+	//Particles
+	Effects						effects;
+
+	ItemMenu					itemMenu;
+
+	int							itemSelected;
+
+	bool						lastBoss;
 	
 	//Faces
 	//Nyashki
@@ -100,12 +106,16 @@ private:
 	static const int lightType = 3;
 	static const int creoType = 4;
 	static const int shardsType = 5;
+	static const int hellType = 6;
+	static const int mechType = 7;
 	unsigned int				currentBackground;
 	sf::Shader					fire;
 	sf::Shader					space;
 	sf::Shader					sback;
 	sf::Shader					light;
 	sf::Shader					creo;
+	sf::Shader					hell;
+	sf::Shader					mech;
 	sf::Shader					shards;
 	unsigned int				seconds;
 	sf::Texture					background;
@@ -139,7 +149,7 @@ private:
 	//Shadow effect
 	sf::RectangleShape			effectRect;
 
-	//Hit effect list
+	//Hit effect
 	HitEffect					he;
 
 	//Battle result
@@ -157,10 +167,16 @@ private:
 	//Spell QTE system
 	SpellQTE					spellQTE;
 
+	sf::Sprite					advantage;
+	float nax;
+	bool						aEffect;
+	sf::Clock					t;
+	bool						check;
+
 public:
 	Battle();
 	void loadResources();
-	void start(Squad &squad);
+	void start(std::vector<Monster> &ms, bool p);
 	void draw(sf::RenderTarget &tg);
 	void drawUI(sf::RenderTarget &tg);
 	void update(sf::Time time);
@@ -172,6 +188,7 @@ public:
 	void damageSpell();
 	void clean();
 	void selectHero();
+	void setW(){state = AI;};
 };
 
 #endif

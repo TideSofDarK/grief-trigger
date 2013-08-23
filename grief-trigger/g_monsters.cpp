@@ -14,7 +14,24 @@ Monster::Monster(std::string name_)
 
 Squad::Squad()
 {
+	animationA = new Animation();
+	spriteA = new AnimatedSprite();
 
+	animationA->setSpriteSheet(TextureManager::instance().getTexture("assets/attention.png"));
+
+	for (int a = 0; a < 3; a++)
+	{
+		animationA->addFrame(sf::IntRect(a * 32, 0, 32, 32));
+	}
+
+	for (int a = 2; a > 0; a--)
+	{
+		animationA->addFrame(sf::IntRect(a * 32, 0, 32, 32));
+	}
+
+	spriteA->setAnimation(*animationA);
+	spriteA->setLooped(true);
+	spriteA->play();
 }
 
 void Squad::init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap)
@@ -30,7 +47,15 @@ void Squad::init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap)
 		monsters.push_back(newMonster);
 	}
 
-	sprite.setTexture(TextureManager::instance().getTexture("assets/slug.png"));
+	if (Level::instance().getDay() >= 3)
+	{
+		sprite.setTexture(TextureManager::instance().getTexture("assets/slug2.png"));
+	}
+	else
+	{
+		sprite.setTexture(TextureManager::instance().getTexture("assets/slug1.png"));
+	}
+	
 	sprite.setPosition(pos);
 
 	for (int a = 0; a < 4; a++)
@@ -58,6 +83,8 @@ void Squad::init(std::string name, sf::Vector2f pos, tmx::MapObject& onMap)
 	maxCounter = 50 + (rand() * (int)(60 - 30) / RAND_MAX);
 
 	bounds = sf::FloatRect(sprite.getPosition().x - (CHARACTER_SIZE * 1), sprite.getPosition().y + (CHARACTER_SIZE * 1), CHARACTER_SIZE * 2, CHARACTER_SIZE * 2);
+
+	aggr = false;
 }
 
 void Squad::draw(sf::RenderTarget &tg)
@@ -65,6 +92,9 @@ void Squad::draw(sf::RenderTarget &tg)
 	sprite.move(0,-11);
 	tg.draw(sprite);
 	sprite.move(0,11);
+	spriteA->setPosition(sprite.getPosition());
+	spriteA->move(-2,-16);
+	if (aggr) tg.draw(*spriteA);
 }
 
 void Squad::update(sf::Time time)
@@ -85,30 +115,35 @@ void Squad::update(sf::Time time)
 			maxCounter = 50 + (rand() * (int)(60 - 30) / RAND_MAX);
 		}
 
-		if(direction != DIR_IDLE)
+		if(direction != DIR_IDLE && !aggr)
 		{
 			step(direction);
 		}
 	}
 
-	if ((rand() % (int)(100)) == 50 && !walking)
+	if (!walking && !aggr)
 	{
-		/*if (SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().x == sprite.getPosition().x + CHARACTER_SIZE && SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().y == sprite.getPosition().y)
+		if (sf::FloatRect(sprite.getPosition().x - (CHARACTER_SIZE*2), sprite.getPosition().y - (CHARACTER_SIZE*2), CHARACTER_SIZE * 4, CHARACTER_SIZE * 4).intersects(SceneManager::instance().getScene().getPlayerBoundOnMap()))
 		{
-		SceneManager::instance().initBattle(*this);
+			aggr = true;
+			aggroTimer.restart();
 		}
-		else if (SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().x == sprite.getPosition().x - CHARACTER_SIZE && SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().y == sprite.getPosition().y)
+	}
+	if (aggr && aggroTimer.getElapsedTime() > sf::seconds(1.3))
+	{	
+		if ((animator.isPlayingAnimation() && animator.getPlayingAnimation() != "left") || !animator.isPlayingAnimation())
 		{
-		SceneManager::instance().initBattle(*this);
+			animator.playAnimation("left", true);
 		}
-		else if (SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().x == sprite.getPosition().x && SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().y == sprite.getPosition().y + CHARACTER_SIZE)
+		if (sprite.getGlobalBounds().intersects(SceneManager::instance().getScene().getPlayerBoundOnMap()))
 		{
-		SceneManager::instance().initBattle(*this);
+			SceneManager::instance().initBattle(*this, false);	
 		}
-		else if (SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().x == sprite.getPosition().x && SceneManager::instance().getScene().getPlayerObject().getOnMap().GetPosition().y == sprite.getPosition().y - CHARACTER_SIZE)
+		else
 		{
-		SceneManager::instance().initBattle(*this);	
-		}*/
+			nx = interpolateLinear(sprite.getPosition().x, SceneManager::instance().getScene().getPlayerPositionOnMap().x, 0.03f);
+			ny = interpolateLinear(sprite.getPosition().y, SceneManager::instance().getScene().getPlayerPositionOnMap().y, 0.03f);
+		}
 	}
 
 	if (walking)
@@ -171,6 +206,9 @@ void Squad::update(sf::Time time)
 	animator.animate(sprite);
 	object->SetPosition(sf::Vector2f(nx, ny));
 	sprite.setPosition(nx, ny);
+
+	spriteA->update(time);
+	spriteA->setPosition(sf::Vector2f(nx, ny));
 }
 
 void Squad::step(int dir)
